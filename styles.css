@@ -1,0 +1,76 @@
+.scribe-timeline-view {
+	padding: var(--size-4-4);
+}
+
+.scribe-timeline-toolbar {
+	display: flex;
+	justify-content: flex-end;
+	margin-bottom: var(--size-4-4);
+}
+
+.scribe-timeline-empty {
+	color: var(--text-muted);
+	padding: var(--size-4-4) 0;
+}
+
+.scribe-timeline-group-title {
+	margin: var(--size-4-4) 0 var(--size-4-2) 0;
+}
+
+.scribe-timeline-track {
+	display: flex;
+	flex-direction: column;
+	position: relative;
+	padding-left: 20px;
+	border-left: 2px solid var(--background-modifier-border);
+}
+
+.scribe-timeline-item {
+	position: relative;
+	margin-bottom: var(--size-4-4);
+}
+
+.scribe-timeline-dot {
+	position: absolute;
+	left: -26px;
+	top: 6px;
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	background: var(--interactive-accent);
+}
+
+.scribe-timeline-item--scene .scribe-timeline-dot {
+	background: var(--text-muted);
+	width: 8px;
+	height: 8px;
+	left: -25px;
+	top: 7px;
+}
+
+.scribe-timeline-card {
+	background: var(--background-secondary);
+	border-radius: var(--radius-m);
+	padding: var(--size-4-3);
+	cursor: pointer;
+}
+
+.scribe-timeline-card:hover {
+	background: var(--background-modifier-hover);
+}
+
+.scribe-timeline-date {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+	margin-bottom: 2px;
+}
+
+.scribe-timeline-title {
+	font-weight: 600;
+}
+
+.scribe-timeline-meta {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+	margin-top: 4px;
+}
