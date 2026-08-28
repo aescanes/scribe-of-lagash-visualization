@@ -15,24 +15,27 @@ export default class ScribeVisualizationPlugin extends Plugin {
 	async onload(): Promise<void> {
 		await this.loadSettings();
 
-		this.vaultIndex = new VaultIndex(this.app);
+		this.vaultIndex = new VaultIndex(this.app, () => ({
+			bookFolders: this.settings.bookFolders,
+			titleLanguage: this.settings.titleLanguage,
+		}));
 		this.addChild(this.vaultIndex);
 
 		this.registerView(VIEW_TYPE_TIMELINE, (leaf) => new TimelineView(leaf, this));
 
 		this.registerBasesView(BASES_VIEW_TYPE_TIMELINE, {
-			name: "Chapter timeline",
-			icon: "clock",
+			name: "Scribe timeline",
+			icon: "chart-no-axes-gantt",
 			factory: (controller, containerEl) => new ScribeTimelineBasesView(controller, containerEl),
 		});
 
-		this.addRibbonIcon("clock", "Open chapter timeline", () => {
+		this.addRibbonIcon("chart-no-axes-gantt", "Open scribe timeline", () => {
 			this.activateTimelineView();
 		});
 
 		this.addCommand({
 			id: "open-chapter-timeline",
-			name: "Open chapter timeline",
+			name: "Open scribe timeline",
 			callback: () => this.activateTimelineView(),
 		});
 
@@ -49,6 +52,7 @@ export default class ScribeVisualizationPlugin extends Plugin {
 
 	async saveSettings(): Promise<void> {
 		await this.saveData(this.settings);
+		this.vaultIndex.rebuild();
 	}
 
 	private async activateTimelineView(): Promise<void> {

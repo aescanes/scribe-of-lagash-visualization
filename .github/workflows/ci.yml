@@ -22,5 +22,8 @@ jobs:
       - name: Type-check and build
         run: npm run build
 
+      - name: Test
+        run: npm test
+
       - name: Lint
-        run: npx eslint src --ext .ts
+        run: npx eslint src

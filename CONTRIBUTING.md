@@ -29,12 +29,18 @@ To try your changes in a real vault, copy (or symlink) `manifest.json`,
 plugin from Obsidian's Community Plugins settings. Reload the plugin (or
 Obsidian) after each rebuild to pick up changes.
 
-Before opening a PR, make sure both of these pass:
+Before opening a PR, make sure all of these pass:
 
 ```bash
 npm run build
-npx eslint src --ext .ts
+npm test
+npx eslint src
 ```
+
+Unit tests live next to the code as `*.test.ts` and cover the pure modules
+(title parsing, book-layout coercion). `npm test` compiles them with esbuild —
+already a build dependency — and runs them through Node's built-in test runner;
+no separate test framework is pulled in.
 
 ## Code conventions
 
@@ -49,6 +55,12 @@ npx eslint src --ext .ts
   `scribe-visualization-*`. Don't hardcode a frontmatter key as a string
   literal elsewhere — reference the constant, since other plugins in the
   series will use the same `scribe-` prefix with different meanings.
+- Note titles are classified by [`src/data/titleParser.ts`](src/data/titleParser.ts),
+  a pure module with no Obsidian imports. Keep it that way — add new languages
+  as extra entries in its pattern table, not as calls into the vault.
+- The plugin writes exactly one file: the per-book companion file handled by
+  [`src/data/timelineFile.ts`](src/data/timelineFile.ts). Never add code that
+  writes to a chapter/scene note.
 
 ## Dependencies
 

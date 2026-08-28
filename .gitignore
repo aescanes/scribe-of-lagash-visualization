@@ -4,6 +4,7 @@ node_modules
 # build output
 main.js
 *.js.map
+.test-build
 
 # obsidian
 data.json
