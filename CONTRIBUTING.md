@@ -70,6 +70,48 @@ add a dependency, keep both of those properties intact — see the
 "Supply-chain safety" section in the README for the reasoning. Avoid adding a
 dependency at all where a small amount of first-party code will do.
 
+## Releasing
+
+Releases are cut from `main` by a maintainer. Feature PRs must **not** bump the
+version — that happens once, at release time.
+
+1. Make sure `main` is up to date, the working tree is clean, and
+   `npm run build && npm test && npx eslint src` all pass.
+2. Update the `## [Unreleased]` heading in `CHANGELOG.md` to the new version and
+   date, and commit that.
+3. Bump the version:
+
+   ```bash
+   npm version <patch|minor|major> --ignore-scripts=false   # or an explicit version, e.g. 0.2.0
+   ```
+
+   This bumps `package.json`, runs [`version-bump.mjs`](version-bump.mjs) to
+   sync `manifest.json` and add the `version → minAppVersion` entry to
+   `versions.json`, then makes one commit and a matching git tag.
+
+   > **Why the flag:** `.npmrc` sets `ignore-scripts=true`, which also
+   > suppresses the `version` lifecycle script — without
+   > `--ignore-scripts=false` the command bumps and tags but silently skips
+   > `version-bump.mjs`, leaving `manifest.json` behind and breaking the
+   > release. The flag is safe here: `npm version` installs nothing, so it only
+   > re-enables this project's own `version` script. `.npmrc` also sets
+   > `tag-version-prefix=""` so the tag is `1.2.3`, not `v1.2.3`.
+
+4. Push the commit and the tag:
+
+   ```bash
+   git push --follow-tags
+   ```
+
+The tag push triggers [`.github/workflows/release.yml`](.github/workflows/release.yml),
+which builds and publishes a GitHub Release containing `main.js`,
+`manifest.json`, and `styles.css`. That workflow fails the release if the tag
+name doesn't match `manifest.json`'s version, so bump *before* tagging (which
+`npm version` does in the right order).
+
+If a minimum Obsidian version bump is needed, edit `minAppVersion` in
+`manifest.json` before step 3 so the new `versions.json` entry records it.
+
 ## Reporting a security issue
 
 Please don't open a public issue for a security vulnerability — see

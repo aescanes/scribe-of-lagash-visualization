@@ -182,6 +182,16 @@ Plugins, and reload after each rebuild. The Bases view also needs the core
 **Bases** plugin enabled (Settings → Core plugins). This repo itself lives inside
 a test vault's plugin folder, so `npm run dev` already writes `main.js` in place.
 
+## Releasing
+
+Maintainer-only, from a clean `main`; feature PRs never bump the version. Roll
+the `CHANGELOG.md` "Unreleased" heading, then
+`npm version <patch|minor|major> --ignore-scripts=false` (the flag is required —
+`.npmrc`'s `ignore-scripts=true` otherwise skips `version-bump.mjs`, which syncs
+`manifest.json` / `versions.json`), then `git push --follow-tags`. The tag push
+runs [`release.yml`](.github/workflows/release.yml). Full steps in
+[CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Frontmatter schema
 
 Only `scribe-visualization-type` is ever required, and only when you need to
