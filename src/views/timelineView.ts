@@ -23,11 +23,11 @@ export class TimelineView extends ItemView {
 	}
 
 	getDisplayText(): string {
-		return "Chapter timeline";
+		return "Scribe timeline";
 	}
 
 	getIcon(): string {
-		return "clock";
+		return "chart-no-axes-gantt";
 	}
 
 	async onOpen(): Promise<void> {
@@ -89,7 +89,13 @@ export class TimelineView extends ItemView {
 		if (entry.date) {
 			card.createDiv({ cls: "scribe-timeline-date", text: entry.date });
 		}
-		card.createDiv({ cls: "scribe-timeline-title", text: entry.title });
+		const title = card.createDiv({ cls: "scribe-timeline-title", text: entry.title });
+		if (entry.context.length) {
+			title.createSpan({
+				cls: "scribe-timeline-context",
+				text: ` (${entry.context.join(" - ")})`,
+			});
+		}
 
 		const meta: string[] = [];
 		if (entry.characters.length) meta.push(entry.characters.join(", "));

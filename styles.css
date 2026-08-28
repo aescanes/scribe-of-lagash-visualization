@@ -69,6 +69,11 @@
 	font-weight: 600;
 }
 
+.scribe-timeline-context {
+	font-weight: 400;
+	color: var(--text-muted);
+}
+
 .scribe-timeline-meta {
 	font-size: var(--font-ui-smaller);
 	color: var(--text-muted);

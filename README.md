@@ -8,9 +8,12 @@ chapters and scenes. It is the first plugin in the **Scribe of Lagash**
 series, a set of independent, focused tools for planning and writing novels
 in Obsidian.
 
-This plugin doesn't own your data: chapters and scenes are just regular notes
-in your vault, tagged with a bit of frontmatter. The plugin reads that
-frontmatter to build visualizations on top of your existing notes.
+This plugin doesn't own your prose: chapters and scenes are just regular notes
+in your vault. Point the plugin at the folder that holds a book and it
+recognises chapters and scenes from their titles ("Chapter 1", "Scene II",
+"Prologue", …); a little `scribe-visualization-*` frontmatter is optional and
+only needed to override the title or add detail. The only file the plugin ever
+writes is a per-book companion file that stores your timeline layout.
 
 ## Current features
 
@@ -18,27 +21,49 @@ frontmatter to build visualizations on top of your existing notes.
   every chapter/scene as a chronological timeline, optionally filtered to a
   single named timeline (a novel can have more than one, e.g. "main plot" vs.
   a character's backstory). No setup required beyond tagging your notes.
-- **Chapter timeline (Bases view)** — the same timeline rendering, registered
+- **Scribe timeline (Bases view)** — the same timeline rendering, registered
   as a view type inside Obsidian's core **Bases** plugin. Create a `.base`
   file, filter to `scribe-visualization-type = chapter` (or `scene`), optionally group by a
-  property such as `scribe-visualization-timelines`, and pick "Chapter timeline" from the
+  property such as `scribe-visualization-timelines`, and pick "Scribe timeline" from the
   Bases view picker. Filtering, sorting, and grouping are all handled by
   Bases' own toolbar — this plugin just renders the result. Requires the core
   Bases plugin to be enabled (Settings → Core plugins).
 
-Planned next: a matrix view for grouping chapters/scenes by character, place,
-or situation (both as a standalone view and as a Bases view).
+Planned next: a **draggable multi-timeline canvas** — colored timeline lanes you
+lay chapters and scenes across (and a chapter can sit on more than one). See
+[docs/timeline-canvas-plan.md](docs/timeline-canvas-plan.md). After that, a
+matrix view grouping chapters/scenes by character, place, or situation.
 
-## Tagging a note as a chapter or scene
+## Setting up a book
 
-Add frontmatter like this to any note you want to appear in the
-visualizations:
+In the plugin settings, add the vault-relative folder that holds your book's
+notes under **Book folders** (one per line — you can track several books). The
+plugin scans that folder and classifies each note by its **title**:
+
+| Title looks like | Recognised as |
+|---|---|
+| `Chapter 1`, `Chapter IV`, `Ch. 12 — The Fall` | chapter (number 1, 4, 12) |
+| `Scene 2`, `Scene IX` | scene |
+| `Prologue`, `Epilogue`, `Interlude` | chapter (no number) |
+| anything else | ignored |
+
+English titles only for now. Leave **Book folders** empty to fall back to
+scanning the whole vault for frontmatter-tagged notes instead.
+
+Sub-folders inside the book become a breadcrumb on each card: a note at
+`My Novel/Act I/Chapter I/Scene 1.md` (book folder `My Novel`) shows as
+**Scene 1 (Act I - Chapter I)**.
+
+### Overriding the title with frontmatter
+
+Everything below is optional. Use it to fix a mis-detected note or to add
+detail the visualizations can show:
 
 ```yaml
 ---
-scribe-visualization-type: chapter          # "chapter" or "scene" (required)
-scribe-visualization-order: 1               # manuscript order; used to sort when no date is set
-scribe-visualization-timelines: [main]      # which timeline(s) this belongs to
+scribe-visualization-type: scene            # force "chapter" or "scene", overrides the title
+scribe-visualization-order: 12              # override the number parsed from the title
+scribe-visualization-timelines: [main]      # seed timeline membership
 scribe-visualization-date: 1901-03-04       # in-story date, any free-form string
 scribe-visualization-characters: [Alice, Bob]
 scribe-visualization-places: [Riverside Tavern]
@@ -46,15 +71,13 @@ scribe-visualization-status: draft
 ---
 ```
 
-Only `scribe-visualization-type` is required. Everything else is optional and simply
-enables richer visualizations as you fill it in.
-
 ## Development
 
 ```bash
 npm install
 npm run dev    # watch build, outputs main.js
 npm run build  # type-check + production build
+npm test       # unit tests (Node's built-in runner; no test framework dependency)
 ```
 
 ### Supply-chain safety

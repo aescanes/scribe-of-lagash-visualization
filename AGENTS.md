@@ -5,20 +5,103 @@ Guidance for AI agents working on this repository. Read this before making chang
 ## Concept
 
 **Scribe of Lagash: Visualization** is an Obsidian plugin that helps novelists
-visualize their chapters and scenes as timelines (and, planned, matrices grouped
-by character / place / situation).
-
-Core principle: **the plugin does not own the data.** Chapters and scenes are
-ordinary Markdown notes in the user's vault. A note opts in by declaring a
-`scribe-visualization-type` frontmatter key (`chapter` or `scene`). The plugin
-only *reads* that frontmatter and renders views on top of it — the note stays the
-source of truth. Be very conservative about ever writing to user notes.
-
-This is the **first plugin in the "Scribe of Lagash" series** — a set of
-independent, single-concern plugins. Other future plugins will reuse the
+visualize their chapters and scenes. It is the first plugin in the
+**"Scribe of Lagash"** series — a set of independent, single-concern Obsidian
+plugins for planning and writing novels. Future plugins in the series reuse the
 `scribe-` frontmatter prefix with *different meanings*, which is why every key
-this plugin touches is namespaced `scribe-visualization-*` (not just `scribe-*`)
-and centralized in one place.
+this plugin touches is namespaced `scribe-visualization-*` and centralized in
+[`src/types.ts`](src/types.ts).
+
+Core principle: **the plugin does not own the user's prose.** Chapters and scenes
+are ordinary Markdown notes in the vault. The plugin discovers and reads them; it
+never rewrites their body. The only file the plugin writes is a per-book
+**companion file** that stores the visualization layout (see below).
+
+### The first visualization — a draggable multi-timeline canvas
+
+The headline feature is a **canvas view** (see the reference screenshot in the
+project discussion): horizontal, colored **timeline lanes** stacked vertically,
+with **chapter / scene cards** laid out left-to-right along each lane in
+chronological / manuscript order. The user can:
+
+- **drag a card horizontally** to reorder it within a timeline,
+- **drag a card vertically** to move it to another timeline, and
+- **place one card on more than one timeline** (a novel has multiple timelines —
+  e.g. "main plot" vs. a character's backstory — and a chapter can sit on
+  several of them at once).
+
+Cards are discovered automatically from a **Book folder**, not hand-created.
+
+### How chapters and scenes are discovered
+
+1. The user points the plugin at one or more **Book folders** (a folder such as
+   `Book` or `Book/The Silent City`). The plugin scans that folder recursively.
+2. Each note is classified by **parsing its title** (file basename). English
+   first; patterns like `Chapter 1`, `Chapter I`, `Ch. 1`, `Scene 2`,
+   `Scene IV`, plus `Prologue` / `Epilogue` / `Interlude`. Roman numerals are
+   decoded to integers for ordering. Notes whose title matches nothing are left
+   unclassified (not shown, but surfaced in a "not recognized" affordance).
+3. **Frontmatter overrides title parsing.** If a note has
+   `scribe-visualization-type`, that wins over whatever the title says; likewise
+   `scribe-visualization-order` overrides the number parsed from the title. This
+   lets a user fix a mis-detected note without renaming it.
+
+Title parsing is intentionally isolated (`src/data/titleParser.ts`, planned) so
+other languages — the screenshot shows Spanish "Escena" — can be added later as
+extra pattern tables.
+
+### The companion file (per book)
+
+Timeline definitions and card placements live in **one Markdown file inside the
+Book folder** (default name `Timelines.md`, configurable). It is human-readable,
+diff-friendly, and travels with the book. Shape:
+
+```yaml
+---
+scribe-visualization: book
+timelines:
+  - id: main
+    name: Main plot
+    color: "#e06c75"
+    order: 0
+  - id: backstory
+    name: Alice's backstory
+    color: "#e5c07b"
+    order: 1
+placements:
+  "Book/Chapter 1.md":
+    timelines: [main]
+    x: 0
+  "Book/Chapter 2.md":
+    timelines: [main, backstory]
+    x: 1
+---
+
+Free-text notes about the book's structure can go in the body.
+```
+
+Rules:
+
+- The plugin **only** writes this file (debounced, on drag/edit). It never edits
+  chapter/scene note bodies.
+- A newly detected chapter/scene with no placement entry is auto-added to a
+  default lane so nothing silently disappears.
+- A placement pointing at a note that no longer exists is kept but shown as
+  "missing" rather than deleted, so a rename/move is recoverable.
+
+## Current implementation vs. target
+
+| Area | Built now | Target |
+|---|---|---|
+| Discovery | ✅ Book-folder scan + title parsing, frontmatter `-type` as override (falls back to whole-vault frontmatter scan when no book folder is set) | — |
+| Layout data layer | ✅ `BookLayout` types + companion-file read/write + coercion, all tested | wire into a view |
+| First view | Simple vertical list timeline ([`timelineView.ts`](src/views/timelineView.ts)), still frontmatter-`timelines`-driven | Draggable multi-timeline **canvas** reading the companion file |
+| Layout storage | Companion file I/O exists; nothing writes to it yet | Canvas persists drags here (debounced) |
+| Bases view | [`basesTimelineView.ts`](src/views/basesTimelineView.ts), renders Bases' grouped result | Keep; revisit once canvas lands |
+| Matrix view | — | Group chapters/scenes by character / place / situation |
+
+Keep the existing views working until the canvas replaces them. The phased build
+plan is in [`docs/timeline-canvas-plan.md`](docs/timeline-canvas-plan.md).
 
 ## Architecture
 
@@ -26,52 +109,50 @@ Entry point: [`src/main.ts`](src/main.ts) → `ScribeVisualizationPlugin`.
 
 | Piece | File | Responsibility |
 |---|---|---|
-| Plugin shell | [`src/main.ts`](src/main.ts) | onload wiring: registers views, ribbon icon, command, settings tab; owns the `VaultIndex` as a child component |
-| Frontmatter schema + types | [`src/types.ts`](src/types.ts) | `FRONTMATTER_KEYS` (the **single source of truth** for key names) and `NovelEntry` |
-| Vault index | [`src/data/vaultIndex.ts`](src/data/vaultIndex.ts) | `Component` that scans all Markdown files, parses tagged notes into `NovelEntry[]`, keeps it live via `metadataCache` / `vault` events, notifies subscribers through `onChange` |
-| Standalone timeline | [`src/views/timelineView.ts`](src/views/timelineView.ts) | `ItemView` (`VIEW_TYPE_TIMELINE`). Reads from `VaultIndex`, does its own timeline-name filter dropdown, re-renders on index change |
-| Bases timeline | [`src/views/basesTimelineView.ts`](src/views/basesTimelineView.ts) | `BasesView` (`BASES_VIEW_TYPE_TIMELINE`) registered into Obsidian's core **Bases** plugin. Renders `this.data.groupedData` as-is |
-| Settings | [`src/settings/settings.ts`](src/settings/settings.ts), [`src/settings/settingsTab.ts`](src/settings/settingsTab.ts) | Just `defaultTimeline` so far |
-| Styles | [`styles.css`](styles.css) | Uses Obsidian CSS variables only (`var(--...)`) — no hardcoded colors, so themes work |
+| Plugin shell | [`src/main.ts`](src/main.ts) | onload wiring: registers views, ribbon icon, command, settings tab; owns the index as a child `Component` |
+| Frontmatter + layout types | [`src/types.ts`](src/types.ts) | `FRONTMATTER_KEYS` (**single source of truth** for key names), `NovelEntry`, `ParsedTitle`, `TimelineDef`, `Placement`, `BookLayout` |
+| Title parser | [`src/data/titleParser.ts`](src/data/titleParser.ts) | Pure, no Obsidian imports: `parseTitle(basename, lang) → ParsedTitle \| null`; `romanToInt`; per-language pattern tables (`en` only so far) |
+| Vault / book index | [`src/data/vaultIndex.ts`](src/data/vaultIndex.ts) | Scans notes (restricted to configured book folders), classifies them (title parse, frontmatter `-type` overrides), keeps a live `NovelEntry[]`, notifies subscribers via `onChange`. First scan waits for `onLayoutReady` + `metadataCache` "resolved" (a cold start has no file list yet, and title-only notes never fire "changed"); also watches `vault` create/delete/rename, debounced. `rebuild()` is public — call it when settings change |
+| Book-layout helpers | [`src/data/bookLayout.ts`](src/data/bookLayout.ts) | Pure: `parseBookLayout` (coerce loose YAML), `timelineFilePath`, `emptyBookLayout` |
+| Path breadcrumb | [`src/data/pathContext.ts`](src/data/pathContext.ts) | Pure: `folderContext(filePath, baseFolder)` → the folder segments shown next to a card title (book folder and file name excluded) |
+| Companion file I/O | [`src/data/timelineFile.ts`](src/data/timelineFile.ts) | `readBookLayout` / `writeBookLayout` for the per-book `Timelines.md`; write preserves the note body (`processFrontMatter`) or creates the file |
+| Canvas view *(planned)* | `src/views/timelineCanvasView.ts` | `ItemView` — renders lanes + draggable cards, persists layout to the companion file |
+| Simple timeline | [`src/views/timelineView.ts`](src/views/timelineView.ts) | Current `ItemView` (`VIEW_TYPE_TIMELINE`); superseded by the canvas eventually |
+| Bases timeline | [`src/views/basesTimelineView.ts`](src/views/basesTimelineView.ts) | `BasesView` registered into Obsidian's core **Bases** plugin. Renders `this.data.groupedData` as-is — Bases owns all filter/sort/group |
+| Settings | [`src/settings/`](src/settings/) | Book folder(s), companion-file name, default timeline |
+| Styles | [`styles.css`](styles.css) | Obsidian CSS variables only (`var(--...)`) — no hardcoded colors except user-chosen timeline colors from the companion file |
 
-### Data flow
+### Separation of responsibility
 
-```
-vault notes (frontmatter) ──▶ VaultIndex.rebuild() ──▶ NovelEntry[]
-                                     │
-                                     ├─▶ TimelineView (subscribes via onChange)
-                                     └─▶ SettingsTab (getTimelineNames)
-
-Bases (.base file: filter/sort/group) ──▶ ScribeTimelineBasesView.onDataUpdated()
-```
-
-The two timeline views deliberately do **not** share rendering code right now.
-The standalone view filters/sorts itself (via `VaultIndex`); the Bases view
-delegates *all* filtering, sorting, and grouping to Bases' own toolbar and only
-renders the result. Keep that separation of responsibility — don't make the Bases
-view reimplement query logic.
+- The **standalone views** (simple timeline, canvas) read from the index and own
+  their own layout logic.
+- The **Bases view** delegates *all* filtering, sorting, and grouping to Bases'
+  toolbar and only renders the result. Don't make it reimplement query logic.
+- **Title parsing** is a pure, isolated, per-language module — no Obsidian API
+  calls inside it, so it stays trivially testable.
 
 ## Conventions (enforced — don't violate)
 
-- **Never hardcode a frontmatter key string literal.** Always reference
-  `FRONTMATTER_KEYS` from [`src/types.ts`](src/types.ts). Adding a new field means
-  adding it there first.
+- **Never hardcode a frontmatter key string literal.** Reference
+  `FRONTMATTER_KEYS` from [`src/types.ts`](src/types.ts). New field → add it there
+  first.
+- **The plugin writes only the companion file.** Never write to a chapter/scene
+  note's body or frontmatter unless a task explicitly calls for it and the user
+  has agreed.
 - **TypeScript with `strictNullChecks`.** Avoid `any` where a real type exists.
-- **Comments explain *why*, not *what*.** Only add a comment where intent isn't
-  obvious from names/structure. Match the existing sparse comment style.
-- **Keep diffs focused.** No drive-by formatting or refactoring mixed into a
+- **Comments explain *why*, not *what*.** Match the existing sparse style.
+- **Keep diffs focused** — no drive-by formatting or refactoring mixed into a
   feature/fix.
-- Every source file starts with the SPDX GPL-3.0-or-later header + copyright line.
-- **License is GPL-3.0-or-later.** Don't add dependencies with incompatible
-  licenses.
+- Every source file starts with the SPDX `GPL-3.0-or-later` header + copyright.
+- **License is GPL-3.0-or-later** — don't add incompatibly licensed deps.
 
 ### Supply-chain rules
 
-- All deps in `package.json` are pinned to **exact** versions — no `^`, `~`, or
-  `latest`. `.npmrc` has `save-exact=true`.
-- `.npmrc` has `ignore-scripts=true`. Don't rely on dependency lifecycle scripts.
+- All deps pinned to **exact** versions — no `^`, `~`, `latest`
+  (`.npmrc` → `save-exact=true`).
+- `.npmrc` → `ignore-scripts=true`. Don't rely on dependency lifecycle scripts.
   `esbuild`'s postinstall is opted back in only via `npm run rebuild:esbuild`.
-- **Prefer first-party code over adding a dependency.**
+- **Prefer a small amount of first-party code over adding a dependency.**
 
 ## Commands
 
@@ -79,53 +160,49 @@ view reimplement query logic.
 npm install
 npm run dev     # esbuild watch → main.js (inline sourcemap)
 npm run build   # tsc --noEmit type-check + minified production bundle → main.js
-npx eslint src --ext .ts
+npm test        # esbuild-compile src/**/*.test.ts → .test-build, run node --test
+npx eslint src  # flat config in eslint.config.mjs (ESLint 9)
 ```
 
-CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs `npm run build`
-and the eslint command on push/PR to `main`. Both must pass before a PR.
+CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs `npm run build`,
+`npm test`, and eslint on push/PR to `main`. All must pass before a PR.
 
-`main.js` is the bundled build output (committed for release). The build entry is
-`src/main.ts`; `obsidian`, `electron`, CodeMirror, and Node builtins are marked
-external in [`esbuild.config.mjs`](esbuild.config.mjs).
+Tests use Node's built-in `node:test` — **no test framework dependency**.
+[`esbuild.test.mjs`](esbuild.test.mjs) transpiles the `*.test.ts` files (obsidian
+and Node builtins left external) into `.test-build/`. Only pure modules with no
+Obsidian imports are unit-tested; keep such logic in its own file (e.g.
+[`src/data/bookLayout.ts`](src/data/bookLayout.ts) split out from
+`timelineFile.ts`) so it can be imported without pulling in `obsidian`.
 
 ## Testing changes in a real vault
 
 Copy or symlink `manifest.json`, `main.js`, and `styles.css` into
-`<vault>/.obsidian/plugins/scribe-of-lagash-visualization/`, then enable in
-Community Plugins and reload after each rebuild. The Bases view also requires the
-core **Bases** plugin enabled (Settings → Core plugins).
+`<vault>/.obsidian/plugins/scribe-of-lagash-visualization/`, enable in Community
+Plugins, and reload after each rebuild. The Bases view also needs the core
+**Bases** plugin enabled (Settings → Core plugins). This repo itself lives inside
+a test vault's plugin folder, so `npm run dev` already writes `main.js` in place.
 
 ## Frontmatter schema
 
-Only `scribe-visualization-type` is required; everything else is optional and
-just enables richer views.
+Only `scribe-visualization-type` is ever required, and only when you need to
+override title parsing. Everything else is optional.
 
 | Key | Type | Use |
 |---|---|---|
-| `scribe-visualization-type` | `"chapter"` \| `"scene"` | **required** — opts the note in |
-| `scribe-visualization-order` | number | manuscript order; sort key when no date |
-| `scribe-visualization-timelines` | string / list | which named timeline(s) the entry belongs to |
+| `scribe-visualization-type` | `"chapter"` \| `"scene"` | override title-based classification |
+| `scribe-visualization-order` | number | override the number parsed from the title |
+| `scribe-visualization-timelines` | string / list | seed timeline membership (companion file wins once the user drags) |
 | `scribe-visualization-date` | string (free-form) | in-story date shown on the card |
-| `scribe-visualization-characters` | string / list | shown in card meta |
-| `scribe-visualization-places` | string / list | shown in card meta |
-| `scribe-visualization-status` | string | e.g. `draft` (not yet surfaced in UI) |
-| `scribe-visualization-parent` | string | scene → chapter link (not yet surfaced in UI) |
+| `scribe-visualization-characters` | string / list | card meta; future matrix axis |
+| `scribe-visualization-places` | string / list | card meta; future matrix axis |
+| `scribe-visualization-status` | string | e.g. `draft` (not yet surfaced) |
+| `scribe-visualization-parent` | string | scene → chapter link (not yet surfaced) |
 
-`VaultIndex` coerces values leniently: comma-separated strings become arrays,
-empty/missing → `null` or `[]`.
-
-## Roadmap / current state
-
-- Version `0.1.0`, initial commit. `CHANGELOG.md` "Unreleased" section tracks work.
-- **Planned next:** a matrix view grouping chapters/scenes by character, place, or
-  situation — both as a standalone view and a Bases view. When building it, follow
-  the same pattern: standalone reads `VaultIndex`, Bases view renders Bases'
-  grouped result.
-- `status` and `parent` frontmatter are parsed but not yet displayed — wiring them
-  into the UI is fair game.
+`VaultIndex` coerces leniently: comma-separated strings → arrays, empty/missing →
+`null` or `[]`.
 
 ## Docs to keep in sync
 
-When you change behavior or the schema, update: `README.md`, `CHANGELOG.md`
-("Unreleased"), and `CONTRIBUTING.md` if conventions change.
+When behavior or schema changes, update: `README.md`, `CHANGELOG.md`
+("Unreleased"), [`docs/timeline-canvas-plan.md`](docs/timeline-canvas-plan.md),
+and `CONTRIBUTING.md` if conventions change.

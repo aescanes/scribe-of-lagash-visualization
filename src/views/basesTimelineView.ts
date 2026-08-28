@@ -2,6 +2,7 @@
 // Copyright (C) 2026 aescanes
 
 import { BasesEntry, BasesEntryGroup, BasesView, QueryController } from "obsidian";
+import { folderContext } from "../data/pathContext";
 import { FRONTMATTER_KEYS } from "../types";
 
 export const BASES_VIEW_TYPE_TIMELINE = "scribe-timeline";
@@ -75,7 +76,12 @@ export class ScribeTimelineBasesView extends BasesView {
 		const date = entry.getValue(PROP.date)?.toString();
 		if (date) card.createDiv({ cls: "scribe-timeline-date", text: date });
 
-		card.createDiv({ cls: "scribe-timeline-title", text: entry.file.basename });
+		const title = card.createDiv({ cls: "scribe-timeline-title", text: entry.file.basename });
+		// No book-folder concept here, so show the full parent-folder path.
+		const context = folderContext(entry.file.path);
+		if (context.length) {
+			title.createSpan({ cls: "scribe-timeline-context", text: ` (${context.join(" - ")})` });
+		}
 
 		const meta: string[] = [];
 		const characters = entry.getValue(PROP.characters)?.toString();
