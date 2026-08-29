@@ -59,23 +59,221 @@
 	background: var(--background-modifier-hover);
 }
 
-.scribe-timeline-date {
-	font-size: var(--font-ui-smaller);
-	color: var(--text-muted);
-	margin-bottom: 2px;
-}
-
 .scribe-timeline-title {
 	font-weight: 600;
 }
 
 .scribe-timeline-context {
 	font-weight: 400;
+	font-size: var(--font-ui-smaller);
 	color: var(--text-muted);
+}
+
+.scribe-timeline-date {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+	margin-top: 4px;
 }
 
 .scribe-timeline-meta {
 	font-size: var(--font-ui-smaller);
 	color: var(--text-muted);
 	margin-top: 4px;
+}
+
+/* ---- Timeline canvas ---- */
+
+.scribe-canvas-view {
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}
+
+.scribe-canvas-toolbar {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-2);
+	padding: var(--size-4-2) var(--size-4-3);
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.scribe-canvas-book-name {
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+}
+
+.scribe-canvas-notice {
+	padding: var(--size-4-6) var(--size-4-4);
+	color: var(--text-muted);
+	max-width: 40rem;
+}
+
+.scribe-canvas-notice button {
+	margin-top: var(--size-4-3);
+}
+
+.scribe-canvas-scroll {
+	flex: 1;
+	overflow: auto;
+}
+
+.scribe-canvas-board {
+	display: flex;
+	flex-direction: column;
+	width: max-content;
+	min-width: 100%;
+}
+
+.scribe-canvas-lane {
+	display: flex;
+	align-items: stretch;
+	min-height: 132px;
+	border-bottom: 1px solid var(--background-modifier-border);
+	background: color-mix(in srgb, var(--scribe-lane-color) 12%, var(--background-primary));
+}
+
+.scribe-canvas-lane-header {
+	position: sticky;
+	left: 0;
+	z-index: 3;
+	flex: 0 0 150px;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	padding: var(--size-4-2) var(--size-4-3);
+	background: var(--background-primary);
+	border-right: 1px solid var(--background-modifier-border);
+}
+
+.scribe-canvas-lane-name {
+	font-weight: 600;
+}
+
+.scribe-canvas-lane-count {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+}
+
+.scribe-canvas-lane-rail {
+	position: relative;
+	flex: 1 0 auto;
+	min-width: calc(var(--scribe-col-count) * var(--scribe-col-width));
+}
+
+.scribe-canvas-card {
+	display: flex;
+	gap: var(--size-2-2);
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+	padding: var(--size-4-2) var(--size-4-3);
+	cursor: pointer;
+}
+
+.scribe-canvas-card:hover {
+	background: var(--background-modifier-hover);
+}
+
+.scribe-canvas-lane-rail .scribe-canvas-card {
+	position: absolute;
+	top: 12px;
+	left: calc(var(--scribe-card-x) * var(--scribe-col-width) + 12px);
+	width: calc(var(--scribe-col-width) - 24px);
+}
+
+.scribe-canvas-card.is-linked {
+	outline: 2px solid var(--interactive-accent);
+	outline-offset: 1px;
+}
+
+.scribe-canvas-card-dot {
+	flex: none;
+	width: 8px;
+	height: 8px;
+	margin-top: 5px;
+	border-radius: 50%;
+	background: var(--interactive-accent);
+}
+
+.scribe-canvas-card--scene .scribe-canvas-card-dot {
+	background: var(--text-muted);
+}
+
+.scribe-canvas-card-body {
+	flex: 1;
+	min-width: 0;
+}
+
+.scribe-canvas-card-title {
+	font-weight: 600;
+	overflow-wrap: anywhere;
+}
+
+.scribe-canvas-card-context {
+	font-weight: 400;
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+	margin-top: 1px;
+}
+
+.scribe-canvas-card-date {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+	margin-top: 4px;
+}
+
+.scribe-canvas-card-meta {
+	margin-top: 4px;
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.scribe-canvas-card-badge {
+	display: inline-block;
+	margin-top: 6px;
+	padding: 0 4px;
+	border-radius: var(--radius-s);
+	background: var(--background-modifier-border);
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+}
+
+.scribe-canvas-unplaced {
+	border-top: 1px solid var(--background-modifier-border);
+	padding: var(--size-4-3);
+}
+
+.scribe-canvas-unplaced-label {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+	margin-bottom: var(--size-4-2);
+}
+
+.scribe-canvas-unplaced-rail {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--size-4-2);
+}
+
+.scribe-canvas-unplaced-rail .scribe-canvas-card {
+	width: calc(var(--scribe-col-width, 220px) - 24px);
+}
+
+.scribe-canvas-unrecognized {
+	padding: var(--size-4-3);
+	font-size: var(--font-ui-small);
+}
+
+.scribe-canvas-unrecognized summary {
+	cursor: pointer;
+	color: var(--text-muted);
+}
+
+.scribe-canvas-unrecognized ul {
+	margin: var(--size-4-2) 0 0;
+	padding-left: var(--size-4-4);
 }

@@ -21,9 +21,17 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Settings for book folders, companion-file name, and title language.
 - Per-book companion file (`Timelines.md`) read/write layer for the upcoming
   timeline canvas — the only file the plugin writes.
-- Timeline cards show the note's folder path as a breadcrumb next to the title,
-  e.g. "Scene 1 (Act I - Chapter I)". The scanned book folder is omitted; the
-  Bases view (which has no book folder) shows the full parent path.
+- Timeline cards show the note title on the first line and its folder path as a
+  muted breadcrumb below it (e.g. title "Scene 1", then "Act I - Chapter I").
+  The scanned book folder is omitted; the Bases view (which has no book folder)
+  shows the full parent path.
+- Timeline canvas view (ribbon icon / "Open timeline canvas" command): read-only
+  horizontal timeline lanes for a book, cards laid out by their saved column.
+  Multiple book folders get a switcher. A book with no companion file yet shows
+  a "Create timeline" button that starts one "Main plot" lane with every
+  chapter/scene on it. Notes in the book that aren't recognised as a chapter or
+  scene are listed separately. Dragging cards comes next.
+- The old list timeline is still available as "Open simple timeline".
 
 ### Changed
 
