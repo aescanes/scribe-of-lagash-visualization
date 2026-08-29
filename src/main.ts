@@ -6,6 +6,7 @@ import { VaultIndex } from "./data/vaultIndex";
 import { DEFAULT_SETTINGS, ScribeVisualizationSettings } from "./settings/settings";
 import { ScribeVisualizationSettingTab } from "./settings/settingsTab";
 import { TimelineView, VIEW_TYPE_TIMELINE } from "./views/timelineView";
+import { TimelineCanvasView, VIEW_TYPE_TIMELINE_CANVAS } from "./views/timelineCanvasView";
 import { BASES_VIEW_TYPE_TIMELINE, ScribeTimelineBasesView } from "./views/basesTimelineView";
 
 export default class ScribeVisualizationPlugin extends Plugin {
@@ -22,6 +23,7 @@ export default class ScribeVisualizationPlugin extends Plugin {
 		this.addChild(this.vaultIndex);
 
 		this.registerView(VIEW_TYPE_TIMELINE, (leaf) => new TimelineView(leaf, this));
+		this.registerView(VIEW_TYPE_TIMELINE_CANVAS, (leaf) => new TimelineCanvasView(leaf, this));
 
 		this.registerBasesView(BASES_VIEW_TYPE_TIMELINE, {
 			name: "Scribe timeline",
@@ -29,14 +31,20 @@ export default class ScribeVisualizationPlugin extends Plugin {
 			factory: (controller, containerEl) => new ScribeTimelineBasesView(controller, containerEl),
 		});
 
-		this.addRibbonIcon("chart-no-axes-gantt", "Open scribe timeline", () => {
-			this.activateTimelineView();
+		this.addRibbonIcon("chart-no-axes-gantt", "Open timeline canvas", () => {
+			this.activateView(VIEW_TYPE_TIMELINE_CANVAS);
+		});
+
+		this.addCommand({
+			id: "open-timeline-canvas",
+			name: "Open timeline canvas",
+			callback: () => this.activateView(VIEW_TYPE_TIMELINE_CANVAS),
 		});
 
 		this.addCommand({
 			id: "open-chapter-timeline",
-			name: "Open scribe timeline",
-			callback: () => this.activateTimelineView(),
+			name: "Open simple timeline",
+			callback: () => this.activateView(VIEW_TYPE_TIMELINE),
 		});
 
 		this.addSettingTab(new ScribeVisualizationSettingTab(this.app, this));
@@ -44,6 +52,7 @@ export default class ScribeVisualizationPlugin extends Plugin {
 
 	onunload(): void {
 		this.app.workspace.detachLeavesOfType(VIEW_TYPE_TIMELINE);
+		this.app.workspace.detachLeavesOfType(VIEW_TYPE_TIMELINE_CANVAS);
 	}
 
 	async loadSettings(): Promise<void> {
@@ -55,13 +64,13 @@ export default class ScribeVisualizationPlugin extends Plugin {
 		this.vaultIndex.rebuild();
 	}
 
-	private async activateTimelineView(): Promise<void> {
+	private async activateView(viewType: string): Promise<void> {
 		const { workspace } = this.app;
 
-		let leaf: WorkspaceLeaf | null = workspace.getLeavesOfType(VIEW_TYPE_TIMELINE)[0] ?? null;
+		let leaf: WorkspaceLeaf | null = workspace.getLeavesOfType(viewType)[0] ?? null;
 		if (!leaf) {
 			leaf = workspace.getLeaf("tab");
-			await leaf.setViewState({ type: VIEW_TYPE_TIMELINE, active: true });
+			await leaf.setViewState({ type: viewType, active: true });
 		}
 
 		workspace.revealLeaf(leaf);

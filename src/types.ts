@@ -48,6 +48,11 @@ export interface NovelEntry {
 	source: EntrySource;
 	title: string;
 	/**
+	 * The configured book folder this note was found under, or "" when no book
+	 * folder is configured and the whole vault is scanned.
+	 */
+	bookFolder: string;
+	/**
 	 * Folder segments between the scanned book folder and the note, e.g.
 	 * ["Act I", "Chapter I"]. Shown next to the title as a breadcrumb.
 	 */

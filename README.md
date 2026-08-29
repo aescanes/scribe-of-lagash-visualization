@@ -17,11 +17,14 @@ writes is a per-book companion file that stores your timeline layout.
 
 ## Current features
 
-- **Timeline view** — a standalone view (ribbon icon / command) that lists
-  every chapter/scene as a chronological timeline, optionally filtered to a
-  single named timeline (a novel can have more than one, e.g. "main plot" vs.
-  a character's backstory). No setup required beyond tagging your notes.
-- **Scribe timeline (Bases view)** — the same timeline rendering, registered
+- **Timeline canvas** — the main view (ribbon icon / "Open timeline canvas"
+  command). Horizontal, colored timeline lanes for a book, with each
+  chapter/scene as a card in manuscript order. Read-only for now — pick
+  "Create timeline" the first time to seed a "Main plot" lane; dragging cards
+  between lanes lands in the next release.
+- **Simple timeline** — a plain chronological list of every chapter/scene
+  ("Open simple timeline" command), optionally filtered to one named timeline.
+- **Scribe timeline (Bases view)** — the list rendering, registered
   as a view type inside Obsidian's core **Bases** plugin. Create a `.base`
   file, filter to `scribe-visualization-type = chapter` (or `scene`), optionally group by a
   property such as `scribe-visualization-timelines`, and pick "Scribe timeline" from the
@@ -29,8 +32,8 @@ writes is a per-book companion file that stores your timeline layout.
   Bases' own toolbar — this plugin just renders the result. Requires the core
   Bases plugin to be enabled (Settings → Core plugins).
 
-Planned next: a **draggable multi-timeline canvas** — colored timeline lanes you
-lay chapters and scenes across (and a chapter can sit on more than one). See
+Planned next: **dragging** cards between lanes and along the timeline, adding
+and recolouring lanes, and letting a chapter sit on more than one timeline. See
 [docs/timeline-canvas-plan.md](docs/timeline-canvas-plan.md). After that, a
 matrix view grouping chapters/scenes by character, place, or situation.
 
@@ -50,9 +53,9 @@ plugin scans that folder and classifies each note by its **title**:
 English titles only for now. Leave **Book folders** empty to fall back to
 scanning the whole vault for frontmatter-tagged notes instead.
 
-Sub-folders inside the book become a breadcrumb on each card: a note at
-`My Novel/Act I/Chapter I/Scene 1.md` (book folder `My Novel`) shows as
-**Scene 1 (Act I - Chapter I)**.
+Sub-folders inside the book become a breadcrumb under the title on each card: a
+note at `My Novel/Act I/Chapter I/Scene 1.md` (book folder `My Novel`) shows
+"Scene 1" with "Act I - Chapter I" on the line below.
 
 ### Overriding the title with frontmatter
 

@@ -1,6 +1,6 @@
 # Implementation plan — draggable multi-timeline canvas
 
-Status: **Phase 0 complete.** This is the build plan for the first visualization
+Status: **Phase 1 complete** (read-only canvas). This is the build plan for the first visualization
 described in [`../AGENTS.md`](../AGENTS.md). Each phase is independently
 shippable and leaves the plugin in a working state.
 
@@ -79,7 +79,20 @@ round-trips. No visible change yet.
 
 ---
 
-## Phase 1 — Canvas view, read-only
+## Phase 1 — Canvas view, read-only ✅ done
+
+Delivered in [`src/views/timelineCanvasView.ts`](../src/views/timelineCanvasView.ts)
+(the `ItemView`) and [`src/views/canvasModel.ts`](../src/views/canvasModel.ts)
+(pure `canvasModel` / `starterLayout` / `isLayoutEmpty`, unit-tested).
+`NovelEntry` gained `bookFolder`; `VaultIndex` gained `getBookFolders()` and
+`getEntriesForBook()`. Ribbon + "Open timeline canvas" command open it; the old
+list view stays as "Open simple timeline". Multi-membership renders as a copy
+per lane (linked on hover) rather than a vertical span — span/ghost handling is
+deferred to Phase 3. `styles.css` extended with `.scribe-canvas-*`.
+
+Original checklist:
+
+### 1a/1b
 
 **1a. View** — `src/views/timelineCanvasView.ts`, `ItemView`,
 `VIEW_TYPE_TIMELINE_CANVAS = "scribe-timeline-canvas"`

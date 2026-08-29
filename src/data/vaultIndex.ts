@@ -33,7 +33,7 @@ function toNumberOrNull(value: unknown): number | null {
 }
 
 /** Normalizes a folder path for prefix matching (no leading/trailing slash). */
-function normalizeFolder(folder: string): string {
+export function normalizeFolder(folder: string): string {
 	return folder.replace(/^\/+/, "").replace(/\/+$/, "");
 }
 
@@ -80,6 +80,17 @@ export class VaultIndex extends Component {
 
 	getEntries(): NovelEntry[] {
 		return this.entries;
+	}
+
+	/** Configured book folders, normalized, in the order the user listed them. */
+	getBookFolders(): string[] {
+		return this.getConfig().bookFolders.map(normalizeFolder).filter(Boolean);
+	}
+
+	/** Entries under one book folder (pass "" for the no-book-folder whole-vault case). */
+	getEntriesForBook(bookFolder: string): NovelEntry[] {
+		const target = normalizeFolder(bookFolder);
+		return this.entries.filter((e) => e.bookFolder === target);
 	}
 
 	getTimelineNames(): string[] {
@@ -142,6 +153,7 @@ export class VaultIndex extends Component {
 			type,
 			source,
 			title: file.basename,
+			bookFolder: baseFolder,
 			context: folderContext(file.path, baseFolder),
 			order: toNumberOrNull(frontmatter[FRONTMATTER_KEYS.order]) ?? parsedNumber,
 			timelines: toStringArray(frontmatter[FRONTMATTER_KEYS.timelines]),

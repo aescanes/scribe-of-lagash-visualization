@@ -73,15 +73,15 @@ export class ScribeTimelineBasesView extends BasesView {
 
 		const card = item.createDiv({ cls: "scribe-timeline-card" });
 
-		const date = entry.getValue(PROP.date)?.toString();
-		if (date) card.createDiv({ cls: "scribe-timeline-date", text: date });
-
-		const title = card.createDiv({ cls: "scribe-timeline-title", text: entry.file.basename });
+		card.createDiv({ cls: "scribe-timeline-title", text: entry.file.basename });
 		// No book-folder concept here, so show the full parent-folder path.
 		const context = folderContext(entry.file.path);
 		if (context.length) {
-			title.createSpan({ cls: "scribe-timeline-context", text: ` (${context.join(" - ")})` });
+			card.createDiv({ cls: "scribe-timeline-context", text: context.join(" - ") });
 		}
+
+		const date = entry.getValue(PROP.date)?.toString();
+		if (date) card.createDiv({ cls: "scribe-timeline-date", text: date });
 
 		const meta: string[] = [];
 		const characters = entry.getValue(PROP.characters)?.toString();

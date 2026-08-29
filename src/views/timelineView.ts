@@ -86,15 +86,15 @@ export class TimelineView extends ItemView {
 		item.createDiv({ cls: "scribe-timeline-dot" });
 
 		const card = item.createDiv({ cls: "scribe-timeline-card" });
+		card.createDiv({ cls: "scribe-timeline-title", text: entry.title });
+		if (entry.context.length) {
+			card.createDiv({
+				cls: "scribe-timeline-context",
+				text: entry.context.join(" - "),
+			});
+		}
 		if (entry.date) {
 			card.createDiv({ cls: "scribe-timeline-date", text: entry.date });
-		}
-		const title = card.createDiv({ cls: "scribe-timeline-title", text: entry.title });
-		if (entry.context.length) {
-			title.createSpan({
-				cls: "scribe-timeline-context",
-				text: ` (${entry.context.join(" - ")})`,
-			});
 		}
 
 		const meta: string[] = [];
