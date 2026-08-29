@@ -77,25 +77,36 @@ version — that happens once, at release time.
 
 1. Make sure `main` is up to date, the working tree is clean, and
    `npm run build && npm test && npx eslint src` all pass.
-2. Update the `## [Unreleased]` heading in `CHANGELOG.md` to the new version and
-   date, and commit that.
-3. Bump the version:
+2. In `CHANGELOG.md`, rename the `## [Unreleased]` heading to
+   `## [<version>] - <date>` (add a fresh empty `## [Unreleased]` above it if you
+   like), and commit that. The text under that heading becomes the git tag's
+   message, so write it for a reader of `git show <tag>`.
+3. Bump the version — use the wrapper script for your bump size:
 
    ```bash
-   npm version <patch|minor|major> --ignore-scripts=false   # or an explicit version, e.g. 0.2.0
+   npm run version-minor      # or version-patch / version-major
    ```
 
-   This bumps `package.json`, runs [`version-bump.mjs`](version-bump.mjs) to
-   sync `manifest.json` and add the `version → minAppVersion` entry to
-   `versions.json`, then makes one commit and a matching git tag.
+   Each wrapper runs `npm version <type> --ignore-scripts=false`. That:
 
-   > **Why the flag:** `.npmrc` sets `ignore-scripts=true`, which also
-   > suppresses the `version` lifecycle script — without
-   > `--ignore-scripts=false` the command bumps and tags but silently skips
-   > `version-bump.mjs`, leaving `manifest.json` behind and breaking the
-   > release. The flag is safe here: `npm version` installs nothing, so it only
-   > re-enables this project's own `version` script. `.npmrc` also sets
-   > `tag-version-prefix=""` so the tag is `1.2.3`, not `v1.2.3`.
+   - bumps `package.json` / `package-lock.json`;
+   - runs the `version` hook → [`version-bump.mjs`](version-bump.mjs) syncs
+     `manifest.json` and adds the `version → minAppVersion` line to
+     `versions.json`;
+   - makes one commit and an annotated tag `<version>` (no `v` prefix);
+   - runs the `postversion` hook → [`version-tag.mjs`](version-tag.mjs) rewrites
+     the tag's message to this version's `CHANGELOG.md` section.
+
+   > **Why `--ignore-scripts=false`:** `.npmrc` has `ignore-scripts=true`, which
+   > otherwise suppresses the `version` / `postversion` hooks — the bump would
+   > tag but skip `version-bump.mjs`, leaving `manifest.json` behind and failing
+   > the release. It's safe: `npm version` installs nothing, so the flag only
+   > re-enables this project's own hooks. The wrappers bake it in so you can't
+   > forget.
+
+   To set the tag message yourself instead of pulling it from the changelog,
+   append `-- -m "<message>"` (`%s` expands to the version), e.g.
+   `npm run version-patch -- -m "%s — hotfix for the canvas crash"`.
 
 4. Push the commit and the tag:
 

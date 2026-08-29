@@ -186,12 +186,16 @@ a test vault's plugin folder, so `npm run dev` already writes `main.js` in place
 
 ## Releasing
 
-Maintainer-only, from a clean `main`; feature PRs never bump the version. Roll
-the `CHANGELOG.md` "Unreleased" heading, then
-`npm version <patch|minor|major> --ignore-scripts=false` (the flag is required —
-`.npmrc`'s `ignore-scripts=true` otherwise skips `version-bump.mjs`, which syncs
-`manifest.json` / `versions.json`), then `git push --follow-tags`. The tag push
-runs [`release.yml`](.github/workflows/release.yml). Full steps in
+Maintainer-only, from a clean `main`; feature PRs never bump the version. Rename
+the `CHANGELOG.md` "Unreleased" heading to `## [<version>] - <date>` and commit,
+then `npm run version-minor` (or `-patch` / `-major`), then
+`git push --follow-tags`. Each wrapper is `npm version <type>
+--ignore-scripts=false` — the flag is required, since `.npmrc`'s
+`ignore-scripts=true` otherwise skips the `version` hook
+([`version-bump.mjs`](version-bump.mjs), syncs `manifest.json` / `versions.json`)
+and the `postversion` hook ([`version-tag.mjs`](version-tag.mjs), sets the tag
+message to that CHANGELOG section). The tag push runs
+[`release.yml`](.github/workflows/release.yml). Full steps in
 [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Frontmatter schema
