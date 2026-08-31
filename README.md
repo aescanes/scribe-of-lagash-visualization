@@ -40,7 +40,7 @@ matrix view grouping chapters/scenes by character, place, or situation.
 ## Setting up a book
 
 In the plugin settings, add the vault-relative folder that holds your book's
-notes under **Book folders** (one per line — you can track several books). The
+notes under **Book folder**. The
 plugin scans that folder and classifies each note by its **title**:
 
 | Title looks like | Recognised as |
