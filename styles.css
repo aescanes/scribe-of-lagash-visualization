@@ -121,6 +121,7 @@
 .scribe-canvas-scroll {
 	flex: 1;
 	overflow: auto;
+	background: var(--background-secondary);
 }
 
 .scribe-canvas-board {
@@ -133,9 +134,7 @@
 .scribe-canvas-lane {
 	display: flex;
 	align-items: stretch;
-	min-height: 132px;
-	border-bottom: 1px solid var(--background-modifier-border);
-	background: color-mix(in srgb, var(--scribe-lane-color) 12%, var(--background-primary));
+	min-height: 150px;
 }
 
 .scribe-canvas-lane-header {
@@ -145,10 +144,24 @@
 	flex: 0 0 184px;
 	display: flex;
 	flex-direction: column;
+	justify-content: center;
 	gap: var(--size-2-2);
 	padding: var(--size-4-2) var(--size-4-3);
-	background: var(--background-primary);
+	background: var(--background-secondary);
 	border-right: 1px solid var(--background-modifier-border);
+}
+
+/* A short segment of the lane's colour, joining the header to the rail line. */
+.scribe-canvas-lane-header::after {
+	content: "";
+	position: absolute;
+	right: -1px;
+	top: 50%;
+	width: 12px;
+	height: 4px;
+	transform: translateY(-50%);
+	border-radius: 2px;
+	background: var(--scribe-lane-color);
 }
 
 .scribe-canvas-lane-name-input {
@@ -205,26 +218,47 @@
 	min-width: calc(var(--scribe-col-count) * var(--scribe-col-width));
 }
 
+/* The timeline itself: a thin coloured line down the middle of the lane. */
+.scribe-canvas-lane-rail::before {
+	content: "";
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 50%;
+	height: 4px;
+	transform: translateY(-50%);
+	border-radius: 2px;
+	background: var(--scribe-lane-color);
+}
+
 .scribe-canvas-card {
 	display: flex;
 	gap: var(--size-2-2);
-	background: var(--background-secondary);
+	background: var(--background-primary);
 	border: 1px solid var(--background-modifier-border);
 	border-radius: var(--radius-m);
+	box-shadow: var(--shadow-s);
 	padding: var(--size-4-2) var(--size-4-3);
 	cursor: grab;
 	touch-action: none;
 }
 
 .scribe-canvas-card:hover {
-	background: var(--background-modifier-hover);
+	/* keep the card opaque (background stays var(--background-primary)); just lift it */
+	border-color: var(--background-modifier-border-hover);
+	box-shadow: var(--shadow-l);
+	/* above cards from neighbouring lanes it may overlap */
+	z-index: 5;
 }
 
+/* Cards sit centred on the lane line, straddling it. */
 .scribe-canvas-lane-rail .scribe-canvas-card {
 	position: absolute;
-	top: 12px;
+	top: 50%;
 	left: calc(var(--scribe-card-x) * var(--scribe-col-width) + 12px);
 	width: calc(var(--scribe-col-width) - 24px);
+	transform: translateY(-50%);
+	border-left: 3px solid var(--scribe-lane-color);
 }
 
 .scribe-canvas-card.is-linked {
@@ -233,15 +267,15 @@
 }
 
 .scribe-canvas-card.is-dragging {
-	/* position/left/top/width are set inline by the drag handler */
+	/* transform is set inline by the drag handler (translate from resting spot) */
 	z-index: var(--layer-dragged, 100);
 	pointer-events: none;
 	cursor: grabbing;
-	opacity: 0.92;
 	box-shadow: var(--shadow-l);
 }
 
 .scribe-canvas-lane.is-drop-target {
+	background: color-mix(in srgb, var(--scribe-lane-color) 8%, transparent);
 	box-shadow: inset 0 0 0 2px var(--interactive-accent);
 }
 

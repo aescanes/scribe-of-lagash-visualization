@@ -3,7 +3,7 @@
 
 import { App, PluginSettingTab, Setting } from "obsidian";
 import type ScribeVisualizationPlugin from "../main";
-import { availableLanguages } from "../data/titleParser";
+import { availableLanguages, languageLabel } from "../data/titleParser";
 
 export class ScribeVisualizationSettingTab extends PluginSettingTab {
 	plugin: ScribeVisualizationPlugin;
@@ -59,7 +59,7 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 			.setName("Title language")
 			.setDesc("Which language's patterns to use when reading chapter/scene numbers from note titles.")
 			.addDropdown((dropdown) => {
-				for (const lang of availableLanguages()) dropdown.addOption(lang, lang);
+				for (const lang of availableLanguages()) dropdown.addOption(lang, languageLabel(lang));
 				dropdown.setValue(this.plugin.settings.titleLanguage);
 				dropdown.onChange(async (value) => {
 					this.plugin.settings.titleLanguage = value;

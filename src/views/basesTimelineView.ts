@@ -18,6 +18,11 @@ const PROP = {
  * Renders a Base's query result (already filtered, sorted, and grouped by the
  * user via Bases' own toolbar) as a chapter/scene timeline. This intentionally
  * defers all filtering/sorting/grouping to Bases rather than reimplementing it.
+ *
+ * This view is deliberately independent of the timeline canvas: it reads note
+ * frontmatter through Bases and knows nothing about book folders, the
+ * `Timelines.md` companion file, or lanes. It stays a lightweight,
+ * property-driven list; the canvas is the layout-owning editable view.
  */
 export class ScribeTimelineBasesView extends BasesView {
 	type = BASES_VIEW_TYPE_TIMELINE;

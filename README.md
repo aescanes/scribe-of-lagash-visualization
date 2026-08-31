@@ -50,8 +50,10 @@ plugin scans that folder and classifies each note by its **title**:
 | `Prologue`, `Epilogue`, `Interlude` | chapter (no number) |
 | anything else | ignored |
 
-English titles only for now. Leave **Book folders** empty to fall back to
-scanning the whole vault for frontmatter-tagged notes instead.
+English and Spanish are supported (`Capítulo 3`, `Escena II`, `Prólogo`, …) —
+pick the language under **Title language** in settings. Leave **Book folder**
+empty to fall back to scanning the whole vault for frontmatter-tagged notes
+instead.
 
 Sub-folders inside the book become a breadcrumb under the title on each card: a
 note at `My Novel/Act I/Chapter I/Scene 1.md` (book folder `My Novel`) shows

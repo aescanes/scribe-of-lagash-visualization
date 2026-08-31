@@ -5,6 +5,24 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Spanish title parsing: notes named `Capítulo 3`, `Cap. 3`, `Escena II`,
+  `Prólogo`, `Epílogo`, … (accents optional) are recognised when "Título
+  language" is set to Español in settings. The dropdown now shows language
+  names rather than codes.
+
+### Changed
+
+- Timeline canvas restyled: each lane is now a thin coloured line with the
+  chapter/scene cards sitting on top of it, instead of a tinted band. Cards stay
+  opaque on hover (no more line showing through), a soft shadow and a coloured
+  left edge, and a dragged card now tracks the pointer exactly. Lane names,
+  colours, and reordering are unchanged.
+- The Bases view and the "Open simple timeline" list are documented as
+  deliberately independent of the timeline canvas — they read note frontmatter,
+  not the `Timelines.md` companion file, and neither is going away.
+
 ## [0.3.0](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.3.0) - 2026-08-31
 
 ### Changed

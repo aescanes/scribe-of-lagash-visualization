@@ -95,10 +95,11 @@ Rules:
 |---|---|---|
 | Discovery | ✅ Book-folder scan + title parsing, frontmatter `-type` as override (falls back to whole-vault frontmatter scan when no book folder is set) | — |
 | Layout data layer | ✅ `BookLayout` types + companion-file read/write + coercion, all tested | wire into a view |
-| Canvas view | ✅ Editable ([`timelineCanvasView.ts`](src/views/timelineCanvasView.ts)): drag cards to reorder / change lane, add / rename / recolour / reorder / delete lanes, auto-place new notes, `Mod+Z` undo, debounced save | Phase 3: one card on several lanes; Phase 4: react to external `Timelines.md` edits |
-| Simple list view | Still there as "Open simple timeline" ([`timelineView.ts`](src/views/timelineView.ts)), frontmatter-`timelines`-driven | keep as a light reading mode, or retire (Phase 4) |
+| Canvas view | ✅ Editable ([`timelineCanvasView.ts`](src/views/timelineCanvasView.ts)): drag cards to reorder / change lane, add / rename / recolour / reorder / delete lanes, auto-place new notes, `Mod+Z` undo, debounced save. One card = one lane | react to external `Timelines.md` edits while open |
+| Simple list view | ✅ Kept ("Open simple timeline", [`timelineView.ts`](src/views/timelineView.ts)) as the zero-setup reading view — no book folder or companion file needed | — |
 | Layout storage | ✅ Canvas writes the companion file on every edit (debounced 700 ms, flushed on close) | — |
-| Bases view | [`basesTimelineView.ts`](src/views/basesTimelineView.ts), renders Bases' grouped result | Keep; revisit once canvas lands |
+| Bases view | ✅ Kept, property-driven ([`basesTimelineView.ts`](src/views/basesTimelineView.ts)) — independent of the canvas / companion file | — |
+| i18n | ✅ Title parser ships `en` + `es`; language picked in settings | more languages as needed |
 | Matrix view | — | Group chapters/scenes by character / place / situation |
 
 Keep the existing views working until the canvas replaces them. The phased build
@@ -112,7 +113,7 @@ Entry point: [`src/main.ts`](src/main.ts) → `ScribeVisualizationPlugin`.
 |---|---|---|
 | Plugin shell | [`src/main.ts`](src/main.ts) | onload wiring: registers views, ribbon icon, command, settings tab; owns the index as a child `Component` |
 | Frontmatter + layout types | [`src/types.ts`](src/types.ts) | `FRONTMATTER_KEYS` (**single source of truth** for key names), `NovelEntry`, `ParsedTitle`, `TimelineDef`, `Placement`, `BookLayout` |
-| Title parser | [`src/data/titleParser.ts`](src/data/titleParser.ts) | Pure, no Obsidian imports: `parseTitle(basename, lang) → ParsedTitle \| null`; `romanToInt`; per-language pattern tables (`en` only so far) |
+| Title parser | [`src/data/titleParser.ts`](src/data/titleParser.ts) | Pure, no Obsidian imports: `parseTitle(basename, lang) → ParsedTitle \| null`; `romanToInt`; `availableLanguages` / `languageLabel`. `LANGUAGE_PATTERNS` has `en` + `es` — a new language is one entry there plus one in `LANGUAGE_LABELS` |
 | Vault / book index | [`src/data/vaultIndex.ts`](src/data/vaultIndex.ts) | Scans notes (restricted to configured book folders), classifies them (title parse, frontmatter `-type` overrides), keeps a live `NovelEntry[]`, notifies subscribers via `onChange`. First scan waits for `onLayoutReady` + `metadataCache` "resolved" (a cold start has no file list yet, and title-only notes never fire "changed"); also watches `vault` create/delete/rename, debounced. `rebuild()` is public — call it when settings change |
 | Book-layout helpers | [`src/data/bookLayout.ts`](src/data/bookLayout.ts) | Pure: `parseBookLayout` (coerce loose YAML), `timelineFilePath`, `emptyBookLayout` |
 | Path breadcrumb | [`src/data/pathContext.ts`](src/data/pathContext.ts) | Pure: `folderContext(filePath, baseFolder)` → the folder segments shown next to a card title (book folder and file name excluded) |
@@ -126,12 +127,18 @@ Entry point: [`src/main.ts`](src/main.ts) → `ScribeVisualizationPlugin`.
 
 ### Separation of responsibility
 
-- The **standalone views** (simple timeline, canvas) read from the index and own
-  their own layout logic.
-- The **Bases view** delegates *all* filtering, sorting, and grouping to Bases'
-  toolbar and only renders the result. Don't make it reimplement query logic.
-- **Title parsing** is a pure, isolated, per-language module — no Obsidian API
-  calls inside it, so it stays trivially testable.
+Three independent views, no shared rendering:
+
+- **Canvas** — the layout-owning editable view. Reads the index + the per-book
+  `Timelines.md`; all layout maths live in `canvasModel.ts`.
+- **Simple timeline** — a read-only chronological list from the index. Needs no
+  book folder or companion file, so it works before any setup.
+- **Bases view** — a read-only list driven by note frontmatter + Bases' own
+  filter/sort/group toolbar. Knows nothing about book folders, `Timelines.md`,
+  or lanes. Don't make it reimplement query logic.
+
+**Title parsing** is a pure, isolated, per-language module — no Obsidian API
+calls inside it, so it stays trivially testable.
 
 ## Conventions (enforced — don't violate)
 

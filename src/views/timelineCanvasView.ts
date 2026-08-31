@@ -42,9 +42,8 @@ interface DropTarget {
 interface DragState {
 	path: string;
 	el: HTMLElement;
-	width: number;
-	offsetX: number;
-	offsetY: number;
+	/** Resting vertical transform of the card ("-50%" for lane cards, "0px" for flow). */
+	restY: string;
 	startX: number;
 	startY: number;
 	started: boolean;
@@ -385,7 +384,7 @@ export class TimelineCanvasView extends ItemView {
 			if (this.drag) return;
 			void this.app.workspace.getLeaf(false).openFile(entry.file);
 		});
-		el.addEventListener("pointerdown", (e) => this.onCardPointerDown(e, entry.file.path, el));
+		el.addEventListener("pointerdown", (e) => this.onCardPointerDown(e, entry.file.path, el, flow));
 
 		const siblings = this.cardEls.get(entry.file.path) ?? [];
 		siblings.push(el);
@@ -428,17 +427,14 @@ export class TimelineCanvasView extends ItemView {
 
 	// ---- drag ----
 
-	private onCardPointerDown(evt: PointerEvent, path: string, el: HTMLElement): void {
+	private onCardPointerDown(evt: PointerEvent, path: string, el: HTMLElement, flow: boolean): void {
 		if (evt.button !== 0 || this.drag) return;
-		const rect = el.getBoundingClientRect();
 		const onMove = (e: PointerEvent) => this.onDragMove(e);
 		const onUp = (e: PointerEvent) => this.onDragUp(e);
 		this.drag = {
 			path,
 			el,
-			width: rect.width,
-			offsetX: evt.clientX - rect.left,
-			offsetY: evt.clientY - rect.top,
+			restY: flow ? "0px" : "-50%",
 			startX: evt.clientX,
 			startY: evt.clientY,
 			started: false,
@@ -455,22 +451,18 @@ export class TimelineCanvasView extends ItemView {
 		const drag = this.drag;
 		if (!drag) return;
 
+		const dx = e.clientX - drag.startX;
+		const dy = e.clientY - drag.startY;
+
 		if (!drag.started) {
-			if (
-				Math.abs(e.clientX - drag.startX) < DRAG_THRESHOLD &&
-				Math.abs(e.clientY - drag.startY) < DRAG_THRESHOLD
-			) {
-				return;
-			}
+			if (Math.abs(dx) < DRAG_THRESHOLD && Math.abs(dy) < DRAG_THRESHOLD) return;
 			drag.started = true;
 			drag.el.addClass("is-dragging");
-			// Inline so it always beats the ".scribe-canvas-lane-rail .scribe-canvas-card" rule.
-			drag.el.style.position = "fixed";
-			drag.el.style.width = `${drag.width}px`;
 		}
 
-		drag.el.style.left = `${e.clientX - drag.offsetX}px`;
-		drag.el.style.top = `${e.clientY - drag.offsetY}px`;
+		// Translate from the card's resting spot — immune to any transformed /
+		// `contain`ed ancestor that would offset a `position: fixed` element.
+		drag.el.style.transform = `translate(${dx}px, calc(${drag.restY} + ${dy}px))`;
 		this.showDrop(this.dropTarget(e.clientX, e.clientY));
 	}
 
