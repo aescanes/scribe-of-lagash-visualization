@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: MIT
 // Copyright (C) 2026 aescanes
 
 // `npm version` postversion hook. It creates the tag with just the bare version

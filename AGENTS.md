@@ -145,8 +145,9 @@ Entry point: [`src/main.ts`](src/main.ts) → `ScribeVisualizationPlugin`.
 - **Comments explain *why*, not *what*.** Match the existing sparse style.
 - **Keep diffs focused** — no drive-by formatting or refactoring mixed into a
   feature/fix.
-- Every source file starts with the SPDX `GPL-3.0-or-later` header + copyright.
-- **License is GPL-3.0-or-later** — don't add incompatibly licensed deps.
+- Every source file starts with the SPDX `MIT` header + copyright line.
+- **License is MIT** — don't add dependencies under a copyleft (GPL/LGPL/…) or
+  otherwise MIT-incompatible license.
 
 ### Supply-chain rules
 
@@ -186,15 +187,16 @@ a test vault's plugin folder, so `npm run dev` already writes `main.js` in place
 
 ## Releasing
 
-Maintainer-only, from a clean `main`; feature PRs never bump the version. Rename
-the `CHANGELOG.md` "Unreleased" heading to `## [<version>] - <date>` and commit,
-then `npm run version-minor` (or `-patch` / `-major`), then
-`git push --follow-tags`. Each wrapper is `npm version <type>
---ignore-scripts=false` — the flag is required, since `.npmrc`'s
-`ignore-scripts=true` otherwise skips the `version` hook
-([`version-bump.mjs`](version-bump.mjs), syncs `manifest.json` / `versions.json`)
-and the `postversion` hook ([`version-tag.mjs`](version-tag.mjs), sets the tag
-message to that CHANGELOG section). The tag push runs
+Maintainer-only, from a clean `main`; feature PRs never bump the version. Make
+sure `CHANGELOG.md`'s `## [Unreleased]` section is complete, then
+`npm run version-minor` (or `-patch` / `-major`), then `git push --follow-tags`.
+Each wrapper is `npm version <type> --ignore-scripts=false` — the flag is
+required, since `.npmrc`'s `ignore-scripts=true` otherwise skips the hooks. The
+`version` hook runs [`version-changelog.mjs`](version-changelog.mjs) (promotes
+`## [Unreleased]` to `## [<version>] - <date>`) then
+[`version-bump.mjs`](version-bump.mjs) (syncs `manifest.json` / `versions.json`);
+the `postversion` hook runs [`version-tag.mjs`](version-tag.mjs) (writes that
+CHANGELOG section into the tag message). The tag push runs
 [`release.yml`](.github/workflows/release.yml). Full steps in
 [CONTRIBUTING.md](CONTRIBUTING.md).
 

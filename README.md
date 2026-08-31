@@ -1,6 +1,6 @@
 # Scribe of Lagash: Visualization
 
-![License: GPL v3](https://img.shields.io/badge/license-GPLv3-blue.svg)
+![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Minimum Obsidian version](https://img.shields.io/badge/obsidian-%E2%89%A51.10.0-8b6cef)
 
 An [Obsidian](https://obsidian.md) plugin that helps novelists visualize their
@@ -112,6 +112,4 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 
 ## License
 
-[GPL-3.0-or-later](LICENSE). If you distribute a modified version of this
-plugin, your version must also be licensed under the GPL and its source made
-available — you can't fold this code into a closed-source plugin.
+[MIT](LICENSE).
