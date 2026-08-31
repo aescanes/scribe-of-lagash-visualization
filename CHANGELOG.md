@@ -5,6 +5,8 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-08-31
+
 ### Changed
 
 - **License changed from GPL-3.0-or-later to MIT** to align with the rest of the
