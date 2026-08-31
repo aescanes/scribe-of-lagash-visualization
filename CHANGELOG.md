@@ -27,6 +27,10 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - The "Open simple timeline" list view and the Bases timeline view. The line
   view (and a coming chronological view) replace them.
+- The `scribe-visualization-type`, `-order`, and `-timelines` frontmatter keys.
+  A note is a chapter/scene by its **title**, its order by **folder structure
+  then title number**, and its line membership by the Line file. `-date`,
+  `-characters`, `-places`, and `-status` stay.
 
 ## [0.3.0](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.3.0) - 2026-08-31
 

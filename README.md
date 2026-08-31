@@ -43,23 +43,20 @@ plugin scans that folder and classifies each note by its **title**:
 
 English and Spanish are supported (`Capítulo 3`, `Escena II`, `Prólogo`, …) —
 pick the language under **Title language** in settings. Leave **Book folder**
-empty to fall back to scanning the whole vault for frontmatter-tagged notes
-instead.
+empty to scan the whole vault instead.
 
-Sub-folders inside the book become a breadcrumb under the title on each card: a
-note at `My Novel/Act I/Chapter I/Scene 1.md` (book folder `My Novel`) shows
-"Scene 1" with "Act I - Chapter I" underneath.
+Manuscript order comes from the **folder structure** (all of `Act I/…` before
+`Act II/…`) and then the number in the title. Sub-folders also become a
+breadcrumb under the title on each card: a note at
+`My Novel/Act I/Chapter I/Scene 1.md` (book folder `My Novel`) shows "Scene 1"
+with "Act I - Chapter I" underneath.
 
-### Overriding the title with frontmatter
+### Optional frontmatter
 
-Everything below is optional. Use it to fix a mis-detected note or to add
-detail the cards can show:
+None of this is required — it only adds detail the cards can show:
 
 ```yaml
 ---
-scribe-visualization-type: scene            # force "chapter" or "scene", overrides the title
-scribe-visualization-order: 12              # override the number parsed from the title
-scribe-visualization-timelines: [main]      # seed line membership
 scribe-visualization-date: 1901-03-04       # in-story date, any free-form string
 scribe-visualization-characters: [Alice, Bob]
 scribe-visualization-places: [Riverside Tavern]

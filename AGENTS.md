@@ -47,6 +47,9 @@ folder-based approach before adding a new frontmatter field or setting.
    "not recognized" list.
 3. The scene → chapter relationship is **folder nesting only** — a scene note
    lives inside its chapter's folder. No `parent` frontmatter key.
+4. Manuscript order is **folder structure, then title number** — all of
+   `Act I/…` before `Act II/…`, and within a folder by the number in the title
+   (`byManuscriptOrder` in `vaultIndex.ts`). No `order` frontmatter key.
 
 ### The Line file (per book)
 
@@ -96,7 +99,7 @@ Entry point: [`src/main.ts`](src/main.ts) → `ScribeVisualizationPlugin`.
 | Plugin shell | [`src/main.ts`](src/main.ts) | onload wiring: registers the line view, ribbon icon, command, settings tab; owns the index as a child `Component` |
 | Types | [`src/types.ts`](src/types.ts) | `FRONTMATTER_KEYS` (**single source of truth** for key names), `NovelEntry`, `ParsedTitle`, `Line`, `Placement`, `LineLayout` |
 | Title parser | [`src/data/titleParser.ts`](src/data/titleParser.ts) | Pure, no Obsidian imports: `parseTitle(basename, lang)`; `romanToInt`; `availableLanguages` / `languageLabel`. `LANGUAGE_PATTERNS` has `en` + `es` — a new language is one entry there plus one in `LANGUAGE_LABELS` |
-| Vault / book index | [`src/data/vaultIndex.ts`](src/data/vaultIndex.ts) | Scans notes under configured book folders, classifies them (title parse, frontmatter `-type` override), keeps a live `NovelEntry[]`, notifies via `onChange`. First scan waits for `onLayoutReady` + `metadataCache` "resolved"; also watches `vault` create/delete/rename, debounced. `rebuild()` is public. `getBookFolders()` / `getEntriesForBook()` |
+| Vault / book index | [`src/data/vaultIndex.ts`](src/data/vaultIndex.ts) | Scans notes under configured book folders, keeps the title-parsed ones as a live `NovelEntry[]` sorted by `byManuscriptOrder` (folder, then title number), notifies via `onChange`. First scan waits for `onLayoutReady` + `metadataCache` "resolved"; also watches `vault` create/delete/rename, debounced. `rebuild()` is public. `getBookFolders()` / `getEntriesForBook()` |
 | Line-layout helpers | [`src/data/lineLayout.ts`](src/data/lineLayout.ts) | Pure: `parseLineLayout` (coerce loose YAML, reads the legacy `timelines` key), `lineFilePath`, `emptyLineLayout` |
 | Path breadcrumb | [`src/data/pathContext.ts`](src/data/pathContext.ts) | Pure: `folderContext(filePath, baseFolder)` → folder segments shown under a card title |
 | Line file I/O | [`src/data/lineFile.ts`](src/data/lineFile.ts) | `readLineLayout` / `writeLineLayout` for the per-book `Lines.md` (write preserves the note body via `processFrontMatter`, or creates the file); `migrateLegacyLineFile` renames a stray `Timelines.md` |
@@ -179,25 +182,20 @@ CHANGELOG section into the tag message). Full steps in
 
 ## Frontmatter schema
 
-Only `scribe-visualization-type` is ever required, and only when you need to
-override title parsing. Everything else is optional.
+Every key is **optional** — a note becomes a chapter/scene purely by its title,
+its order by folder structure + the title number, its line membership by the
+Line file. These keys just add detail the cards can show:
 
 | Key | Type | Use |
 |---|---|---|
-| `scribe-visualization-type` | `"chapter"` \| `"scene"` | override title-based classification |
-| `scribe-visualization-order` | number | override the number parsed from the title |
-| `scribe-visualization-timelines` | string / list | seed line membership (Line file wins once the user drags) |
 | `scribe-visualization-date` | string (free-form) | in-story date shown on the card; the coming chronological view will order by it |
 | `scribe-visualization-characters` | string / list | card meta; future matrix axis |
 | `scribe-visualization-places` | string / list | card meta; future matrix axis |
 | `scribe-visualization-status` | string | e.g. `draft` (not yet surfaced) |
 
-> `-type`, `-order`, and `-timelines` are slated for removal (the next commit):
-> classification and order come from the folder structure + title, and line
-> membership from the Line file. `-date` and the rest stay.
-
-`VaultIndex` coerces leniently: comma-separated strings → arrays, empty/missing →
-`null` or `[]`.
+There is no `-type`, `-order`, `-timelines`, or `-parent` key — deliberately.
+`VaultIndex` coerces leniently: comma-separated strings → arrays,
+empty/missing → `null` or `[]`.
 
 ## Docs to keep in sync
 

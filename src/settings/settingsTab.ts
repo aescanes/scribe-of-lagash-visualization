@@ -20,17 +20,15 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 		containerEl.createEl("h2", { text: "Scribe of Lagash: Visualization" });
 		containerEl.createEl("p", {
 			text:
-				"Point the plugin at the folder that holds each book's notes. Notes are " +
-				"classified as chapters or scenes by their title (e.g. \"Chapter 1\", \"Scene II\"). " +
-				"Add a scribe-visualization-type frontmatter field (\"chapter\" or \"scene\") to " +
-				"override the title for a specific note.",
+				"Point the plugin at the folder that holds a book's notes. Notes are " +
+				"classified as chapters or scenes by their title (e.g. \"Chapter 1\", \"Scene II\").",
 		});
 
 		new Setting(containerEl)
 			.setName("Book folder")
 			.setDesc(
-				"Add here the folder containing the book's chapter/scene notes. " +
-					"Leave empty to scan the whole vault for frontmatter-tagged notes instead.",
+				"The folder containing the book's chapter/scene notes. " +
+					"Leave empty to scan the whole vault.",
 			)
 			.addText((text) => {
 				text.setPlaceholder("Novels/The Silent City");

@@ -381,10 +381,6 @@ export class LineView extends ItemView {
 		if (entry.places.length > 0) meta.push(entry.places.join(", "));
 		if (meta.length > 0) body.createDiv({ cls: "scribe-canvas-card-meta", text: meta.join(" · ") });
 
-		if (entry.source === "frontmatter") {
-			body.createSpan({ cls: "scribe-canvas-card-badge", text: "frontmatter" });
-		}
-
 		el.addEventListener("click", () => {
 			if (this.drag) return;
 			void this.app.workspace.getLeaf(false).openFile(entry.file);

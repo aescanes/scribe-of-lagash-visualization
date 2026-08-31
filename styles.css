@@ -251,16 +251,6 @@
 	text-overflow: ellipsis;
 }
 
-.scribe-canvas-card-badge {
-	display: inline-block;
-	margin-top: 6px;
-	padding: 0 4px;
-	border-radius: var(--radius-s);
-	background: var(--background-modifier-border);
-	font-size: var(--font-ui-smaller);
-	color: var(--text-muted);
-}
-
 .scribe-canvas-unplaced {
 	border-top: 1px solid var(--background-modifier-border);
 	padding: var(--size-4-3);

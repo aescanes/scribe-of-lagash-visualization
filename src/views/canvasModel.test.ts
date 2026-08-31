@@ -24,12 +24,10 @@ function entry(path: string, over: Partial<NovelEntry> = {}): NovelEntry {
 	return {
 		file: { path, basename: path.split("/").pop()?.replace(/\.md$/, "") ?? path } as NovelEntry["file"],
 		type: "chapter",
-		source: "title",
 		title: path.split("/").pop()?.replace(/\.md$/, "") ?? path,
 		bookFolder: "Book",
 		context: [],
 		order: null,
-		timelines: [],
 		date: null,
 		characters: [],
 		places: [],

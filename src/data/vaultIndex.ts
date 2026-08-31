@@ -2,7 +2,8 @@
 // Copyright (C) 2026 aescanes
 
 import { App, Component, debounce, TFile } from "obsidian";
-import { EntrySource, EntryType, FRONTMATTER_KEYS, NovelEntry } from "../types";
+import { FRONTMATTER_KEYS, NovelEntry } from "../types";
+import { byManuscriptOrder } from "./manuscriptOrder";
 import { folderContext } from "./pathContext";
 import { DEFAULT_LANGUAGE, parseTitle } from "./titleParser";
 
@@ -26,25 +27,15 @@ function toStringOrNull(value: unknown): string | null {
 	return String(value);
 }
 
-function toNumberOrNull(value: unknown): number | null {
-	if (value === null || value === undefined || value === "") return null;
-	const n = Number(value);
-	return Number.isNaN(n) ? null : n;
-}
-
 /** Normalizes a folder path for prefix matching (no leading/trailing slash). */
 export function normalizeFolder(folder: string): string {
 	return folder.replace(/^\/+/, "").replace(/\/+$/, "");
 }
 
 /**
- * Scans the vault for chapter/scene notes and keeps a live, in-memory index of
- * them. A note qualifies if its title parses as a chapter/scene (see
- * titleParser) or if it declares a scribe-visualization-type frontmatter key,
- * which also overrides the title-based classification. When book folders are
- * configured, only notes inside them are considered.
- *
- * Views subscribe via `onChange` and re-render whenever the index is rebuilt.
+ * Scans configured book folders for notes whose title parses as a chapter or
+ * scene (see titleParser) and keeps a live, in-memory index of them. Views
+ * subscribe via `onChange` and re-render whenever the index is rebuilt.
  */
 export class VaultIndex extends Component {
 	private entries: NovelEntry[] = [];
@@ -108,47 +99,30 @@ export class VaultIndex extends Component {
 			if (entry) entries.push(entry);
 		}
 
-		entries.sort((a, b) => {
-			if (a.order !== null && b.order !== null) return a.order - b.order;
-			if (a.order !== null) return -1;
-			if (b.order !== null) return 1;
-			return a.title.localeCompare(b.title);
-		});
+		entries.sort((a, b) =>
+			byManuscriptOrder(
+				{ path: a.file.path, order: a.order, title: a.title },
+				{ path: b.file.path, order: b.order, title: b.title },
+			),
+		);
 
 		this.entries = entries;
 		for (const listener of this.listeners) listener();
 	}
 
 	private parseFile(file: TFile, language: string, baseFolder: string): NovelEntry | null {
+		const parsed = parseTitle(file.basename, language);
+		if (!parsed) return null;
+
 		const frontmatter = this.app.metadataCache.getFileCache(file)?.frontmatter ?? {};
-
-		let type: EntryType | null = null;
-		let source: EntrySource = "title";
-		let parsedNumber: number | null = null;
-
-		const rawType = frontmatter[FRONTMATTER_KEYS.type];
-		if (rawType === "chapter" || rawType === "scene") {
-			type = rawType;
-			source = "frontmatter";
-		} else {
-			const parsed = parseTitle(file.basename, language);
-			if (parsed) {
-				type = parsed.type;
-				parsedNumber = parsed.number;
-			}
-		}
-
-		if (!type) return null;
 
 		return {
 			file,
-			type,
-			source,
+			type: parsed.type,
 			title: file.basename,
 			bookFolder: baseFolder,
 			context: folderContext(file.path, baseFolder),
-			order: toNumberOrNull(frontmatter[FRONTMATTER_KEYS.order]) ?? parsedNumber,
-			timelines: toStringArray(frontmatter[FRONTMATTER_KEYS.timelines]),
+			order: parsed.number,
 			date: toStringOrNull(frontmatter[FRONTMATTER_KEYS.date]),
 			characters: toStringArray(frontmatter[FRONTMATTER_KEYS.characters]),
 			places: toStringArray(frontmatter[FRONTMATTER_KEYS.places]),

@@ -173,14 +173,12 @@ membership" prototype was built and dropped).
 
 ## Phase 3 — Integration & polish ✅ done
 
-- **Bases view** — stays property-driven. [`basesTimelineView.ts`](../src/views/basesTimelineView.ts)
-  reads note frontmatter and Bases' own filter/sort/group toolbar; it does not
-  touch the companion file and has no lanes. Documented as such in its file
-  header and `AGENTS.md`.
-- **Simple list view** — kept as the zero-setup "reading" view
-  ([`timelineView.ts`](../src/views/timelineView.ts), "Open simple timeline").
-  It needs no book folder and no companion file, so it stays useful even before
-  the canvas is set up. Not retired.
+- **Bases view & simple list view** — first kept, then (with the removal of the
+  frontmatter keys they depended on) **removed** in favour of the line view plus
+  the coming chronological view.
+- **Frontmatter keys** — `scribe-visualization-type` / `-order` / `-timelines`
+  removed. Chapter/scene comes from the title, order from folder structure +
+  title number (`byManuscriptOrder`), line membership from the Line file.
 - **i18n** — `titleParser.ts` now ships `en` and `es` pattern tables
   (`Capítulo` / `Cap.`, `Escena` / `Esc.`, `Prólogo` / `Epílogo` / …, accents
   optional). `languageLabel()` gives the settings dropdown friendly names
