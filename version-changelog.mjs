@@ -28,6 +28,6 @@ if (!text.includes(MARKER)) {
 }
 
 const date = new Date().toISOString().slice(0, 10);
-text = text.replace(MARKER, `${MARKER}\n\n## [${version}] - ${date}`);
+text = text.replace(MARKER, `${MARKER}\n\n## [${version}](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/${version}) - ${date}`);
 writeFileSync(FILE, text);
 console.log(`version-changelog: opened CHANGELOG.md section [${version}] - ${date}`);

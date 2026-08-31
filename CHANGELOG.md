@@ -5,14 +5,14 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-## [0.3.0] - 2026-08-31
+## [0.3.0](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.3.0) - 2026-08-31
 
 ### Changed
 
 - **License changed from GPL-3.0-or-later to MIT** to align with the rest of the
   Obsidian plugin ecosystem.
 
-## [0.2.0] - 2026-08-31
+## [0.2.0](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.2.0) - 2026-08-31
 
 ### Added
 
@@ -28,7 +28,7 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   relationship is now derived only from folder nesting (a scene note lives in
   its chapter's folder), keeping the schema and settings smaller.
 
-## [0.1.2] - 2026-08-29
+## [0.1.2](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.1.2) - 2026-08-29
 
 Re-release of 0.1.1 with the packaging fixed (see 0.1.1 below). No functional
 change over 0.1.1.
