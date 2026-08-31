@@ -1,18 +1,22 @@
-# Implementation plan — draggable multi-timeline canvas
+# Implementation plan — the line view
 
-Status: **Phase 3 complete** (integration & polish). This is the build plan for the first visualization
-described in [`../AGENTS.md`](../AGENTS.md). Each phase is independently
-shippable and leaves the plugin in a working state.
+Status: **Phase 3 complete** (integration & polish). This is the build plan for a
+book's default view, described in [`../AGENTS.md`](../AGENTS.md). Each phase is
+independently shippable and leaves the plugin in a working state.
+
+Terminology note: what earlier phases below call a "timeline canvas" with
+"lanes" is now the **line view** with **lines**. The rename landed in one
+mechanical commit after Phase 3; the phase write-ups keep their original wording
+as a historical record.
 
 ## Goal
 
-Replace the current simple list timeline with a canvas of horizontal, colored
-**timeline lanes**. Chapter / scene cards are discovered from a **Book folder**
-(by parsing note titles), laid out chronologically along each lane, each on one
-lane, and can be dragged between lanes and reordered. Layout persists to a
-per-book companion Markdown file.
+A book's default view: horizontal, coloured **lines**. Chapter / scene cards are
+discovered from a **book folder** (by parsing note titles), each placed on one
+line, and can be dragged between lines and reordered. The arrangement persists
+to a per-book **Line file** (`Lines.md`).
 
-(An earlier draft had a card living on multiple lanes at once; that was
+(An earlier draft had a card living on multiple lines at once; that was
 prototyped, disliked, and dropped — see the reverted "multi-timeline
 membership" idea below.)
 

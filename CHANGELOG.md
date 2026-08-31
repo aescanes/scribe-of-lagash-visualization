@@ -14,14 +14,19 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
-- Timeline canvas restyled: each lane is now a thin coloured line with the
-  chapter/scene cards sitting on top of it, instead of a tinted band. Cards stay
-  opaque on hover (no more line showing through), a soft shadow and a coloured
-  left edge, and a dragged card now tracks the pointer exactly. Lane names,
-  colours, and reordering are unchanged.
-- The Bases view and the "Open simple timeline" list are documented as
-  deliberately independent of the timeline canvas — they read note frontmatter,
-  not the `Timelines.md` companion file, and neither is going away.
+- **"Timeline" is now "line".** The horizontal tracks are *lines*, a book has a
+  *line view* (ribbon icon / "Open lines" command), and its layout is stored in
+  a **Line file** (`Lines.md`; an existing `Timelines.md` is renamed on first
+  open). Types, settings, and CSS classes renamed to match.
+- Line view restyled: each line is a thin coloured rule with the chapter/scene
+  cards sitting on top of it, instead of a tinted band. Cards stay opaque on
+  hover, have a soft shadow and a coloured left edge, and a dragged card now
+  tracks the pointer exactly.
+
+### Removed
+
+- The "Open simple timeline" list view and the Bases timeline view. The line
+  view (and a coming chronological view) replace them.
 
 ## [0.3.0](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.3.0) - 2026-08-31
 

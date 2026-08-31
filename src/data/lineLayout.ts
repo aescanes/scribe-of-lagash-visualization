@@ -1,30 +1,30 @@
 // SPDX-License-Identifier: MIT
 // Copyright (C) 2026 aescanes
 
-import { BookLayout, Placement, TimelineDef } from "../types";
+import { Line, LineLayout, Placement } from "../types";
 
 /**
- * Pure helpers for the per-book timeline layout: constructing it, coercing
+ * Pure helpers for the per-book line layout: constructing it, coercing
  * loosely-typed parsed YAML into a well-formed shape, and computing its
- * companion-file path. No Obsidian APIs — kept separate from timelineFile.ts
- * so it stays unit-testable.
+ * Line-file path. No Obsidian APIs — kept separate from lineFile.ts so it stays
+ * unit-testable.
  */
 
-export const DEFAULT_TIMELINE_FILE = "Timelines.md";
-export const DEFAULT_TIMELINE_COLOR = "#888888";
+export const DEFAULT_LINE_FILE = "Lines.md";
+export const DEFAULT_LINE_COLOR = "#888888";
 
-export function emptyBookLayout(): BookLayout {
-	return { timelines: [], placements: {} };
+export function emptyLineLayout(): LineLayout {
+	return { lines: [], placements: {} };
 }
 
 function trimSlashes(path: string): string {
 	return path.replace(/^\/+/, "").replace(/\/+$/, "");
 }
 
-/** Vault-relative path to a book's companion file. */
-export function timelineFilePath(bookFolder: string, fileName: string): string {
+/** Vault-relative path to a book's Line file. */
+export function lineFilePath(bookFolder: string, fileName: string): string {
 	const folder = trimSlashes(bookFolder);
-	const name = trimSlashes(fileName.trim()) || DEFAULT_TIMELINE_FILE;
+	const name = trimSlashes(fileName.trim()) || DEFAULT_LINE_FILE;
 	return folder ? `${folder}/${name}` : name;
 }
 
@@ -42,25 +42,27 @@ function asStringArray(value: unknown): string[] {
 	return value.map((v) => String(v)).filter(Boolean);
 }
 
-/** Coerces arbitrary parsed YAML into a well-formed BookLayout. */
-export function parseBookLayout(raw: unknown): BookLayout {
-	const layout = emptyBookLayout();
+/** Coerces arbitrary parsed YAML into a well-formed LineLayout. */
+export function parseLineLayout(raw: unknown): LineLayout {
+	const layout = emptyLineLayout();
 	if (!raw || typeof raw !== "object") return layout;
 	const obj = raw as Record<string, unknown>;
 
-	if (Array.isArray(obj.timelines)) {
-		obj.timelines.forEach((item, i) => {
+	// `timelines` is the pre-0.4 key name; still read it so old files load.
+	const rawLines = Array.isArray(obj.lines) ? obj.lines : obj.timelines;
+	if (Array.isArray(rawLines)) {
+		rawLines.forEach((item, i) => {
 			if (!item || typeof item !== "object") return;
 			const t = item as Record<string, unknown>;
 			const id = asString(t.id, "");
 			if (!id) return;
-			const def: TimelineDef = {
+			const line: Line = {
 				id,
 				name: asString(t.name, id),
-				color: asString(t.color, DEFAULT_TIMELINE_COLOR),
+				color: asString(t.color, DEFAULT_LINE_COLOR),
 				order: asNumber(t.order, i),
 			};
-			layout.timelines.push(def);
+			layout.lines.push(line);
 		});
 	}
 
@@ -69,7 +71,7 @@ export function parseBookLayout(raw: unknown): BookLayout {
 			if (!value || typeof value !== "object") continue;
 			const p = value as Record<string, unknown>;
 			const placement: Placement = {
-				timelines: asStringArray(p.timelines),
+				lines: asStringArray(Array.isArray(p.lines) ? p.lines : p.timelines),
 				x: asNumber(p.x, 0),
 			};
 			layout.placements[path] = placement;

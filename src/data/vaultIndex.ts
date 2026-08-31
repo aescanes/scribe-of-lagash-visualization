@@ -93,14 +93,6 @@ export class VaultIndex extends Component {
 		return this.entries.filter((e) => e.bookFolder === target);
 	}
 
-	getTimelineNames(): string[] {
-		const names = new Set<string>();
-		for (const entry of this.entries) {
-			for (const t of entry.timelines) names.add(t);
-		}
-		return Array.from(names).sort();
-	}
-
 	/** Rebuilds the index; safe to call from anywhere (e.g. when settings change). */
 	rebuild(): void {
 		const { bookFolders, titleLanguage } = this.getConfig();

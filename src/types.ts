@@ -64,30 +64,30 @@ export interface NovelEntry {
 	status: string | null;
 }
 
-/** One horizontal lane in the timeline canvas. */
-export interface TimelineDef {
+/** One horizontal line in the book's default view. */
+export interface Line {
 	id: string;
 	name: string;
 	/** Any CSS color string; chosen by the user. */
 	color: string;
-	/** Sort order of the lane, top to bottom. */
+	/** Sort order of the line, top to bottom. */
 	order: number;
 }
 
-/** Where a single note's card sits on the canvas. */
+/** Where a single note's card sits in the default view. */
 export interface Placement {
-	/** IDs of the timelines this card belongs to. */
-	timelines: string[];
-	/** Column index along the horizontal (manuscript / chronological) axis. */
+	/** IDs of the lines this card belongs to. */
+	lines: string[];
+	/** Column index along the horizontal (manuscript) axis. */
 	x: number;
 }
 
 /**
- * The full visualization layout for one book, persisted to the per-book
- * companion file (default "Timelines.md") inside the book folder. Keyed by
- * vault-relative note path.
+ * The book's default view — its lines and where each chapter/scene card sits on
+ * them. Persisted to the per-book "Line file" (default "Lines.md") inside the
+ * book folder. Keyed by vault-relative note path.
  */
-export interface BookLayout {
-	timelines: TimelineDef[];
+export interface LineLayout {
+	lines: Line[];
 	placements: Record<string, Placement>;
 }

@@ -20,7 +20,7 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 		containerEl.createEl("h2", { text: "Scribe of Lagash: Visualization" });
 		containerEl.createEl("p", {
 			text:
-				"Point the plugin at the folder that hold each book's notes. Notes are " +
+				"Point the plugin at the folder that holds each book's notes. Notes are " +
 				"classified as chapters or scenes by their title (e.g. \"Chapter 1\", \"Scene II\"). " +
 				"Add a scribe-visualization-type frontmatter field (\"chapter\" or \"scene\") to " +
 				"override the title for a specific note.",
@@ -45,12 +45,12 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName("Timeline file name")
-			.setDesc("Name of the companion file created inside each book folder to store the timeline layout.")
+			.setName("Line file name")
+			.setDesc("Name of the Line file created inside the book folder to store its default view.")
 			.addText((text) => {
-				text.setValue(this.plugin.settings.timelineFileName);
+				text.setValue(this.plugin.settings.lineFileName);
 				text.onChange(async (value) => {
-					this.plugin.settings.timelineFileName = value.trim() || "Timelines.md";
+					this.plugin.settings.lineFileName = value.trim() || "Lines.md";
 					await this.plugin.saveSettings();
 				});
 			});
@@ -63,24 +63,6 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 				dropdown.setValue(this.plugin.settings.titleLanguage);
 				dropdown.onChange(async (value) => {
 					this.plugin.settings.titleLanguage = value;
-					await this.plugin.saveSettings();
-				});
-			});
-
-		const timelineNames = this.plugin.vaultIndex.getTimelineNames();
-
-		new Setting(containerEl)
-			.setName("Default timeline")
-			.setDesc(
-				"Which scribe-visualization-timelines value to show when the Timeline view opens. " +
-					"Leave blank to show every entry regardless of timeline.",
-			)
-			.addDropdown((dropdown) => {
-				dropdown.addOption("", "All entries");
-				for (const name of timelineNames) dropdown.addOption(name, name);
-				dropdown.setValue(this.plugin.settings.defaultTimeline);
-				dropdown.onChange(async (value) => {
-					this.plugin.settings.defaultTimeline = value;
 					await this.plugin.saveSettings();
 				});
 			});

@@ -9,19 +9,15 @@ export interface ScribeVisualizationSettings {
 	 */
 	bookFolders: string[];
 
-	/** Name of the per-book companion file that stores the timeline layout. */
-	timelineFileName: string;
+	/** Name of the per-book Line file that stores the default view. */
+	lineFileName: string;
 
 	/** Language pattern table used to parse note titles. */
 	titleLanguage: string;
-
-	/** Timeline shown by default when the Timeline view opens; "" means "all entries". */
-	defaultTimeline: string;
 }
 
 export const DEFAULT_SETTINGS: ScribeVisualizationSettings = {
 	bookFolders: [],
-	timelineFileName: "Timelines.md",
+	lineFileName: "Lines.md",
 	titleLanguage: "en",
-	defaultTimeline: "",
 };
