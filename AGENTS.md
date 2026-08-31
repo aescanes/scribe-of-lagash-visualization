@@ -15,51 +15,52 @@ this plugin touches is namespaced `scribe-visualization-*` and centralized in
 Core principle: **the plugin does not own the user's prose.** Chapters and scenes
 are ordinary Markdown notes in the vault. The plugin discovers and reads them; it
 never rewrites their body. The only file the plugin writes is a per-book
-**companion file** that stores the visualization layout (see below).
+**Line file** that stores the book's default view.
 
-### The first visualization — a draggable multi-timeline canvas
+Standing preference (from the maintainer): **favour folder structure over
+frontmatter keys and settings, to keep the plugin simple.** Propose a
+folder-based approach before adding a new frontmatter field or setting.
 
-The headline feature is a **canvas view** (see the reference screenshot in the
-project discussion): horizontal, colored **timeline lanes** stacked vertically,
-with **chapter / scene cards** laid out left-to-right along each lane in
-chronological / manuscript order. The user can:
+### Views of a book
 
-- **drag a card horizontally** to reorder it within a timeline,
-- **drag a card vertically** to move it to another timeline, and
-- **place one card on more than one timeline** (a novel has multiple timelines —
-  e.g. "main line" vs. a character's backstory — and a chapter can sit on
-  several of them at once).
+- **Line view** — the default view, and everything built so far. Chapters/scenes
+  are discovered from a **book folder** by parsing note titles; the user creates
+  **lines** (horizontal coloured tracks) and drags each card onto a line. The
+  arrangement is saved in the Line file. `LineView`, `VIEW_TYPE_LINE_VIEW`,
+  ribbon icon / "Open lines" command.
+- **Chronological view** *(planned)* — orders the same chapters/scenes by their
+  `scribe-visualization-date`, and only works for notes that have that property.
+  Not built yet.
 
-Cards are discovered automatically from a **Book folder**, not hand-created.
+> The term is **line**, not "timeline". An earlier draft called these timelines
+> and also let one card sit on several at once — that multi-membership idea was
+> prototyped and dropped; **one card belongs to exactly one line.**
 
 ### How chapters and scenes are discovered
 
-1. The user points the plugin at one or more **Book folders** (a folder such as
-   `Book` or `Book/The Silent City`). The plugin scans that folder recursively.
-2. Each note is classified by **parsing its title** (file basename). English
-   first; patterns like `Chapter 1`, `Chapter I`, `Ch. 1`, `Scene 2`,
-   `Scene IV`, plus `Prologue` / `Epilogue` / `Interlude`. Roman numerals are
-   decoded to integers for ordering. Notes whose title matches nothing are left
-   unclassified (not shown, but surfaced in a "not recognized" affordance).
-3. **Frontmatter overrides title parsing.** If a note has
-   `scribe-visualization-type`, that wins over whatever the title says; likewise
-   `scribe-visualization-order` overrides the number parsed from the title. This
-   lets a user fix a mis-detected note without renaming it.
+1. The user points the plugin at a **book folder** (e.g. `Book` or
+   `Book/The Silent City`). The plugin scans it recursively.
+2. Each note is classified by **parsing its title** (file basename). `en` and
+   `es` pattern tables ship: `Chapter 1` / `Ch. 1` / `Scene IV` / `Prologue`,
+   `Capítulo 1` / `Cap. 1` / `Escena IV` / `Prólogo`, … Roman numerals are
+   decoded. Notes whose title matches nothing are surfaced in a
+   "not recognized" list.
+3. The scene → chapter relationship is **folder nesting only** — a scene note
+   lives inside its chapter's folder. No `parent` frontmatter key.
+4. Manuscript order is **folder structure, then title number** — all of
+   `Act I/…` before `Act II/…`, and within a folder by the number in the title
+   (`byManuscriptOrder` in `vaultIndex.ts`). No `order` frontmatter key.
 
-Title parsing is intentionally isolated (`src/data/titleParser.ts`, planned) so
-other languages — the screenshot shows Spanish "Escena" — can be added later as
-extra pattern tables.
+### The Line file (per book)
 
-### The companion file (per book)
-
-Timeline definitions and card placements live in **one Markdown file inside the
-Book folder** (default name `Timelines.md`, configurable). It is human-readable,
-diff-friendly, and travels with the book. Shape:
+Lines and card placements live in **one Markdown file inside the book folder**
+(default `Lines.md`, configurable). Human-readable, diff-friendly, travels with
+the book. Shape:
 
 ```yaml
 ---
-scribe-visualization: book
-timelines:
+scribe-visualization: lines
+lines:
   - id: main
     name: Main line
     color: "#e06c75"
@@ -70,39 +71,24 @@ timelines:
     order: 1
 placements:
   "Book/Chapter 1.md":
-    timelines: [main]
+    lines: [main]
     x: 0
   "Book/Chapter 2.md":
-    timelines: [main, backstory]
+    lines: [backstory]
     x: 1
 ---
 
-Free-text notes about the book's structure can go in the body.
+Free-text notes about the book can go in the body.
 ```
 
 Rules:
 
 - The plugin **only** writes this file (debounced, on drag/edit). It never edits
   chapter/scene note bodies.
-- A newly detected chapter/scene with no placement entry is auto-added to a
-  default lane so nothing silently disappears.
-- A placement pointing at a note that no longer exists is kept but shown as
-  "missing" rather than deleted, so a rename/move is recoverable.
-
-## Current implementation vs. target
-
-| Area | Built now | Target |
-|---|---|---|
-| Discovery | ✅ Book-folder scan + title parsing, frontmatter `-type` as override (falls back to whole-vault frontmatter scan when no book folder is set) | — |
-| Layout data layer | ✅ `BookLayout` types + companion-file read/write + coercion, all tested | wire into a view |
-| Canvas view | ✅ Editable ([`timelineCanvasView.ts`](src/views/timelineCanvasView.ts)): drag cards to reorder / change lane, add / rename / recolour / reorder / delete lanes, auto-place new notes, `Mod+Z` undo, debounced save | Phase 3: one card on several lanes; Phase 4: react to external `Timelines.md` edits |
-| Simple list view | Still there as "Open simple timeline" ([`timelineView.ts`](src/views/timelineView.ts)), frontmatter-`timelines`-driven | keep as a light reading mode, or retire (Phase 4) |
-| Layout storage | ✅ Canvas writes the companion file on every edit (debounced 700 ms, flushed on close) | — |
-| Bases view | [`basesTimelineView.ts`](src/views/basesTimelineView.ts), renders Bases' grouped result | Keep; revisit once canvas lands |
-| Matrix view | — | Group chapters/scenes by character / place / situation |
-
-Keep the existing views working until the canvas replaces them. The phased build
-plan is in [`docs/timeline-canvas-plan.md`](docs/timeline-canvas-plan.md).
+- A newly detected chapter/scene with no placement is auto-added to the topmost
+  line so nothing silently disappears.
+- A pre-0.4 `Timelines.md` is renamed to `Lines.md` on first open; the old
+  `timelines:` keys are still read.
 
 ## Architecture
 
@@ -110,35 +96,31 @@ Entry point: [`src/main.ts`](src/main.ts) → `ScribeVisualizationPlugin`.
 
 | Piece | File | Responsibility |
 |---|---|---|
-| Plugin shell | [`src/main.ts`](src/main.ts) | onload wiring: registers views, ribbon icon, command, settings tab; owns the index as a child `Component` |
-| Frontmatter + layout types | [`src/types.ts`](src/types.ts) | `FRONTMATTER_KEYS` (**single source of truth** for key names), `NovelEntry`, `ParsedTitle`, `TimelineDef`, `Placement`, `BookLayout` |
-| Title parser | [`src/data/titleParser.ts`](src/data/titleParser.ts) | Pure, no Obsidian imports: `parseTitle(basename, lang) → ParsedTitle \| null`; `romanToInt`; per-language pattern tables (`en` only so far) |
-| Vault / book index | [`src/data/vaultIndex.ts`](src/data/vaultIndex.ts) | Scans notes (restricted to configured book folders), classifies them (title parse, frontmatter `-type` overrides), keeps a live `NovelEntry[]`, notifies subscribers via `onChange`. First scan waits for `onLayoutReady` + `metadataCache` "resolved" (a cold start has no file list yet, and title-only notes never fire "changed"); also watches `vault` create/delete/rename, debounced. `rebuild()` is public — call it when settings change |
-| Book-layout helpers | [`src/data/bookLayout.ts`](src/data/bookLayout.ts) | Pure: `parseBookLayout` (coerce loose YAML), `timelineFilePath`, `emptyBookLayout` |
-| Path breadcrumb | [`src/data/pathContext.ts`](src/data/pathContext.ts) | Pure: `folderContext(filePath, baseFolder)` → the folder segments shown next to a card title (book folder and file name excluded) |
-| Companion file I/O | [`src/data/timelineFile.ts`](src/data/timelineFile.ts) | `readBookLayout` / `writeBookLayout` for the per-book `Timelines.md`; write preserves the note body (`processFrontMatter`) or creates the file |
-| Canvas render model | [`src/views/canvasModel.ts`](src/views/canvasModel.ts) | Pure, unit-tested: `canvasModel(entries, layout)` → lanes + cards + `unplaced`; every layout edit (`moveCard`, `reconcilePlacements`, `addLane` / `renameLane` / `recolorLane` / `moveLane` / `removeLane`, `cloneLayout`, `starterLayout`). **All layout maths live here, not in the view.** |
-| Canvas view | [`src/views/timelineCanvasView.ts`](src/views/timelineCanvasView.ts) | `ItemView` (`VIEW_TYPE_TIMELINE_CANVAS`). DOM + pointer-drag only: renders from `canvasModel`, calls the pure ops via `mutate()` (push undo snapshot → apply → debounced save → re-render). In-memory `layout` is authoritative while open; file re-read only on open / book switch |
-| Simple timeline | [`src/views/timelineView.ts`](src/views/timelineView.ts) | Older `ItemView` (`VIEW_TYPE_TIMELINE`), "Open simple timeline"; frontmatter-`timelines`-driven |
-| Bases timeline | [`src/views/basesTimelineView.ts`](src/views/basesTimelineView.ts) | `BasesView` registered into Obsidian's core **Bases** plugin. Renders `this.data.groupedData` as-is — Bases owns all filter/sort/group |
-| Settings | [`src/settings/`](src/settings/) | Book folder(s), companion-file name, default timeline |
-| Styles | [`styles.css`](styles.css) | Obsidian CSS variables only (`var(--...)`) — no hardcoded colors except user-chosen timeline colors from the companion file |
+| Plugin shell | [`src/main.ts`](src/main.ts) | onload wiring: registers the line view, ribbon icon, command, settings tab; owns the index as a child `Component` |
+| Types | [`src/types.ts`](src/types.ts) | `FRONTMATTER_KEYS` (**single source of truth** for key names), `NovelEntry`, `ParsedTitle`, `Line`, `Placement`, `LineLayout` |
+| Title parser | [`src/data/titleParser.ts`](src/data/titleParser.ts) | Pure, no Obsidian imports: `parseTitle(basename, lang)`; `romanToInt`; `availableLanguages` / `languageLabel`. `LANGUAGE_PATTERNS` has `en` + `es` — a new language is one entry there plus one in `LANGUAGE_LABELS` |
+| Vault / book index | [`src/data/vaultIndex.ts`](src/data/vaultIndex.ts) | Scans notes under configured book folders, keeps the title-parsed ones as a live `NovelEntry[]` sorted by `byManuscriptOrder` (folder, then title number), notifies via `onChange`. First scan waits for `onLayoutReady` + `metadataCache` "resolved"; also watches `vault` create/delete/rename, debounced. `rebuild()` is public. `getBookFolders()` / `getEntriesForBook()` |
+| Line-layout helpers | [`src/data/lineLayout.ts`](src/data/lineLayout.ts) | Pure: `parseLineLayout` (coerce loose YAML, reads the legacy `timelines` key), `lineFilePath`, `emptyLineLayout` |
+| Path breadcrumb | [`src/data/pathContext.ts`](src/data/pathContext.ts) | Pure: `folderContext(filePath, baseFolder)` → folder segments shown under a card title |
+| Line file I/O | [`src/data/lineFile.ts`](src/data/lineFile.ts) | `readLineLayout` / `writeLineLayout` for the per-book `Lines.md` (write preserves the note body via `processFrontMatter`, or creates the file); `migrateLegacyLineFile` renames a stray `Timelines.md` |
+| Line render model | [`src/views/canvasModel.ts`](src/views/canvasModel.ts) | Pure, unit-tested: `canvasModel(entries, layout)` → lines + cards + `unplaced`; every layout edit (`moveCard`, `reconcilePlacements`, `addLine` / `renameLine` / `recolorLine` / `moveLine` / `removeLine`, `cloneLayout`, `starterLayout`). **All layout maths live here, not in the view.** |
+| Line view | [`src/views/lineView.ts`](src/views/lineView.ts) | `ItemView` (`VIEW_TYPE_LINE_VIEW`). DOM + pointer-drag only: renders from `canvasModel`, calls the pure ops via `mutate()` (push undo snapshot → apply → debounced save → re-render). In-memory `layout` is authoritative while open; file re-read only on open / book switch |
+| Settings | [`src/settings/`](src/settings/) | Book folder, Line-file name, title language |
+| Styles | [`styles.css`](styles.css) | Obsidian CSS variables only (`var(--...)`) — no hardcoded colours except user-chosen line colours from the Line file. Canvas classes are `.scribe-canvas-*`; per-line colour is `--scribe-line-color` |
 
 ### Separation of responsibility
 
-- The **standalone views** (simple timeline, canvas) read from the index and own
-  their own layout logic.
-- The **Bases view** delegates *all* filtering, sorting, and grouping to Bases'
-  toolbar and only renders the result. Don't make it reimplement query logic.
+- **The view is DOM only.** Every layout mutation is a pure function in
+  `canvasModel.ts`, unit-tested. The view calls them through `mutate()`.
 - **Title parsing** is a pure, isolated, per-language module — no Obsidian API
-  calls inside it, so it stays trivially testable.
+  calls — so it stays trivially testable. A card's `x` is one shared column
+  index (the manuscript axis).
 
 ## Conventions (enforced — don't violate)
 
 - **Never hardcode a frontmatter key string literal.** Reference
-  `FRONTMATTER_KEYS` from [`src/types.ts`](src/types.ts). New field → add it there
-  first.
-- **The plugin writes only the companion file.** Never write to a chapter/scene
+  `FRONTMATTER_KEYS` from [`src/types.ts`](src/types.ts).
+- **The plugin writes only the Line file.** Never write to a chapter/scene
   note's body or frontmatter unless a task explicitly calls for it and the user
   has agreed.
 - **TypeScript with `strictNullChecks`.** Avoid `any` where a real type exists.
@@ -174,16 +156,15 @@ Tests use Node's built-in `node:test` — **no test framework dependency**.
 [`esbuild.test.mjs`](esbuild.test.mjs) transpiles the `*.test.ts` files (obsidian
 and Node builtins left external) into `.test-build/`. Only pure modules with no
 Obsidian imports are unit-tested; keep such logic in its own file (e.g.
-[`src/data/bookLayout.ts`](src/data/bookLayout.ts) split out from
-`timelineFile.ts`) so it can be imported without pulling in `obsidian`.
+[`src/data/lineLayout.ts`](src/data/lineLayout.ts) split out from `lineFile.ts`)
+so it can be imported without pulling in `obsidian`.
 
 ## Testing changes in a real vault
 
 Copy or symlink `manifest.json`, `main.js`, and `styles.css` into
 `<vault>/.obsidian/plugins/scribe-of-lagash-visualization/`, enable in Community
-Plugins, and reload after each rebuild. The Bases view also needs the core
-**Bases** plugin enabled (Settings → Core plugins). This repo itself lives inside
-a test vault's plugin folder, so `npm run dev` already writes `main.js` in place.
+Plugins, and reload after each rebuild. This repo itself lives inside a test
+vault's plugin folder, so `npm run dev` already writes `main.js` in place.
 
 ## Releasing
 
@@ -196,34 +177,28 @@ required, since `.npmrc`'s `ignore-scripts=true` otherwise skips the hooks. The
 `## [Unreleased]` to `## [<version>] - <date>`) then
 [`version-bump.mjs`](version-bump.mjs) (syncs `manifest.json` / `versions.json`);
 the `postversion` hook runs [`version-tag.mjs`](version-tag.mjs) (writes that
-CHANGELOG section into the tag message). The tag push runs
-[`release.yml`](.github/workflows/release.yml). Full steps in
+CHANGELOG section into the tag message). Full steps in
 [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Frontmatter schema
 
-Only `scribe-visualization-type` is ever required, and only when you need to
-override title parsing. Everything else is optional.
+Every key is **optional** — a note becomes a chapter/scene purely by its title,
+its order by folder structure + the title number, its line membership by the
+Line file. These keys just add detail the cards can show:
 
 | Key | Type | Use |
 |---|---|---|
-| `scribe-visualization-type` | `"chapter"` \| `"scene"` | override title-based classification |
-| `scribe-visualization-order` | number | override the number parsed from the title |
-| `scribe-visualization-timelines` | string / list | seed timeline membership (companion file wins once the user drags) |
-| `scribe-visualization-date` | string (free-form) | in-story date shown on the card |
+| `scribe-visualization-date` | string (free-form) | in-story date shown on the card; the coming chronological view will order by it |
 | `scribe-visualization-characters` | string / list | card meta; future matrix axis |
 | `scribe-visualization-places` | string / list | card meta; future matrix axis |
 | `scribe-visualization-status` | string | e.g. `draft` (not yet surfaced) |
 
-`VaultIndex` coerces leniently: comma-separated strings → arrays, empty/missing →
-`null` or `[]`.
-
-The scene → chapter relationship is expressed **only by folder nesting** (a
-scene note lives in its chapter's folder) — there is no `parent` frontmatter
-key, deliberately, to keep the schema and settings small.
+There is no `-type`, `-order`, `-timelines`, or `-parent` key — deliberately.
+`VaultIndex` coerces leniently: comma-separated strings → arrays,
+empty/missing → `null` or `[]`.
 
 ## Docs to keep in sync
 
 When behavior or schema changes, update: `README.md`, `CHANGELOG.md`
-("Unreleased"), [`docs/timeline-canvas-plan.md`](docs/timeline-canvas-plan.md),
-and `CONTRIBUTING.md` if conventions change.
+("Unreleased"), [`docs/line-view-plan.md`](docs/line-view-plan.md), and
+`CONTRIBUTING.md` if conventions change.

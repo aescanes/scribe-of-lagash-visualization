@@ -5,9 +5,7 @@ import { Plugin, WorkspaceLeaf } from "obsidian";
 import { VaultIndex } from "./data/vaultIndex";
 import { DEFAULT_SETTINGS, ScribeVisualizationSettings } from "./settings/settings";
 import { ScribeVisualizationSettingTab } from "./settings/settingsTab";
-import { TimelineView, VIEW_TYPE_TIMELINE } from "./views/timelineView";
-import { TimelineCanvasView, VIEW_TYPE_TIMELINE_CANVAS } from "./views/timelineCanvasView";
-import { BASES_VIEW_TYPE_TIMELINE, ScribeTimelineBasesView } from "./views/basesTimelineView";
+import { LineView, VIEW_TYPE_LINE_VIEW } from "./views/lineView";
 
 export default class ScribeVisualizationPlugin extends Plugin {
 	settings: ScribeVisualizationSettings;
@@ -22,37 +20,23 @@ export default class ScribeVisualizationPlugin extends Plugin {
 		}));
 		this.addChild(this.vaultIndex);
 
-		this.registerView(VIEW_TYPE_TIMELINE, (leaf) => new TimelineView(leaf, this));
-		this.registerView(VIEW_TYPE_TIMELINE_CANVAS, (leaf) => new TimelineCanvasView(leaf, this));
+		this.registerView(VIEW_TYPE_LINE_VIEW, (leaf) => new LineView(leaf, this));
 
-		this.registerBasesView(BASES_VIEW_TYPE_TIMELINE, {
-			name: "Scribe timeline",
-			icon: "chart-no-axes-gantt",
-			factory: (controller, containerEl) => new ScribeTimelineBasesView(controller, containerEl),
-		});
-
-		this.addRibbonIcon("chart-no-axes-gantt", "Open timeline canvas", () => {
-			this.activateView(VIEW_TYPE_TIMELINE_CANVAS);
+		this.addRibbonIcon("chart-no-axes-gantt", "Open lines", () => {
+			this.activateView(VIEW_TYPE_LINE_VIEW);
 		});
 
 		this.addCommand({
-			id: "open-timeline-canvas",
-			name: "Open timeline canvas",
-			callback: () => this.activateView(VIEW_TYPE_TIMELINE_CANVAS),
-		});
-
-		this.addCommand({
-			id: "open-chapter-timeline",
-			name: "Open simple timeline",
-			callback: () => this.activateView(VIEW_TYPE_TIMELINE),
+			id: "open-lines",
+			name: "Open lines",
+			callback: () => this.activateView(VIEW_TYPE_LINE_VIEW),
 		});
 
 		this.addSettingTab(new ScribeVisualizationSettingTab(this.app, this));
 	}
 
 	onunload(): void {
-		this.app.workspace.detachLeavesOfType(VIEW_TYPE_TIMELINE);
-		this.app.workspace.detachLeavesOfType(VIEW_TYPE_TIMELINE_CANVAS);
+		this.app.workspace.detachLeavesOfType(VIEW_TYPE_LINE_VIEW);
 	}
 
 	async loadSettings(): Promise<void> {

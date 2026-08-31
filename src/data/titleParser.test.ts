@@ -4,7 +4,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { parseTitle, romanToInt } from "./titleParser";
+import { availableLanguages, languageLabel, parseTitle, romanToInt } from "./titleParser";
 
 test("romanToInt decodes well-formed numerals", () => {
 	assert.equal(romanToInt("I"), 1);
@@ -45,4 +45,24 @@ test("parseTitle returns null for unrelated titles", () => {
 
 test("parseTitle falls back to the default language for unknown languages", () => {
 	assert.deepEqual(parseTitle("Chapter 3", "xx"), { type: "chapter", number: 3, label: "Chapter 3" });
+});
+
+test("parseTitle recognises Spanish chapter/scene titles", () => {
+	assert.deepEqual(parseTitle("Capítulo 3", "es"), { type: "chapter", number: 3, label: "Capítulo 3" });
+	assert.deepEqual(parseTitle("Capitulo 5", "es"), { type: "chapter", number: 5, label: "Capítulo 5" });
+	assert.deepEqual(parseTitle("Cap. 12 — La caída", "es"), { type: "chapter", number: 12, label: "Capítulo 12" });
+	assert.deepEqual(parseTitle("Escena II", "es"), { type: "scene", number: 2, label: "Escena 2" });
+	assert.deepEqual(parseTitle("Prólogo", "es"), { type: "chapter", number: null, label: "Prólogo" });
+	assert.deepEqual(parseTitle("EPILOGO", "es"), { type: "chapter", number: null, label: "Epilogo" });
+});
+
+test("parseTitle language tables do not bleed into each other", () => {
+	assert.equal(parseTitle("Capítulo 3", "en"), null);
+	assert.equal(parseTitle("Chapter 3", "es"), null);
+});
+
+test("availableLanguages / languageLabel", () => {
+	assert.deepEqual(availableLanguages().sort(), ["en", "es"]);
+	assert.equal(languageLabel("es"), "Español");
+	assert.equal(languageLabel("xx"), "xx");
 });

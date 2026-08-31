@@ -8,8 +8,8 @@ import type { EntryType, ParsedTitle } from "../types";
  * APIs — so it stays trivially testable and so more languages can be added as
  * extra pattern tables without touching the scanning code.
  *
- * Only English ships today. The screenshot-driven design uses Spanish
- * ("Capítulo", "Escena"); adding it means one more entry in LANGUAGE_PATTERNS.
+ * English and Spanish ship today. A new language is one more entry in
+ * LANGUAGE_PATTERNS plus a label in LANGUAGE_LABELS — nothing else changes.
  */
 
 interface NumberedPattern {
@@ -50,12 +50,42 @@ const LANGUAGE_PATTERNS: Record<string, PatternTable> = {
 			{ type: "chapter", regex: /^\s*(prologue|epilogue|interlude|foreword|afterword|preface)\b/i },
 		],
 	},
+	es: {
+		numbered: [
+			{
+				type: "chapter",
+				unit: "Capítulo",
+				regex: new RegExp(`^\\s*(?:cap[íi]tulo|cap)\\.?\\s+${NUMBER_TOKEN}\\b`, "i"),
+			},
+			{
+				type: "scene",
+				unit: "Escena",
+				regex: new RegExp(`^\\s*(?:escena|esc)\\.?\\s+${NUMBER_TOKEN}\\b`, "i"),
+			},
+		],
+		standalone: [
+			{
+				type: "chapter",
+				regex: /^\s*(pr[óo]logo|ep[íi]logo|interludio|prefacio|ep[íi]grafe)\b/i,
+			},
+		],
+	},
+};
+
+const LANGUAGE_LABELS: Record<string, string> = {
+	en: "English",
+	es: "Español",
 };
 
 export const DEFAULT_LANGUAGE = "en";
 
 export function availableLanguages(): string[] {
 	return Object.keys(LANGUAGE_PATTERNS);
+}
+
+/** Human-readable name for a language code, for the settings dropdown. */
+export function languageLabel(code: string): string {
+	return LANGUAGE_LABELS[code] ?? code;
 }
 
 const CANONICAL_ROMAN = /^M{0,3}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$/i;

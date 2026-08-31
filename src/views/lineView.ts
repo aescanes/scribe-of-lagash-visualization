@@ -3,38 +3,43 @@
 
 import { debounce, ItemView, normalizePath, Scope, TFile, WorkspaceLeaf } from "obsidian";
 import type ScribeVisualizationPlugin from "../main";
-import { emptyBookLayout, timelineFilePath } from "../data/bookLayout";
-import { readBookLayout, writeBookLayout } from "../data/timelineFile";
-import { BookLayout, NovelEntry } from "../types";
 import {
-	addLane,
+	emptyLineLayout,
+	lineFilePath,
+	migrateLegacyLineFile,
+	readLineLayout,
+	writeLineLayout,
+} from "../data/lineFile";
+import { LineLayout, NovelEntry } from "../types";
+import {
+	addLine,
 	canvasModel,
 	CanvasCard,
 	cloneLayout,
-	defaultLaneId,
+	defaultLineId,
 	isLayoutEmpty,
-	laneOrderFromModel,
+	lineOrderFromModel,
 	moveCard,
-	moveLane,
-	recolorLane,
+	moveLine,
+	recolorLine,
 	reconcilePlacements,
-	removeLane,
-	renameLane,
+	removeLine,
+	renameLine,
 	starterLayout,
 } from "./canvasModel";
 
-export const VIEW_TYPE_TIMELINE_CANVAS = "scribe-timeline-canvas";
+export const VIEW_TYPE_LINE_VIEW = "scribe-line-view";
 
 const COLUMN_WIDTH = 220;
 const DRAG_THRESHOLD = 5;
 const UNDO_LIMIT = 50;
 const SAVE_DEBOUNCE_MS = 700;
 
-/** Follows the theme accent until the user recolors the lane. */
-const STARTER_LANE_COLOR = "var(--interactive-accent)";
+/** Follows the theme accent until the user recolors the line. */
+const STARTER_LINE_COLOR = "var(--interactive-accent)";
 
 interface DropTarget {
-	laneId: string;
+	lineId: string;
 	index: number;
 	rail: HTMLElement;
 }
@@ -42,9 +47,8 @@ interface DropTarget {
 interface DragState {
 	path: string;
 	el: HTMLElement;
-	width: number;
-	offsetX: number;
-	offsetY: number;
+	/** Resting vertical transform of the card ("-50%" for line cards, "0px" for flow). */
+	restY: string;
 	startX: number;
 	startY: number;
 	started: boolean;
@@ -54,21 +58,21 @@ interface DragState {
 }
 
 /**
- * The timeline canvas: horizontal lanes from the book's companion file, with
- * chapter/scene cards that can be dragged between lanes and reordered. Lanes
- * can be added, renamed, recoloured, reordered, and removed. Every change is
- * saved to the companion file (debounced) and can be undone with Mod+Z.
+ * The book's default view: horizontal lines with chapter/scene cards that can be
+ * dragged between lines and reordered. Lines can be added, renamed, recoloured,
+ * reordered, and removed. Every change is saved to the per-book Line file
+ * (debounced) and can be undone with Mod+Z.
  *
  * While the view is open its in-memory `layout` is authoritative; the file is
  * only re-read on open and on book switch.
  */
-export class TimelineCanvasView extends ItemView {
+export class LineView extends ItemView {
 	private plugin: ScribeVisualizationPlugin;
 	private unsubscribe: (() => void) | null = null;
 	private book: string;
-	private layout: BookLayout = emptyBookLayout();
+	private layout: LineLayout = emptyLineLayout();
 	private fileExists = false;
-	private undoStack: BookLayout[] = [];
+	private undoStack: LineLayout[] = [];
 	private cardEls = new Map<string, HTMLElement[]>();
 	private drag: DragState | null = null;
 
@@ -81,11 +85,11 @@ export class TimelineCanvasView extends ItemView {
 	}
 
 	getViewType(): string {
-		return VIEW_TYPE_TIMELINE_CANVAS;
+		return VIEW_TYPE_LINE_VIEW;
 	}
 
 	getDisplayText(): string {
-		return "Timeline canvas";
+		return "Lines";
 	}
 
 	getIcon(): string {
@@ -111,8 +115,8 @@ export class TimelineCanvasView extends ItemView {
 
 	// ---- data ----
 
-	private timelinePath(): string {
-		return timelineFilePath(this.book, this.plugin.settings.timelineFileName);
+	private linePath(): string {
+		return lineFilePath(this.book, this.plugin.settings.lineFileName);
 	}
 
 	private currentEntries(): NovelEntry[] {
@@ -124,24 +128,25 @@ export class TimelineCanvasView extends ItemView {
 		this.undoStack = [];
 
 		if (this.book) {
-			const path = normalizePath(this.timelinePath());
+			const path = normalizePath(this.linePath());
+			await migrateLegacyLineFile(this.app, path);
 			this.fileExists = this.app.vault.getAbstractFileByPath(path) instanceof TFile;
-			this.layout = await readBookLayout(this.app, path);
+			this.layout = await readLineLayout(this.app, path);
 			this.autoPlace();
 		} else {
 			this.fileExists = false;
-			this.layout = emptyBookLayout();
+			this.layout = emptyLineLayout();
 		}
 		this.render();
 	}
 
-	/** Adds any newly discovered chapter/scene to the default lane, and saves if so. */
+	/** Adds any newly discovered chapter/scene to the default line, and saves if so. */
 	private autoPlace(): void {
 		if (!this.fileExists || isLayoutEmpty(this.layout)) return;
 		const { layout, changed } = reconcilePlacements(
 			this.layout,
 			this.currentEntries().map((e) => e.file.path),
-			defaultLaneId(this.layout),
+			defaultLineId(this.layout),
 		);
 		if (changed) {
 			this.layout = layout;
@@ -150,7 +155,7 @@ export class TimelineCanvasView extends ItemView {
 	}
 
 	private onIndexChange(): void {
-		// Don't yank the DOM out from under an in-progress drag or a lane rename.
+		// Don't yank the DOM out from under an in-progress drag or a line rename.
 		if (this.drag?.started || this.isEditingText()) {
 			this.autoPlace();
 			return;
@@ -172,10 +177,10 @@ export class TimelineCanvasView extends ItemView {
 
 	private async save(): Promise<void> {
 		if (!this.book || isLayoutEmpty(this.layout)) return;
-		await writeBookLayout(this.app, this.timelinePath(), this.layout);
+		await writeLineLayout(this.app, this.linePath(), this.layout);
 	}
 
-	private mutate(fn: (layout: BookLayout) => BookLayout): void {
+	private mutate(fn: (layout: LineLayout) => LineLayout): void {
 		this.undoStack.push(cloneLayout(this.layout));
 		if (this.undoStack.length > UNDO_LIMIT) this.undoStack.shift();
 		this.layout = fn(this.layout);
@@ -201,15 +206,15 @@ export class TimelineCanvasView extends ItemView {
 
 		const books = this.plugin.vaultIndex.getBookFolders();
 		const entries = this.book ? this.currentEntries() : [];
-		const canvasReady =
+		const viewReady =
 			books.length > 0 && entries.length > 0 && this.fileExists && !isLayoutEmpty(this.layout);
 
-		this.renderToolbar(root, books, canvasReady);
+		this.renderToolbar(root, books, viewReady);
 
 		if (books.length === 0) {
 			this.renderNotice(
 				root,
-				"Add a book folder in the plugin settings (Settings → Scribe of Lagash: Visualization) to build a timeline.",
+				"Add a book folder in the plugin settings (Settings → Scribe of Lagash: Visualization) to build its lines.",
 			);
 			return;
 		}
@@ -217,22 +222,21 @@ export class TimelineCanvasView extends ItemView {
 		if (entries.length === 0) {
 			this.renderNotice(
 				root,
-				`No chapters or scenes found in "${this.book}". Name notes like "Chapter 1" or "Scene 2", ` +
-					"or add a scribe-visualization-type frontmatter field.",
+				`No chapters or scenes found in "${this.book}". Name notes like "Chapter 1" or "Scene 2".`,
 			);
 			return;
 		}
 
-		if (!canvasReady) {
+		if (!viewReady) {
 			this.renderCreatePrompt(root, entries);
 			return;
 		}
 
-		this.renderCanvas(root, entries);
+		this.renderLines(root, entries);
 		this.renderUnrecognized(root, entries);
 	}
 
-	private renderToolbar(root: HTMLElement, books: string[], canvasReady: boolean): void {
+	private renderToolbar(root: HTMLElement, books: string[], viewReady: boolean): void {
 		const toolbar = root.createDiv({ cls: "scribe-canvas-toolbar" });
 
 		if (books.length > 1) {
@@ -244,7 +248,7 @@ export class TimelineCanvasView extends ItemView {
 			toolbar.createSpan({ cls: "scribe-canvas-book-name", text: books[0] });
 		}
 
-		if (!canvasReady) return;
+		if (!viewReady) return;
 
 		const spacer = toolbar.createDiv({ cls: "scribe-canvas-toolbar-spacer" });
 		spacer.style.flex = "1";
@@ -253,9 +257,9 @@ export class TimelineCanvasView extends ItemView {
 		undo.disabled = this.undoStack.length === 0;
 		undo.addEventListener("click", () => this.undo());
 
-		const add = toolbar.createEl("button", { cls: "mod-cta", text: "Add lane" });
+		const add = toolbar.createEl("button", { cls: "mod-cta", text: "Add line" });
 		add.addEventListener("click", () => {
-			this.mutate((l) => addLane(l, `Timeline ${l.timelines.length + 1}`, STARTER_LANE_COLOR).layout);
+			this.mutate((l) => addLine(l, `Line ${l.lines.length + 1}`, STARTER_LINE_COLOR).layout);
 		});
 	}
 
@@ -268,18 +272,18 @@ export class TimelineCanvasView extends ItemView {
 		box.createEl("p", {
 			text:
 				`"${this.book}" has ${entries.length} chapter/scene ` +
-				`note${entries.length === 1 ? "" : "s"} but no timeline yet.`,
+				`note${entries.length === 1 ? "" : "s"} but no lines yet.`,
 		});
-		const button = box.createEl("button", { cls: "mod-cta", text: "Create timeline" });
+		const button = box.createEl("button", { cls: "mod-cta", text: "Create lines" });
 		button.addEventListener("click", async () => {
 			button.disabled = true;
-			const layout = starterLayout(entries, { name: "Main line", color: STARTER_LANE_COLOR });
-			await writeBookLayout(this.app, this.timelinePath(), layout);
+			const layout = starterLayout(entries, { name: "Main line", color: STARTER_LINE_COLOR });
+			await writeLineLayout(this.app, this.linePath(), layout);
 			await this.openBook(this.book);
 		});
 	}
 
-	private renderCanvas(root: HTMLElement, entries: NovelEntry[]): void {
+	private renderLines(root: HTMLElement, entries: NovelEntry[]): void {
 		const model = canvasModel(entries, this.layout);
 
 		const scroll = root.createDiv({ cls: "scribe-canvas-scroll" });
@@ -287,72 +291,72 @@ export class TimelineCanvasView extends ItemView {
 		board.style.setProperty("--scribe-col-width", `${COLUMN_WIDTH}px`);
 		board.style.setProperty("--scribe-col-count", String(model.columnCount));
 
-		model.lanes.forEach((lane, i) => {
-			const laneEl = board.createDiv({ cls: "scribe-canvas-lane" });
-			laneEl.dataset.laneId = lane.def.id;
-			laneEl.style.setProperty("--scribe-lane-color", lane.def.color);
-			this.renderLaneHeader(laneEl, lane.def.id, lane.def.name, lane.def.color, lane.cards.length, {
+		model.lines.forEach((line, i) => {
+			const lineEl = board.createDiv({ cls: "scribe-canvas-line" });
+			lineEl.dataset.lineId = line.def.id;
+			lineEl.style.setProperty("--scribe-line-color", line.def.color);
+			this.renderLineHeader(lineEl, line.def.id, line.def.name, line.def.color, line.cards.length, {
 				first: i === 0,
-				last: i === model.lanes.length - 1,
-				only: model.lanes.length === 1,
+				last: i === model.lines.length - 1,
+				only: model.lines.length === 1,
 			});
-			const rail = laneEl.createDiv({ cls: "scribe-canvas-lane-rail" });
-			for (const card of lane.cards) this.renderCard(rail, card, false);
+			const rail = lineEl.createDiv({ cls: "scribe-canvas-line-rail" });
+			for (const card of line.cards) this.renderCard(rail, card, false);
 		});
 
 		if (model.unplaced.length > 0) {
 			const strip = root.createDiv({ cls: "scribe-canvas-unplaced" });
 			strip.createDiv({
 				cls: "scribe-canvas-unplaced-label",
-				text: `Not on any timeline (${model.unplaced.length}) — drag onto a lane`,
+				text: `Not on any line (${model.unplaced.length}) — drag onto a line`,
 			});
 			const rail = strip.createDiv({ cls: "scribe-canvas-unplaced-rail" });
 			for (const entry of model.unplaced) this.renderCard(rail, { entry, x: 0 }, true);
 		}
 	}
 
-	private renderLaneHeader(
-		laneEl: HTMLElement,
+	private renderLineHeader(
+		lineEl: HTMLElement,
 		id: string,
 		name: string,
 		color: string,
 		count: number,
 		pos: { first: boolean; last: boolean; only: boolean },
 	): void {
-		const header = laneEl.createDiv({ cls: "scribe-canvas-lane-header" });
+		const header = lineEl.createDiv({ cls: "scribe-canvas-line-header" });
 
 		const nameInput = header.createEl("input", {
-			cls: "scribe-canvas-lane-name-input",
+			cls: "scribe-canvas-line-name-input",
 			type: "text",
 			value: name,
 		});
 		nameInput.addEventListener("change", () => {
 			const next = nameInput.value.trim();
-			if (next && next !== name) this.mutate((l) => renameLane(l, id, next));
+			if (next && next !== name) this.mutate((l) => renameLine(l, id, next));
 			else nameInput.value = name;
 		});
 
-		const controls = header.createDiv({ cls: "scribe-canvas-lane-controls" });
+		const controls = header.createDiv({ cls: "scribe-canvas-line-controls" });
 
-		const colorInput = controls.createEl("input", { cls: "scribe-canvas-lane-color", type: "color" });
+		const colorInput = controls.createEl("input", { cls: "scribe-canvas-line-color", type: "color" });
 		colorInput.value = this.toHex(color);
 		colorInput.addEventListener("change", () =>
-			this.mutate((l) => recolorLane(l, id, colorInput.value)),
+			this.mutate((l) => recolorLine(l, id, colorInput.value)),
 		);
 
-		const up = controls.createEl("button", { text: "▲", attr: { "aria-label": "Move lane up" } });
+		const up = controls.createEl("button", { text: "▲", attr: { "aria-label": "Move line up" } });
 		up.disabled = pos.first;
-		up.addEventListener("click", () => this.mutate((l) => moveLane(l, id, -1)));
+		up.addEventListener("click", () => this.mutate((l) => moveLine(l, id, -1)));
 
-		const down = controls.createEl("button", { text: "▼", attr: { "aria-label": "Move lane down" } });
+		const down = controls.createEl("button", { text: "▼", attr: { "aria-label": "Move line down" } });
 		down.disabled = pos.last;
-		down.addEventListener("click", () => this.mutate((l) => moveLane(l, id, 1)));
+		down.addEventListener("click", () => this.mutate((l) => moveLine(l, id, 1)));
 
-		const del = controls.createEl("button", { text: "✕", attr: { "aria-label": "Delete lane" } });
+		const del = controls.createEl("button", { text: "✕", attr: { "aria-label": "Delete line" } });
 		del.disabled = pos.only;
-		del.addEventListener("click", () => this.mutate((l) => removeLane(l, id)));
+		del.addEventListener("click", () => this.mutate((l) => removeLine(l, id)));
 
-		header.createSpan({ cls: "scribe-canvas-lane-count", text: `${count}` });
+		header.createSpan({ cls: "scribe-canvas-line-count", text: `${count}` });
 	}
 
 	private renderCard(parent: HTMLElement, card: CanvasCard, flow: boolean): void {
@@ -377,15 +381,11 @@ export class TimelineCanvasView extends ItemView {
 		if (entry.places.length > 0) meta.push(entry.places.join(", "));
 		if (meta.length > 0) body.createDiv({ cls: "scribe-canvas-card-meta", text: meta.join(" · ") });
 
-		if (entry.source === "frontmatter") {
-			body.createSpan({ cls: "scribe-canvas-card-badge", text: "frontmatter" });
-		}
-
 		el.addEventListener("click", () => {
 			if (this.drag) return;
 			void this.app.workspace.getLeaf(false).openFile(entry.file);
 		});
-		el.addEventListener("pointerdown", (e) => this.onCardPointerDown(e, entry.file.path, el));
+		el.addEventListener("pointerdown", (e) => this.onCardPointerDown(e, entry.file.path, el, flow));
 
 		const siblings = this.cardEls.get(entry.file.path) ?? [];
 		siblings.push(el);
@@ -402,12 +402,12 @@ export class TimelineCanvasView extends ItemView {
 
 	private renderUnrecognized(root: HTMLElement, entries: NovelEntry[]): void {
 		const known = new Set(entries.map((e) => e.file.path));
-		const companion = normalizePath(this.timelinePath());
+		const lineFile = normalizePath(this.linePath());
 		const prefix = `${this.book}/`;
 
 		const missing = this.app.vault
 			.getMarkdownFiles()
-			.filter((f) => f.path.startsWith(prefix) && f.path !== companion && !known.has(f.path))
+			.filter((f) => f.path.startsWith(prefix) && f.path !== lineFile && !known.has(f.path))
 			.sort((a, b) => a.path.localeCompare(b.path));
 
 		if (missing.length === 0) return;
@@ -428,17 +428,14 @@ export class TimelineCanvasView extends ItemView {
 
 	// ---- drag ----
 
-	private onCardPointerDown(evt: PointerEvent, path: string, el: HTMLElement): void {
+	private onCardPointerDown(evt: PointerEvent, path: string, el: HTMLElement, flow: boolean): void {
 		if (evt.button !== 0 || this.drag) return;
-		const rect = el.getBoundingClientRect();
 		const onMove = (e: PointerEvent) => this.onDragMove(e);
 		const onUp = (e: PointerEvent) => this.onDragUp(e);
 		this.drag = {
 			path,
 			el,
-			width: rect.width,
-			offsetX: evt.clientX - rect.left,
-			offsetY: evt.clientY - rect.top,
+			restY: flow ? "0px" : "-50%",
 			startX: evt.clientX,
 			startY: evt.clientY,
 			started: false,
@@ -455,22 +452,18 @@ export class TimelineCanvasView extends ItemView {
 		const drag = this.drag;
 		if (!drag) return;
 
+		const dx = e.clientX - drag.startX;
+		const dy = e.clientY - drag.startY;
+
 		if (!drag.started) {
-			if (
-				Math.abs(e.clientX - drag.startX) < DRAG_THRESHOLD &&
-				Math.abs(e.clientY - drag.startY) < DRAG_THRESHOLD
-			) {
-				return;
-			}
+			if (Math.abs(dx) < DRAG_THRESHOLD && Math.abs(dy) < DRAG_THRESHOLD) return;
 			drag.started = true;
 			drag.el.addClass("is-dragging");
-			// Inline so it always beats the ".scribe-canvas-lane-rail .scribe-canvas-card" rule.
-			drag.el.style.position = "fixed";
-			drag.el.style.width = `${drag.width}px`;
 		}
 
-		drag.el.style.left = `${e.clientX - drag.offsetX}px`;
-		drag.el.style.top = `${e.clientY - drag.offsetY}px`;
+		// Translate from the card's resting spot — immune to any transformed /
+		// `contain`ed ancestor that would offset a `position: fixed` element.
+		drag.el.style.transform = `translate(${dx}px, calc(${drag.restY} + ${dy}px))`;
 		this.showDrop(this.dropTarget(e.clientX, e.clientY));
 	}
 
@@ -491,24 +484,24 @@ export class TimelineCanvasView extends ItemView {
 		if (!started) return;
 
 		if (target) {
-			const laneOrder = laneOrderFromModel(canvasModel(this.currentEntries(), this.layout));
-			this.mutate((l) => moveCard(l, drag.path, target.laneId, target.index, laneOrder));
+			const lineOrder = lineOrderFromModel(canvasModel(this.currentEntries(), this.layout));
+			this.mutate((l) => moveCard(l, drag.path, target.lineId, target.index, lineOrder));
 		} else {
 			this.render();
 		}
 	}
 
 	private dropTarget(clientX: number, clientY: number): DropTarget | null {
-		const lanes = this.contentEl.querySelectorAll<HTMLElement>(".scribe-canvas-lane");
-		for (const laneEl of Array.from(lanes)) {
-			const rect = laneEl.getBoundingClientRect();
+		const lineEls = this.contentEl.querySelectorAll<HTMLElement>(".scribe-canvas-line");
+		for (const lineEl of Array.from(lineEls)) {
+			const rect = lineEl.getBoundingClientRect();
 			if (clientY < rect.top || clientY >= rect.bottom) continue;
-			const laneId = laneEl.dataset.laneId;
-			const rail = laneEl.querySelector<HTMLElement>(".scribe-canvas-lane-rail");
-			if (!laneId || !rail) continue;
+			const lineId = lineEl.dataset.lineId;
+			const rail = lineEl.querySelector<HTMLElement>(".scribe-canvas-line-rail");
+			if (!lineId || !rail) continue;
 			const relX = clientX - rail.getBoundingClientRect().left;
 			const index = Math.max(0, Math.round(relX / COLUMN_WIDTH));
-			return { laneId, index, rail };
+			return { lineId, index, rail };
 		}
 		return null;
 	}
@@ -529,7 +522,7 @@ export class TimelineCanvasView extends ItemView {
 
 	private clearDropHighlight(): void {
 		for (const el of Array.from(
-			this.contentEl.querySelectorAll<HTMLElement>(".scribe-canvas-lane.is-drop-target"),
+			this.contentEl.querySelectorAll<HTMLElement>(".scribe-canvas-line.is-drop-target"),
 		)) {
 			el.removeClass("is-drop-target");
 		}

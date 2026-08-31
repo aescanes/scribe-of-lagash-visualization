@@ -1,16 +1,24 @@
-# Implementation plan — draggable multi-timeline canvas
+# Implementation plan — the line view
 
-Status: **Phase 2 complete** (editable single-membership canvas). This is the build plan for the first visualization
-described in [`../AGENTS.md`](../AGENTS.md). Each phase is independently
-shippable and leaves the plugin in a working state.
+Status: **Phase 3 complete** (integration & polish). This is the build plan for a
+book's default view, described in [`../AGENTS.md`](../AGENTS.md). Each phase is
+independently shippable and leaves the plugin in a working state.
+
+Terminology note: what earlier phases below call a "timeline canvas" with
+"lanes" is now the **line view** with **lines**. The rename landed in one
+mechanical commit after Phase 3; the phase write-ups keep their original wording
+as a historical record.
 
 ## Goal
 
-Replace the current simple list timeline with a canvas of horizontal, colored
-**timeline lanes**. Chapter / scene cards are discovered from a **Book folder**
-(by parsing note titles), laid out chronologically along each lane, and can be
-dragged between lanes and reordered. A card can live on multiple lanes. Layout
-persists to a per-book companion Markdown file.
+A book's default view: horizontal, coloured **lines**. Chapter / scene cards are
+discovered from a **book folder** (by parsing note titles), each placed on one
+line, and can be dragged between lines and reordered. The arrangement persists
+to a per-book **Line file** (`Lines.md`).
+
+(An earlier draft had a card living on multiple lines at once; that was
+prototyped, disliked, and dropped — see the reverted "multi-timeline
+membership" idea below.)
 
 ---
 
@@ -158,29 +166,43 @@ Original checklist:
 Deliverable: fully editable single-membership canvas.
 
 Not done / deferred: external edits to `Timelines.md` while the canvas is open
-are ignored until reopen (Phase 4). Dragging a card off all lanes to remove it
-is Phase 3.
+are ignored until reopen; a card can only be on one lane (a "multi-timeline
+membership" prototype was built and dropped).
 
 ---
 
-## Phase 3 — Multi-timeline membership
+## Phase 3 — Integration & polish ✅ done
 
-- Card context menu / drag-with-modifier to add the card to an additional lane.
-- Rendering for non-contiguous membership (linked ghosts) finalized.
-- Removing a card from its last lane → confirm, then drop the placement (note
-  itself is untouched).
+- **Bases view & simple list view** — first kept, then (with the removal of the
+  frontmatter keys they depended on) **removed** in favour of the line view plus
+  the coming chronological view.
+- **Frontmatter keys** — `scribe-visualization-type` / `-order` / `-timelines`
+  removed. Chapter/scene comes from the title, order from folder structure +
+  title number (`byManuscriptOrder`), line membership from the Line file.
+- **i18n** — `titleParser.ts` now ships `en` and `es` pattern tables
+  (`Capítulo` / `Cap.`, `Escena` / `Esc.`, `Prólogo` / `Epílogo` / …, accents
+  optional). `languageLabel()` gives the settings dropdown friendly names
+  ("English", "Español"). Adding a language is one `LANGUAGE_PATTERNS` entry +
+  one `LANGUAGE_LABELS` entry. Unit-tested, including that the tables don't
+  bleed into each other.
+- **Canvas restyle** — each lane is now a thin coloured line (a rail `::before`)
+  with cards sitting centred on it (`top: 50%; translateY(-50%)`, coloured left
+  edge), rather than a tinted full-height band. Canvas surface is
+  `--background-secondary`, cards `--background-primary` + `--shadow-s`, opaque
+  on hover. Drag now moves the card with an inline `transform: translate(delta)`
+  from its resting spot (not `position: fixed` + `left/top`, which drifted right
+  when an ancestor `contain`s or transforms the fixed containing block). Lane
+  headers, colours, names, and reordering are unchanged. Ongoing: `Phase 3` is
+  now the home for further small visual / UX adjustments.
+- **Docs** — `CHANGELOG.md` / `README.md` updated. Screenshots still need to be
+  taken in a real vault by the maintainer.
 
----
+### Multi-timeline membership — dropped
 
-## Phase 4 — Integration & polish
-
-- Decide whether the Bases view reads companion-file timelines or stays
-  property-driven (likely: leave it property-driven, document the difference).
-- Retire [`src/views/timelineView.ts`](../src/views/timelineView.ts) once the
-  canvas covers its use, or keep it as a lightweight "reading" mode.
-- i18n scaffold: expose language selection for the title parser; add a second
-  pattern table (Spanish: `Capítulo`, `Escena`) as the proof it generalizes.
-- `CHANGELOG.md`, `README.md` screenshots.
+An earlier plan had a card sitting on several lanes at once (right-click "add to
+lane", Ctrl-drag to copy, linked ghost copies, vertical stacking). It was
+implemented in full and reverted — the maintainer disliked the concept. If it
+comes back it needs a fresh design, not this one.
 
 ---
 

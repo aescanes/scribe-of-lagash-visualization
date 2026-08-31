@@ -13,29 +13,20 @@ in your vault. Point the plugin at the folder that holds a book and it
 recognises chapters and scenes from their titles ("Chapter 1", "Scene II",
 "Prologue", …); a little `scribe-visualization-*` frontmatter is optional and
 only needed to override the title or add detail. The only file the plugin ever
-writes is a per-book companion file that stores your timeline layout.
+writes is a per-book **Line file** that stores the book's default view.
 
 ## Current features
 
-- **Timeline canvas** — the main view (ribbon icon / "Open timeline canvas"
-  command). Horizontal, colored timeline lanes for a book, with each
-  chapter/scene as a card. Pick "Create timeline" the first time to seed a
-  "Main line" lane, then drag cards to reorder them or move them to another
-  lane, and add / rename / recolour / reorder / delete lanes from the lane
-  headers. Changes save to `Timelines.md` automatically; `Mod+Z` undoes.
-- **Simple timeline** — a plain chronological list of every chapter/scene
-  ("Open simple timeline" command), optionally filtered to one named timeline.
-- **Scribe timeline (Bases view)** — the list rendering, registered
-  as a view type inside Obsidian's core **Bases** plugin. Create a `.base`
-  file, filter to `scribe-visualization-type = chapter` (or `scene`), optionally group by a
-  property such as `scribe-visualization-timelines`, and pick "Scribe timeline" from the
-  Bases view picker. Filtering, sorting, and grouping are all handled by
-  Bases' own toolbar — this plugin just renders the result. Requires the core
-  Bases plugin to be enabled (Settings → Core plugins).
+- **Line view** — the book's default view (ribbon icon / "Open lines" command).
+  Horizontal, colored **lines** for a book, with each chapter/scene as a card
+  sitting on a line. Pick "Create lines" the first time to seed a "Main line",
+  then drag cards to reorder them or move them to another line, and add /
+  rename / recolour / reorder / delete lines from the line headers. Changes
+  save to the Line file (`Lines.md`) automatically; `Mod+Z` undoes.
 
-Planned next: letting a chapter sit on more than one timeline at once. See
-[docs/timeline-canvas-plan.md](docs/timeline-canvas-plan.md). After that, a
-matrix view grouping chapters/scenes by character, place, or situation.
+Planned next: a **chronological view** ordering chapters/scenes by their
+`scribe-visualization-date`, and a matrix view grouping them by character,
+place, or situation. See [docs/line-view-plan.md](docs/line-view-plan.md).
 
 ## Setting up a book
 
@@ -50,23 +41,22 @@ plugin scans that folder and classifies each note by its **title**:
 | `Prologue`, `Epilogue`, `Interlude` | chapter (no number) |
 | anything else | ignored |
 
-English titles only for now. Leave **Book folders** empty to fall back to
-scanning the whole vault for frontmatter-tagged notes instead.
+English and Spanish are supported (`Capítulo 3`, `Escena II`, `Prólogo`, …) —
+pick the language under **Title language** in settings. Leave **Book folder**
+empty to scan the whole vault instead.
 
-Sub-folders inside the book become a breadcrumb under the title on each card: a
-note at `My Novel/Act I/Chapter I/Scene 1.md` (book folder `My Novel`) shows
-"Scene 1" with "Act I - Chapter I" on the line below.
+Manuscript order comes from the **folder structure** (all of `Act I/…` before
+`Act II/…`) and then the number in the title. Sub-folders also become a
+breadcrumb under the title on each card: a note at
+`My Novel/Act I/Chapter I/Scene 1.md` (book folder `My Novel`) shows "Scene 1"
+with "Act I - Chapter I" underneath.
 
-### Overriding the title with frontmatter
+### Optional frontmatter
 
-Everything below is optional. Use it to fix a mis-detected note or to add
-detail the visualizations can show:
+None of this is required — it only adds detail the cards can show:
 
 ```yaml
 ---
-scribe-visualization-type: scene            # force "chapter" or "scene", overrides the title
-scribe-visualization-order: 12              # override the number parsed from the title
-scribe-visualization-timelines: [main]      # seed timeline membership
 scribe-visualization-date: 1901-03-04       # in-story date, any free-form string
 scribe-visualization-characters: [Alice, Bob]
 scribe-visualization-places: [Riverside Tavern]

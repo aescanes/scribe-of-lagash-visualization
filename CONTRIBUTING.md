@@ -4,7 +4,7 @@ Thanks for your interest in contributing to Scribe of Lagash: Visualization.
 This project is part of the **Scribe of Lagash** series — independent
 Obsidian plugins that help novelists plan and write, each focused on one
 concern. This particular plugin covers chapter/scene visualization
-(timelines and, soon, matrices).
+(lines and, soon, matrices).
 
 ## Ways to contribute
 
@@ -58,9 +58,9 @@ no separate test framework is pulled in.
 - Note titles are classified by [`src/data/titleParser.ts`](src/data/titleParser.ts),
   a pure module with no Obsidian imports. Keep it that way — add new languages
   as extra entries in its pattern table, not as calls into the vault.
-- The plugin writes exactly one file: the per-book companion file handled by
-  [`src/data/timelineFile.ts`](src/data/timelineFile.ts). Never add code that
-  writes to a chapter/scene note.
+- The plugin writes exactly one file: the per-book Line file handled by
+  [`src/data/lineFile.ts`](src/data/lineFile.ts). Never add code that writes to
+  a chapter/scene note.
 
 ## Dependencies
 

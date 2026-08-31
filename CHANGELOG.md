@@ -5,6 +5,33 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Spanish title parsing: notes named `Capítulo 3`, `Cap. 3`, `Escena II`,
+  `Prólogo`, `Epílogo`, … (accents optional) are recognised when "Título
+  language" is set to Español in settings. The dropdown now shows language
+  names rather than codes.
+
+### Changed
+
+- **"Timeline" is now "line".** The horizontal tracks are *lines*, a book has a
+  *line view* (ribbon icon / "Open lines" command), and its layout is stored in
+  a **Line file** (`Lines.md`; an existing `Timelines.md` is renamed on first
+  open). Types, settings, and CSS classes renamed to match.
+- Line view restyled: each line is a thin coloured rule with the chapter/scene
+  cards sitting on top of it, instead of a tinted band. Cards stay opaque on
+  hover, have a soft shadow and a coloured left edge, and a dragged card now
+  tracks the pointer exactly.
+
+### Removed
+
+- The "Open simple timeline" list view and the Bases timeline view. The line
+  view (and a coming chronological view) replace them.
+- The `scribe-visualization-type`, `-order`, and `-timelines` frontmatter keys.
+  A note is a chapter/scene by its **title**, its order by **folder structure
+  then title number**, and its line membership by the Line file. `-date`,
+  `-characters`, `-places`, and `-status` stay.
+
 ## [0.3.0](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.3.0) - 2026-08-31
 
 ### Changed

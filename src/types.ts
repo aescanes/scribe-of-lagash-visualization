@@ -4,16 +4,16 @@
 import type { TFile } from "obsidian";
 
 /**
- * Frontmatter keys the plugin reads from/writes to notes. Namespaced as
- * "scribe-visualization-*" (not just "scribe-*") because other plugins in
- * the Scribe of Lagash series will add their own "scribe-" prefixed keys,
- * and generic names like "type", "order", or "status" could mean something
- * different to each of them.
+ * Frontmatter keys the plugin reads from notes. Namespaced as
+ * "scribe-visualization-*" (not just "scribe-*") because other plugins in the
+ * Scribe of Lagash series will add their own "scribe-" prefixed keys, and
+ * generic names like "date" or "status" could mean something different to each.
+ *
+ * Chapter/scene classification and order come from the folder structure and the
+ * note title, not frontmatter; line membership comes from the Line file. These
+ * keys only add optional detail the cards can show.
  */
 export const FRONTMATTER_KEYS = {
-	type: "scribe-visualization-type",
-	order: "scribe-visualization-order",
-	timelines: "scribe-visualization-timelines",
 	date: "scribe-visualization-date",
 	characters: "scribe-visualization-characters",
 	places: "scribe-visualization-places",
@@ -32,19 +32,13 @@ export interface ParsedTitle {
 }
 
 /**
- * How an entry's chapter/scene classification was decided. Lets the UI flag
- * notes whose frontmatter overrides what their title would otherwise say.
- */
-export type EntrySource = "title" | "frontmatter";
-
-/**
- * A single chapter or scene, derived from a note's title and/or frontmatter.
- * The note itself remains the source of truth; this is just a parsed view of it.
+ * A single chapter or scene, derived from a note's title (for type and order)
+ * plus optional frontmatter (for card detail). The note itself remains the
+ * source of truth; this is just a parsed view of it.
  */
 export interface NovelEntry {
 	file: TFile;
 	type: EntryType;
-	source: EntrySource;
 	title: string;
 	/**
 	 * The configured book folder this note was found under, or "" when no book
@@ -56,38 +50,38 @@ export interface NovelEntry {
 	 * ["Act I", "Chapter I"]. Shown next to the title as a breadcrumb.
 	 */
 	context: string[];
+	/** The number parsed from the title (null for e.g. "Prologue"). */
 	order: number | null;
-	timelines: string[];
 	date: string | null;
 	characters: string[];
 	places: string[];
 	status: string | null;
 }
 
-/** One horizontal lane in the timeline canvas. */
-export interface TimelineDef {
+/** One horizontal line in the book's default view. */
+export interface Line {
 	id: string;
 	name: string;
 	/** Any CSS color string; chosen by the user. */
 	color: string;
-	/** Sort order of the lane, top to bottom. */
+	/** Sort order of the line, top to bottom. */
 	order: number;
 }
 
-/** Where a single note's card sits on the canvas. */
+/** Where a single note's card sits in the default view. */
 export interface Placement {
-	/** IDs of the timelines this card belongs to. */
-	timelines: string[];
-	/** Column index along the horizontal (manuscript / chronological) axis. */
+	/** IDs of the lines this card belongs to. */
+	lines: string[];
+	/** Column index along the horizontal (manuscript) axis. */
 	x: number;
 }
 
 /**
- * The full visualization layout for one book, persisted to the per-book
- * companion file (default "Timelines.md") inside the book folder. Keyed by
- * vault-relative note path.
+ * The book's default view — its lines and where each chapter/scene card sits on
+ * them. Persisted to the per-book "Line file" (default "Lines.md") inside the
+ * book folder. Keyed by vault-relative note path.
  */
-export interface BookLayout {
-	timelines: TimelineDef[];
+export interface LineLayout {
+	lines: Line[];
 	placements: Record<string, Placement>;
 }

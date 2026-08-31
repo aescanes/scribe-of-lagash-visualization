@@ -3,7 +3,7 @@
 
 import { App, PluginSettingTab, Setting } from "obsidian";
 import type ScribeVisualizationPlugin from "../main";
-import { availableLanguages } from "../data/titleParser";
+import { availableLanguages, languageLabel } from "../data/titleParser";
 
 export class ScribeVisualizationSettingTab extends PluginSettingTab {
 	plugin: ScribeVisualizationPlugin;
@@ -20,17 +20,15 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 		containerEl.createEl("h2", { text: "Scribe of Lagash: Visualization" });
 		containerEl.createEl("p", {
 			text:
-				"Point the plugin at the folder that hold each book's notes. Notes are " +
-				"classified as chapters or scenes by their title (e.g. \"Chapter 1\", \"Scene II\"). " +
-				"Add a scribe-visualization-type frontmatter field (\"chapter\" or \"scene\") to " +
-				"override the title for a specific note.",
+				"Point the plugin at the folder that holds a book's notes. Notes are " +
+				"classified as chapters or scenes by their title (e.g. \"Chapter 1\", \"Scene II\").",
 		});
 
 		new Setting(containerEl)
 			.setName("Book folder")
 			.setDesc(
-				"Add here the folder containing the book's chapter/scene notes. " +
-					"Leave empty to scan the whole vault for frontmatter-tagged notes instead.",
+				"The folder containing the book's chapter/scene notes. " +
+					"Leave empty to scan the whole vault.",
 			)
 			.addText((text) => {
 				text.setPlaceholder("Novels/The Silent City");
@@ -45,12 +43,12 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName("Timeline file name")
-			.setDesc("Name of the companion file created inside each book folder to store the timeline layout.")
+			.setName("Line file name")
+			.setDesc("Name of the Line file created inside the book folder to store its default view.")
 			.addText((text) => {
-				text.setValue(this.plugin.settings.timelineFileName);
+				text.setValue(this.plugin.settings.lineFileName);
 				text.onChange(async (value) => {
-					this.plugin.settings.timelineFileName = value.trim() || "Timelines.md";
+					this.plugin.settings.lineFileName = value.trim() || "Lines.md";
 					await this.plugin.saveSettings();
 				});
 			});
@@ -59,28 +57,10 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 			.setName("Title language")
 			.setDesc("Which language's patterns to use when reading chapter/scene numbers from note titles.")
 			.addDropdown((dropdown) => {
-				for (const lang of availableLanguages()) dropdown.addOption(lang, lang);
+				for (const lang of availableLanguages()) dropdown.addOption(lang, languageLabel(lang));
 				dropdown.setValue(this.plugin.settings.titleLanguage);
 				dropdown.onChange(async (value) => {
 					this.plugin.settings.titleLanguage = value;
-					await this.plugin.saveSettings();
-				});
-			});
-
-		const timelineNames = this.plugin.vaultIndex.getTimelineNames();
-
-		new Setting(containerEl)
-			.setName("Default timeline")
-			.setDesc(
-				"Which scribe-visualization-timelines value to show when the Timeline view opens. " +
-					"Leave blank to show every entry regardless of timeline.",
-			)
-			.addDropdown((dropdown) => {
-				dropdown.addOption("", "All entries");
-				for (const name of timelineNames) dropdown.addOption(name, name);
-				dropdown.setValue(this.plugin.settings.defaultTimeline);
-				dropdown.onChange(async (value) => {
-					this.plugin.settings.defaultTimeline = value;
 					await this.plugin.saveSettings();
 				});
 			});
