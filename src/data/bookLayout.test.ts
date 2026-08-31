@@ -22,7 +22,7 @@ test("parseBookLayout returns an empty layout for junk input", () => {
 test("parseBookLayout coerces timelines and fills defaults", () => {
 	const layout = parseBookLayout({
 		timelines: [
-			{ id: "main", name: "Main plot", color: "#e06c75", order: 0 },
+			{ id: "main", name: "Main line", color: "#e06c75", order: 0 },
 			{ id: "backstory" },
 			{ name: "no id — dropped" },
 		],

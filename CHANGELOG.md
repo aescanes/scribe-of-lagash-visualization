@@ -25,12 +25,17 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   muted breadcrumb below it (e.g. title "Scene 1", then "Act I - Chapter I").
   The scanned book folder is omitted; the Bases view (which has no book folder)
   shows the full parent path.
-- Timeline canvas view (ribbon icon / "Open timeline canvas" command): read-only
+- Timeline canvas view (ribbon icon / "Open timeline canvas" command):
   horizontal timeline lanes for a book, cards laid out by their saved column.
   Multiple book folders get a switcher. A book with no companion file yet shows
-  a "Create timeline" button that starts one "Main plot" lane with every
+  a "Create timeline" button that starts one "Main line" lane with every
   chapter/scene on it. Notes in the book that aren't recognised as a chapter or
-  scene are listed separately. Dragging cards comes next.
+  scene are listed separately.
+- Timeline canvas editing: drag a card along a lane to reorder it or onto
+  another lane to move it; add, rename, recolour, reorder and delete lanes from
+  the lane headers and toolbar. New chapters/scenes are auto-placed on the top
+  lane. Every change saves to `Timelines.md` (debounced) and `Mod+Z` / the Undo
+  button step back through changes.
 - The old list timeline is still available as "Open simple timeline".
 
 ### Changed

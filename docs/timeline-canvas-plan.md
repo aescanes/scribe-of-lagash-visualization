@@ -1,6 +1,6 @@
 # Implementation plan — draggable multi-timeline canvas
 
-Status: **Phase 1 complete** (read-only canvas). This is the build plan for the first visualization
+Status: **Phase 2 complete** (editable single-membership canvas). This is the build plan for the first visualization
 described in [`../AGENTS.md`](../AGENTS.md). Each phase is independently
 shippable and leaves the plugin in a working state.
 
@@ -124,7 +124,25 @@ Deliverable: a real canvas that shows the book, read-only.
 
 ---
 
-## Phase 2 — Drag & edit
+## Phase 2 — Drag & edit ✅ done
+
+Pointer-drag (not HTML5 DnD) on cards: horizontal drag reorders within a lane,
+vertical drag moves the card to the lane under the pointer; both snap to the
+column grid and renumber the affected lanes densely. Unplaced cards can be
+dragged onto a lane. Lane headers carry an inline name field, a
+`<input type="color">` swatch, up/down, and delete (disabled for the only lane);
+the toolbar has "Add lane" and "Undo". `Mod+Z` (view `Scope`) and the Undo
+button walk a 50-deep `BookLayout` snapshot stack. New chapters/scenes are
+auto-placed on the topmost lane on load and on index change. Saves are debounced
+(700 ms) via `writeBookLayout` and flushed on close; while open the in-memory
+`layout` is authoritative and the file is only re-read on open / book switch.
+
+All the layout maths (`moveCard`, `reconcilePlacements`, `addLane` /
+`renameLane` / `recolorLane` / `moveLane` / `removeLane`, `cloneLayout`) live as
+pure functions in [`canvasModel.ts`](../src/views/canvasModel.ts) and are
+unit-tested; the view only does DOM + pointer handling.
+
+Original checklist:
 
 - **Horizontal drag** → recompute `x` (integer column index), renumber the
   affected lane densely, debounced `timelineFile.write`.
@@ -138,6 +156,10 @@ Deliverable: a real canvas that shows the book, read-only.
   view is focused.
 
 Deliverable: fully editable single-membership canvas.
+
+Not done / deferred: external edits to `Timelines.md` while the canvas is open
+are ignored until reopen (Phase 4). Dragging a card off all lanes to remove it
+is Phase 3.
 
 ---
 
@@ -166,7 +188,13 @@ Deliverable: fully editable single-membership canvas.
 
 - Multiple books open at once — one canvas per book leaf, or a book switcher in
   one view? (Lean: one leaf per book, book chosen on open.)
+  Response: For now we will have one one book timeline. That mean one book per vaul. That mean also that in the settings you can define only one path for this.
 - Free-form `x` vs. snapped columns — snapped is simpler and matches the
   "manuscript order" mental model; revisit if users want gaps.
+  Response: In the first version of the timeline we will have snapped columns, but we will add in the near future the free-form using the propieties (frontmatter)
 - Should scenes nest under their parent chapter on the canvas, or sit inline?
-  (`scribe-visualization-parent` exists for this; defer to Phase 3+.)
+  Response: the scene → chapter parent is derived purely from folder nesting
+  (a scene note lives inside its chapter's folder) — no `scribe-visualization-parent`
+  frontmatter key, to keep the plugin simple with fewer settings. On the canvas
+  scenes sit inline as their own cards for now; nesting them visually under the
+  chapter is a possible later refinement.

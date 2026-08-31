@@ -27,7 +27,7 @@ chronological / manuscript order. The user can:
 - **drag a card horizontally** to reorder it within a timeline,
 - **drag a card vertically** to move it to another timeline, and
 - **place one card on more than one timeline** (a novel has multiple timelines —
-  e.g. "main plot" vs. a character's backstory — and a chapter can sit on
+  e.g. "main line" vs. a character's backstory — and a chapter can sit on
   several of them at once).
 
 Cards are discovered automatically from a **Book folder**, not hand-created.
@@ -61,7 +61,7 @@ diff-friendly, and travels with the book. Shape:
 scribe-visualization: book
 timelines:
   - id: main
-    name: Main plot
+    name: Main line
     color: "#e06c75"
     order: 0
   - id: backstory
@@ -95,9 +95,9 @@ Rules:
 |---|---|---|
 | Discovery | ✅ Book-folder scan + title parsing, frontmatter `-type` as override (falls back to whole-vault frontmatter scan when no book folder is set) | — |
 | Layout data layer | ✅ `BookLayout` types + companion-file read/write + coercion, all tested | wire into a view |
-| Canvas view | ✅ Read-only ([`timelineCanvasView.ts`](src/views/timelineCanvasView.ts)): lanes + cards from the companion file, book switcher, "Create timeline" starter, unrecognized-notes list | Phase 2: drag to reorder / move lane, lane toolbar, undo |
+| Canvas view | ✅ Editable ([`timelineCanvasView.ts`](src/views/timelineCanvasView.ts)): drag cards to reorder / change lane, add / rename / recolour / reorder / delete lanes, auto-place new notes, `Mod+Z` undo, debounced save | Phase 3: one card on several lanes; Phase 4: react to external `Timelines.md` edits |
 | Simple list view | Still there as "Open simple timeline" ([`timelineView.ts`](src/views/timelineView.ts)), frontmatter-`timelines`-driven | keep as a light reading mode, or retire (Phase 4) |
-| Layout storage | Canvas writes the companion file only via "Create timeline" | Phase 2: persist every drag (debounced) |
+| Layout storage | ✅ Canvas writes the companion file on every edit (debounced 700 ms, flushed on close) | — |
 | Bases view | [`basesTimelineView.ts`](src/views/basesTimelineView.ts), renders Bases' grouped result | Keep; revisit once canvas lands |
 | Matrix view | — | Group chapters/scenes by character / place / situation |
 
@@ -117,8 +117,8 @@ Entry point: [`src/main.ts`](src/main.ts) → `ScribeVisualizationPlugin`.
 | Book-layout helpers | [`src/data/bookLayout.ts`](src/data/bookLayout.ts) | Pure: `parseBookLayout` (coerce loose YAML), `timelineFilePath`, `emptyBookLayout` |
 | Path breadcrumb | [`src/data/pathContext.ts`](src/data/pathContext.ts) | Pure: `folderContext(filePath, baseFolder)` → the folder segments shown next to a card title (book folder and file name excluded) |
 | Companion file I/O | [`src/data/timelineFile.ts`](src/data/timelineFile.ts) | `readBookLayout` / `writeBookLayout` for the per-book `Timelines.md`; write preserves the note body (`processFrontMatter`) or creates the file |
-| Canvas render model | [`src/views/canvasModel.ts`](src/views/canvasModel.ts) | Pure: `canvasModel(entries, layout)` → lanes + cards + `unplaced`; `starterLayout`; `isLayoutEmpty`. Unit-tested |
-| Canvas view | [`src/views/timelineCanvasView.ts`](src/views/timelineCanvasView.ts) | `ItemView` (`VIEW_TYPE_TIMELINE_CANVAS`). Loads the companion file, renders lanes/cards from `canvasModel`, book switcher, create-timeline / empty / unrecognized states. Read-only so far |
+| Canvas render model | [`src/views/canvasModel.ts`](src/views/canvasModel.ts) | Pure, unit-tested: `canvasModel(entries, layout)` → lanes + cards + `unplaced`; every layout edit (`moveCard`, `reconcilePlacements`, `addLane` / `renameLane` / `recolorLane` / `moveLane` / `removeLane`, `cloneLayout`, `starterLayout`). **All layout maths live here, not in the view.** |
+| Canvas view | [`src/views/timelineCanvasView.ts`](src/views/timelineCanvasView.ts) | `ItemView` (`VIEW_TYPE_TIMELINE_CANVAS`). DOM + pointer-drag only: renders from `canvasModel`, calls the pure ops via `mutate()` (push undo snapshot → apply → debounced save → re-render). In-memory `layout` is authoritative while open; file re-read only on open / book switch |
 | Simple timeline | [`src/views/timelineView.ts`](src/views/timelineView.ts) | Older `ItemView` (`VIEW_TYPE_TIMELINE`), "Open simple timeline"; frontmatter-`timelines`-driven |
 | Bases timeline | [`src/views/basesTimelineView.ts`](src/views/basesTimelineView.ts) | `BasesView` registered into Obsidian's core **Bases** plugin. Renders `this.data.groupedData` as-is — Bases owns all filter/sort/group |
 | Settings | [`src/settings/`](src/settings/) | Book folder(s), companion-file name, default timeline |
@@ -212,10 +212,13 @@ override title parsing. Everything else is optional.
 | `scribe-visualization-characters` | string / list | card meta; future matrix axis |
 | `scribe-visualization-places` | string / list | card meta; future matrix axis |
 | `scribe-visualization-status` | string | e.g. `draft` (not yet surfaced) |
-| `scribe-visualization-parent` | string | scene → chapter link (not yet surfaced) |
 
 `VaultIndex` coerces leniently: comma-separated strings → arrays, empty/missing →
 `null` or `[]`.
+
+The scene → chapter relationship is expressed **only by folder nesting** (a
+scene note lives in its chapter's folder) — there is no `parent` frontmatter
+key, deliberately, to keep the schema and settings small.
 
 ## Docs to keep in sync
 

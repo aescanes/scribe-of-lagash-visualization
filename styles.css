@@ -103,6 +103,11 @@
 	font-size: var(--font-ui-small);
 }
 
+.scribe-canvas-toolbar button {
+	font-size: var(--font-ui-smaller);
+	padding: var(--size-2-1) var(--size-4-2);
+}
+
 .scribe-canvas-notice {
 	padding: var(--size-4-6) var(--size-4-4);
 	color: var(--text-muted);
@@ -137,17 +142,56 @@
 	position: sticky;
 	left: 0;
 	z-index: 3;
-	flex: 0 0 150px;
+	flex: 0 0 184px;
 	display: flex;
 	flex-direction: column;
-	gap: 2px;
+	gap: var(--size-2-2);
 	padding: var(--size-4-2) var(--size-4-3);
 	background: var(--background-primary);
 	border-right: 1px solid var(--background-modifier-border);
 }
 
-.scribe-canvas-lane-name {
+.scribe-canvas-lane-name-input {
+	width: 100%;
+	padding: 2px 4px;
 	font-weight: 600;
+	color: var(--text-normal);
+	background: transparent;
+	border: 1px solid transparent;
+	border-radius: var(--radius-s);
+}
+
+.scribe-canvas-lane-name-input:hover {
+	border-color: var(--background-modifier-border);
+}
+
+.scribe-canvas-lane-name-input:focus {
+	background: var(--background-primary);
+	border-color: var(--background-modifier-border-focus);
+}
+
+.scribe-canvas-lane-controls {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.scribe-canvas-lane-controls button {
+	padding: 0 5px;
+	min-width: 0;
+	height: 20px;
+	font-size: var(--font-ui-smaller);
+	line-height: 1;
+}
+
+.scribe-canvas-lane-color {
+	width: 22px;
+	height: 20px;
+	padding: 0;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	background: none;
+	cursor: pointer;
 }
 
 .scribe-canvas-lane-count {
@@ -168,7 +212,8 @@
 	border: 1px solid var(--background-modifier-border);
 	border-radius: var(--radius-m);
 	padding: var(--size-4-2) var(--size-4-3);
-	cursor: pointer;
+	cursor: grab;
+	touch-action: none;
 }
 
 .scribe-canvas-card:hover {
@@ -185,6 +230,29 @@
 .scribe-canvas-card.is-linked {
 	outline: 2px solid var(--interactive-accent);
 	outline-offset: 1px;
+}
+
+.scribe-canvas-card.is-dragging {
+	/* position/left/top/width are set inline by the drag handler */
+	z-index: var(--layer-dragged, 100);
+	pointer-events: none;
+	cursor: grabbing;
+	opacity: 0.92;
+	box-shadow: var(--shadow-l);
+}
+
+.scribe-canvas-lane.is-drop-target {
+	box-shadow: inset 0 0 0 2px var(--interactive-accent);
+}
+
+.scribe-canvas-drop-bar {
+	position: absolute;
+	top: 6px;
+	bottom: 6px;
+	width: 3px;
+	border-radius: 2px;
+	background: var(--interactive-accent);
+	pointer-events: none;
 }
 
 .scribe-canvas-card-dot {
