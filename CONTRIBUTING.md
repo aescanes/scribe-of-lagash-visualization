@@ -77,10 +77,9 @@ version — that happens once, at release time.
 
 1. Make sure `main` is up to date, the working tree is clean, and
    `npm run build && npm test && npx eslint src` all pass.
-2. In `CHANGELOG.md`, rename the `## [Unreleased]` heading to
-   `## [<version>] - <date>` (add a fresh empty `## [Unreleased]` above it if you
-   like), and commit that. The text under that heading becomes the git tag's
-   message, so write it for a reader of `git show <tag>`.
+2. Check that `CHANGELOG.md`'s `## [Unreleased]` section lists everything in this
+   release, written for a reader of `git show <tag>` — it becomes the tag
+   message. You do **not** rename the heading yourself; the bump does that.
 3. Bump the version — use the wrapper script for your bump size:
 
    ```bash
@@ -90,12 +89,15 @@ version — that happens once, at release time.
    Each wrapper runs `npm version <type> --ignore-scripts=false`. That:
 
    - bumps `package.json` / `package-lock.json`;
-   - runs the `version` hook → [`version-bump.mjs`](version-bump.mjs) syncs
+   - runs the `version` hook →
+     [`version-changelog.mjs`](version-changelog.mjs) promotes
+     `## [Unreleased]` to `## [<version>] - <date>` (leaving a fresh empty
+     `## [Unreleased]`), then [`version-bump.mjs`](version-bump.mjs) syncs
      `manifest.json` and adds the `version → minAppVersion` line to
      `versions.json`;
    - makes one commit and an annotated tag `<version>` (no `v` prefix);
-   - runs the `postversion` hook → [`version-tag.mjs`](version-tag.mjs) rewrites
-     the tag's message to this version's `CHANGELOG.md` section.
+   - runs the `postversion` hook → [`version-tag.mjs`](version-tag.mjs) writes
+     that new `CHANGELOG.md` section into the tag's message.
 
    > **Why `--ignore-scripts=false`:** `.npmrc` has `ignore-scripts=true`, which
    > otherwise suppresses the `version` / `postversion` hooks — the bump would

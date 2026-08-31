@@ -7,7 +7,7 @@
 		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
 		"test": "node esbuild.test.mjs && node --test .test-build",
-		"version": "node version-bump.mjs && git add manifest.json versions.json",
+		"version": "node version-changelog.mjs && node version-bump.mjs && git add CHANGELOG.md manifest.json versions.json",
 		"postversion": "node version-tag.mjs",
 		"version-patch": "npm version patch --ignore-scripts=false",
 		"version-minor": "npm version minor --ignore-scripts=false",
@@ -22,7 +22,7 @@
 		"timeline"
 	],
 	"author": "aescanes",
-	"license": "GPL-3.0-or-later",
+	"license": "MIT",
 	"devDependencies": {
 		"@eslint/js": "9.39.5",
 		"@types/node": "20.19.43",
