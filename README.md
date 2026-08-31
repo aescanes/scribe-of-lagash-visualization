@@ -19,9 +19,10 @@ writes is a per-book companion file that stores your timeline layout.
 
 - **Timeline canvas** — the main view (ribbon icon / "Open timeline canvas"
   command). Horizontal, colored timeline lanes for a book, with each
-  chapter/scene as a card in manuscript order. Read-only for now — pick
-  "Create timeline" the first time to seed a "Main plot" lane; dragging cards
-  between lanes lands in the next release.
+  chapter/scene as a card. Pick "Create timeline" the first time to seed a
+  "Main line" lane, then drag cards to reorder them or move them to another
+  lane, and add / rename / recolour / reorder / delete lanes from the lane
+  headers. Changes save to `Timelines.md` automatically; `Mod+Z` undoes.
 - **Simple timeline** — a plain chronological list of every chapter/scene
   ("Open simple timeline" command), optionally filtered to one named timeline.
 - **Scribe timeline (Bases view)** — the list rendering, registered
@@ -32,8 +33,7 @@ writes is a per-book companion file that stores your timeline layout.
   Bases' own toolbar — this plugin just renders the result. Requires the core
   Bases plugin to be enabled (Settings → Core plugins).
 
-Planned next: **dragging** cards between lanes and along the timeline, adding
-and recolouring lanes, and letting a chapter sit on more than one timeline. See
+Planned next: letting a chapter sit on more than one timeline at once. See
 [docs/timeline-canvas-plan.md](docs/timeline-canvas-plan.md). After that, a
 matrix view grouping chapters/scenes by character, place, or situation.
 

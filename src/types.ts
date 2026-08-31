@@ -18,7 +18,6 @@ export const FRONTMATTER_KEYS = {
 	characters: "scribe-visualization-characters",
 	places: "scribe-visualization-places",
 	status: "scribe-visualization-status",
-	parent: "scribe-visualization-parent",
 } as const;
 
 export type EntryType = "chapter" | "scene";
@@ -63,7 +62,6 @@ export interface NovelEntry {
 	characters: string[];
 	places: string[];
 	status: string | null;
-	parent: string | null;
 }
 
 /** One horizontal lane in the timeline canvas. */

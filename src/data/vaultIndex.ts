@@ -161,7 +161,6 @@ export class VaultIndex extends Component {
 			characters: toStringArray(frontmatter[FRONTMATTER_KEYS.characters]),
 			places: toStringArray(frontmatter[FRONTMATTER_KEYS.places]),
 			status: toStringOrNull(frontmatter[FRONTMATTER_KEYS.status]),
-			parent: toStringOrNull(frontmatter[FRONTMATTER_KEYS.parent]),
 		};
 	}
 }
