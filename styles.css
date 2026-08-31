@@ -58,11 +58,15 @@
 	position: sticky;
 	left: 0;
 	z-index: 3;
-	flex: 0 0 184px;
+	/* fixed width — flex-basis + no grow/shrink + min-width:0 so content can't
+	   push it wider than 180px */
+	flex: 0 0 180px;
+	min-width: 0;
+	box-sizing: border-box;
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
-	gap: var(--size-2-2);
+	gap: 6px;
 	padding: var(--size-4-2) var(--size-4-3);
 	background: var(--background-secondary);
 	border-right: 1px solid var(--background-modifier-border);
@@ -81,23 +85,41 @@
 	background: var(--scribe-line-color);
 }
 
-.scribe-canvas-line-name-input {
-	width: 100%;
+/* Line name + card count. Clicking the name swaps this row for an input. */
+.scribe-canvas-line-name-row {
+	display: flex;
+	align-items: baseline;
+	gap: 5px;
+}
+
+.scribe-canvas-line-name {
+	flex: 0 1 auto;
+	min-width: 0;
 	padding: 2px 4px;
 	font-weight: 600;
 	color: var(--text-normal);
-	background: transparent;
-	border: 1px solid transparent;
 	border-radius: var(--radius-s);
+	cursor: text;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
-.scribe-canvas-line-name-input:hover {
-	border-color: var(--background-modifier-border);
+.scribe-canvas-line-name:hover,
+.scribe-canvas-line-name:focus-visible {
+	background: var(--background-modifier-hover);
+	outline: none;
 }
 
-.scribe-canvas-line-name-input:focus {
+.scribe-canvas-line-name-input {
+	flex: 1;
+	min-width: 0;
+	padding: 2px 4px;
+	font-weight: 600;
+	color: var(--text-normal);
 	background: var(--background-primary);
-	border-color: var(--background-modifier-border-focus);
+	border: 1px solid var(--background-modifier-border-focus);
+	border-radius: var(--radius-s);
 }
 
 .scribe-canvas-line-controls {
@@ -107,26 +129,46 @@
 }
 
 .scribe-canvas-line-controls button {
-	padding: 0 5px;
+	flex: none;
+	width: 22px;
+	height: 22px;
 	min-width: 0;
-	height: 20px;
+	min-height: 0;
+	padding: 0;
 	font-size: var(--font-ui-smaller);
 	line-height: 1;
+	box-shadow: none;
 }
 
+/* Native <input type=color> is a chunky OS control by default — reset it to a
+   plain 22x22 swatch. */
 .scribe-canvas-line-color {
+	flex: none;
 	width: 22px;
-	height: 20px;
+	height: 22px;
 	padding: 0;
 	border: 1px solid var(--background-modifier-border);
 	border-radius: var(--radius-s);
 	background: none;
 	cursor: pointer;
+	appearance: none;
+	-webkit-appearance: none;
+}
+
+.scribe-canvas-line-color::-webkit-color-swatch-wrapper {
+	padding: 0;
+}
+
+.scribe-canvas-line-color::-webkit-color-swatch {
+	border: none;
+	border-radius: 2px;
 }
 
 .scribe-canvas-line-count {
-	font-size: var(--font-ui-smaller);
+	flex: none;
+	font-size: var(--font-ui-medium);
 	color: var(--text-muted);
+	font-weight: 600;
 }
 
 .scribe-canvas-line-rail {

@@ -22,6 +22,8 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   cards sitting on top of it, instead of a tinted band. Cards stay opaque on
   hover, have a soft shadow and a coloured left edge, and a dragged card now
   tracks the pointer exactly.
+- Line headers: the name shows as plain text and only turns into an input when
+  clicked, with the card count `(2)` shown next to it (and hidden while editing).
 
 ### Removed
 

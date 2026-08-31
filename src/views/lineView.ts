@@ -325,15 +325,22 @@ export class LineView extends ItemView {
 	): void {
 		const header = lineEl.createDiv({ cls: "scribe-canvas-line-header" });
 
-		const nameInput = header.createEl("input", {
-			cls: "scribe-canvas-line-name-input",
-			type: "text",
-			value: name,
+		const nameRow = header.createDiv({ cls: "scribe-canvas-line-name-row" });
+		const nameEl = nameRow.createDiv({ cls: "scribe-canvas-line-name", text: name });
+		nameEl.tabIndex = 0;
+		nameEl.setAttr("role", "button");
+		nameEl.setAttr("aria-label", "Rename line");
+		nameEl.addEventListener("click", () => this.editLineName(nameRow, id, name));
+		nameEl.addEventListener("keydown", (e) => {
+			if (e.key === "Enter" || e.key === " ") {
+				e.preventDefault();
+				this.editLineName(nameRow, id, name);
+			}
 		});
-		nameInput.addEventListener("change", () => {
-			const next = nameInput.value.trim();
-			if (next && next !== name) this.mutate((l) => renameLine(l, id, next));
-			else nameInput.value = name;
+		nameRow.createSpan({
+			cls: "scribe-canvas-line-count",
+			text: `(${count})`,
+			attr: { "aria-label": `${count} card${count === 1 ? "" : "s"}` },
 		});
 
 		const controls = header.createDiv({ cls: "scribe-canvas-line-controls" });
@@ -355,8 +362,36 @@ export class LineView extends ItemView {
 		const del = controls.createEl("button", { text: "✕", attr: { "aria-label": "Delete line" } });
 		del.disabled = pos.only;
 		del.addEventListener("click", () => this.mutate((l) => removeLine(l, id)));
+	}
 
-		header.createSpan({ cls: "scribe-canvas-line-count", text: `${count}` });
+	/**
+	 * Swaps the line-name text (and its count) for a full-width input; commits
+	 * on blur / Enter, reverts on Escape. Both paths re-render, restoring the
+	 * text + count.
+	 */
+	private editLineName(nameRow: HTMLElement, id: string, name: string): void {
+		nameRow.empty();
+		const input = nameRow.createEl("input", {
+			cls: "scribe-canvas-line-name-input",
+			type: "text",
+			value: name,
+		});
+		input.focus();
+		input.select();
+
+		let done = false;
+		const finish = (commit: boolean): void => {
+			if (done) return;
+			done = true;
+			const next = input.value.trim();
+			if (commit && next && next !== name) this.mutate((l) => renameLine(l, id, next));
+			else this.render();
+		};
+		input.addEventListener("blur", () => finish(true));
+		input.addEventListener("keydown", (e) => {
+			if (e.key === "Enter") input.blur();
+			else if (e.key === "Escape") finish(false);
+		});
 	}
 
 	private renderCard(parent: HTMLElement, card: CanvasCard, flow: boolean): void {
