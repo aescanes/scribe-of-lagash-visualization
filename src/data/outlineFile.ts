@@ -4,6 +4,7 @@
 import { App, normalizePath, parseYaml, TFile } from "obsidian";
 import { OutlineRow } from "../types";
 import { parseOutlineTable } from "./outline";
+import { replaceFirstTable } from "./outlineGenerate";
 
 /**
  * Reads the optional per-book "Outline file" — a hand-edited Markdown table
@@ -86,4 +87,24 @@ export async function ensureOutlineFile(app: App, path: string): Promise<void> {
 		"",
 	].join("\n");
 	await app.vault.create(normalized, body);
+}
+
+/**
+ * Fills the Outline file's table from `table` (built by `generateOutlineTable`),
+ * but only when its current table has no data rows — a filled-in outline is
+ * never clobbered. Returns whether it wrote. Surrounding text is preserved.
+ */
+export async function writeGeneratedOutline(app: App, path: string, table: string): Promise<boolean> {
+	if (!path) return false;
+	const file = app.vault.getAbstractFileByPath(normalizePath(path));
+	if (!(file instanceof TFile)) return false;
+
+	const content = await app.vault.read(file);
+	const { frontmatter, body } = splitFrontmatter(content);
+	if (!hasMarker(frontmatter)) return false;
+	if (parseOutlineTable(body).length > 0) return false;
+
+	const head = content.slice(0, content.length - body.length);
+	await app.vault.modify(file, head + replaceFirstTable(body, table));
+	return true;
 }

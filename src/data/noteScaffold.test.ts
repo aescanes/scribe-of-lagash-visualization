@@ -35,18 +35,25 @@ function planned(over: Partial<PlannedEntry> = {}): PlannedEntry {
 	};
 }
 
-test("scaffoldNoteBody with no optional cells is just a title", () => {
-	assert.equal(scaffoldNoteBody(planned()), "# Chapter 1\n");
+test("scaffoldNoteBody with no optional cells is empty", () => {
+	assert.equal(scaffoldNoteBody(planned()), "");
 });
 
-test("scaffoldNoteBody adds the Summary as a blockquote", () => {
+test("scaffoldNoteBody puts the Summary in the body, with no title heading", () => {
 	const body = scaffoldNoteBody(planned({ row: row({ summary: "Berlín 2029." }) }));
-	assert.equal(body, "# Chapter 1\n\n> Berlín 2029.\n");
+	assert.equal(body, "Berlín 2029.\n");
 });
 
 test("scaffoldNoteBody writes only the frontmatter keys the row filled in", () => {
 	const body = scaffoldNoteBody(
-		planned({ row: row({ date: "2029-03-01", characters: ["Matthias", "Elke"], status: "draft" }) }),
+		planned({
+			row: row({
+				summary: "The committee applauds.",
+				date: "2029-03-01",
+				characters: ["Matthias", "Elke"],
+				status: "draft",
+			}),
+		}),
 	);
 	assert.equal(
 		body,
@@ -57,7 +64,7 @@ test("scaffoldNoteBody writes only the frontmatter keys the row filled in", () =
 			'scribe-visualization-status: "draft"',
 			"---",
 			"",
-			"# Chapter 1",
+			"The committee applauds.",
 			"",
 		].join("\n"),
 	);

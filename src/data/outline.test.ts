@@ -179,6 +179,39 @@ test("reconcileOutline flags a Type discrepancy", () => {
 	assert.match(result.marks["Book/Chapter 1.md"], /outline plans it as a chapter, note is a scene/);
 });
 
+test("reconcileOutline marks a ghost that was dragged onto a different line", () => {
+	const rows = [row({ act: "I", chapter: 5, line: "Main line" })];
+	const dragged: LineLayout = {
+		...layout,
+		placements: { "Book/Act I/Chapter 5.md": { lines: ["pensiones"], x: 0 } },
+	};
+	const result = reconcileOutline(rows, [], dragged, "Book");
+	assert.equal(result.planned.length, 1);
+	assert.match(result.marks["Book/Act I/Chapter 5.md"], /outline says "Main line", moved to "Pensiones"/);
+});
+
+test("reconcileOutline marks a ghost whose row has no line or an unknown line", () => {
+	const rows = [row({ chapter: 7 }), row({ chapter: 8, line: "Nope" })];
+	const result = reconcileOutline(rows, [], layout, "Book");
+	assert.equal(result.marks["Book/Chapter 7.md"], "no line set in the outline");
+	assert.match(result.marks["Book/Chapter 8.md"], /outline's line "Nope" isn't in Lines.md/);
+});
+
+test("reconcileOutline keeps the no-valid-line mark even after the ghost is dragged onto a line", () => {
+	const rows = [row({ chapter: 7 }), row({ chapter: 8, line: "Nope" })];
+	const dragged: LineLayout = {
+		...layout,
+		placements: {
+			...layout.placements,
+			"Book/Chapter 7.md": { lines: ["main"], x: 0 },
+			"Book/Chapter 8.md": { lines: ["main"], x: 1 },
+		},
+	};
+	const result = reconcileOutline(rows, [], dragged, "Book");
+	assert.equal(result.marks["Book/Chapter 7.md"], "no line set in the outline");
+	assert.match(result.marks["Book/Chapter 8.md"], /outline's line "Nope" isn't in Lines.md/);
+});
+
 test("reconcileOutline collects unresolved Line names for diagnostics", () => {
 	const rows = [row({ chapter: 1, line: "Nope" }), row({ chapter: 2, line: "Nope" })];
 	const result = reconcileOutline(rows, [], layout, "Book");
@@ -186,7 +219,17 @@ test("reconcileOutline collects unresolved Line names for diagnostics", () => {
 	assert.equal(result.planned[0].lineId, null);
 });
 
+test("reconcileOutline reports which real notes matched a row (for orphan detection)", () => {
+	const entries = [
+		entry("Book/Chapter 1.md", { type: "chapter", order: 1 }),
+		entry("Book/Chapter 2.md", { type: "chapter", order: 2 }),
+	];
+	const rows = [row({ chapter: 1 })];
+	const result = reconcileOutline(rows, entries, layout, "Book");
+	assert.deepEqual(result.fulfilledPaths, ["Book/Chapter 1.md"]);
+});
+
 test("reconcileOutline is a no-op for an empty table", () => {
 	const result = reconcileOutline([], [], layout, "Book");
-	assert.deepEqual(result, { planned: [], previews: {}, marks: {}, unknownLines: [] });
+	assert.deepEqual(result, { planned: [], previews: {}, marks: {}, fulfilledPaths: [], unknownLines: [] });
 });

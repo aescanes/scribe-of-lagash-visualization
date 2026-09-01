@@ -157,6 +157,8 @@ export interface OutlineReconciliation {
 	previews: Record<string, string>;
 	/** Vault path -> a human-readable description of how the note differs from its row. */
 	marks: Record<string, string>;
+	/** Vault paths of real notes that matched a row — the rest are "not in the outline". */
+	fulfilledPaths: string[];
 	/** `Line` cell values that matched no line in Lines.md, for diagnostics. */
 	unknownLines: string[];
 }
@@ -165,6 +167,7 @@ const emptyReconciliation: OutlineReconciliation = {
 	planned: [],
 	previews: {},
 	marks: {},
+	fulfilledPaths: [],
 	unknownLines: [],
 };
 
@@ -200,6 +203,7 @@ export function reconcileOutline(
 	const planned: PlannedEntry[] = [];
 	const previews: Record<string, string> = {};
 	const marks: Record<string, string> = {};
+	const fulfilledPaths = new Set<string>();
 	const unknownLines = new Set<string>();
 
 	for (const row of rows) {
@@ -215,10 +219,22 @@ export function reconcileOutline(
 
 		if (!matched) {
 			planned.push({ row, type, label: `${unitLabel(type, language)} ${number}`, expectedPath, lineId: rowLineId });
+
+			const draggedTo = placedLineOf.get(expectedPath);
+			if (!row.line) {
+				marks[expectedPath] = "no line set in the outline";
+			} else if (rowLineId === null) {
+				marks[expectedPath] = `outline's line "${row.line}" isn't in Lines.md`;
+			} else if (draggedTo && draggedTo !== rowLineId) {
+				marks[expectedPath] =
+					`outline says "${lineNameById.get(rowLineId) ?? row.line}", moved to ` +
+					`"${lineNameById.get(draggedTo) ?? draggedTo}"`;
+			}
 			continue;
 		}
 
 		const path = matched.file.path;
+		fulfilledPaths.add(path);
 		if (row.summary) previews[path] = row.summary;
 
 		const issues: string[] = [];
@@ -244,5 +260,11 @@ export function reconcileOutline(
 		if (issues.length > 0) marks[path] = issues.join("; ");
 	}
 
-	return { planned, previews, marks, unknownLines: Array.from(unknownLines).sort() };
+	return {
+		planned,
+		previews,
+		marks,
+		fulfilledPaths: Array.from(fulfilledPaths),
+		unknownLines: Array.from(unknownLines).sort(),
+	};
 }

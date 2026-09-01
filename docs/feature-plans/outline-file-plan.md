@@ -1,8 +1,15 @@
 # Implementation plan — the Outline file
 
-Status: **not started**. This is the build plan for an optional per-book
-**Outline file**, described in [`../../AGENTS.md`](../../AGENTS.md). Each phase
-is independently shippable and leaves the plugin in a working state.
+Status: **Phase 4 + Phase 5 complete**. This is the build plan for an optional
+per-book **Outline file**, described in [`../../AGENTS.md`](../../AGENTS.md).
+Each phase is independently shippable and leaves the plugin in a working state.
+
+Notes vs. plan as built: the reconciliation result also carries `fulfilledPaths`
+(for the "not in the outline" diagnostic); `canvasModel` gained
+`applyPlannedPlacements` (used for both single and batch create) instead of
+routing single-create through `moveCard`; ghost cards on a line are re-indexed
+`0..n` only when that line actually has one. The settings-created skeleton is
+the entry point — there is no toolbar "Create outline file" button.
 
 ## Goal
 
@@ -71,7 +78,7 @@ table or moving the note/card.
 
 ---
 
-## Phase 4 — read the outline, show ghost cards, click-to-create
+## Phase 4 — read the outline, show ghost cards, click-to-create ✅ done
 
 Independently shippable: with a hand-written outline table you see your
 planned book on the canvas and can turn any ghost card into a real note.
@@ -103,8 +110,8 @@ planned book on the canvas and can turn any ghost card into a real note.
     skeleton when `path` is set and the file doesn't exist yet; called from
     `saveSettings` after the name changes.
 - **`src/data/noteScaffold.ts`** (pure): `scaffoldNoteBody(planned): string` —
-  frontmatter block with only the keys the row filled, then `# <title>\n\n>
-  <summary>\n`.
+  frontmatter block with only the keys the row filled, then the Summary as the
+  body (no `# <title>` heading — the filename already is the title).
 - **Settings** — `outlineFileName: ""` (empty = feature off) in
   [`../../src/settings/settings.ts`](../../src/settings/settings.ts); a text
   field in
@@ -131,10 +138,12 @@ planned book on the canvas and can turn any ghost card into a real note.
   switch, and index change — both sources are re-checked every time.
 - `viewReady` also allows a book with lines but zero real entries, as long as
   it has outline rows.
-- Ghost cards: `scribe-canvas-card--planned`, show the summary preview, are
-  **not draggable**, and on click open a confirm ("Create note at `<path>`?")
-  that creates any missing parent folders, writes the scaffolded note, seeds
-  its placement via `moveCard`, and opens it.
+- Ghost cards: `scribe-canvas-card--planned`, show the summary preview,
+  **draggable** like real cards (a drop writes a `Lines.md` placement keyed by
+  the note's future path via `moveCard`; `canvasModel` then honours it over the
+  manuscript-order guess). Click opens a confirm ("Create note at `<path>`?")
+  that creates any missing parent folders, writes the scaffolded note, seeds its
+  placement via `applyPlannedPlacements`, and opens it.
 - Real cards render their `summary` preview and, when marked, a `⚠` badge.
 - Diagnostics list `unknownLines` (outline rows referencing a line not in
   `Lines.md`).
@@ -147,7 +156,7 @@ affordance.
 
 ---
 
-## Phase 5 — polish
+## Phase 5 — polish ✅ done
 
 - **"Create all planned notes"** toolbar action — batches the Phase 4 create
   flow over every ghost card.

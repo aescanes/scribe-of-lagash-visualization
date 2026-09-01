@@ -6,9 +6,10 @@ import { FRONTMATTER_KEYS, PlannedEntry } from "../types";
 /**
  * Builds the starter content for a note created from a planned outline row: a
  * minimal frontmatter block (only the keys the row filled in) followed by the
- * title and the row's Summary as a blockquote. Pure — no Obsidian imports —
- * mirrors the manual YAML serialization `lineFile.ts` uses for a brand-new
- * file, so a stray colon or quote in a Summary/character name still round-trips.
+ * row's Summary as the body. No `# title` heading — the filename already is the
+ * title. Pure — no Obsidian imports — mirrors the manual YAML serialization
+ * `lineFile.ts` uses for a brand-new file, so a stray colon or quote in a
+ * Summary / character name still round-trips.
  */
 
 function frontmatterLines(planned: PlannedEntry): string[] {
@@ -32,8 +33,7 @@ export function scaffoldNoteBody(planned: PlannedEntry): string {
 	const fm = frontmatterLines(planned);
 	if (fm.length > 0) parts.push(["---", ...fm, "---", ""].join("\n"));
 
-	parts.push(`# ${planned.label}`);
-	if (planned.row.summary) parts.push("", `> ${planned.row.summary}`);
+	if (planned.row.summary) parts.push(planned.row.summary);
 	parts.push("");
 
 	return parts.join("\n");

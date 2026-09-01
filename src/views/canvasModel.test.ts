@@ -6,11 +6,13 @@ import assert from "node:assert/strict";
 
 import {
 	addLine,
+	applyPlannedPlacements,
 	canvasModel,
 	cloneLayout,
 	defaultLineId,
 	isLayoutEmpty,
 	layoutsEqual,
+	lineOrderFromModel,
 	moveCard,
 	moveLine,
 	reconcilePlacements,
@@ -18,7 +20,8 @@ import {
 	renameLine,
 	starterLayout,
 } from "./canvasModel";
-import { LineLayout, NovelEntry } from "../types";
+import { LineLayout, NovelEntry, OutlineRow, PlannedEntry } from "../types";
+import { OutlineReconciliation } from "../data/outline";
 
 function entry(path: string, over: Partial<NovelEntry> = {}): NovelEntry {
 	return {
@@ -51,7 +54,7 @@ const layout: LineLayout = {
 test("canvasModel orders lines by order and sorts cards by x", () => {
 	const model = canvasModel([entry("Book/Chapter 2.md"), entry("Book/Chapter 1.md")], layout);
 	assert.deepEqual(model.lines.map((l) => l.def.id), ["back", "main"]);
-	assert.deepEqual(model.lines[1].cards.map((c) => c.entry.file.path), [
+	assert.deepEqual(model.lines[1].cards.map((c) => c.entry?.file.path), [
 		"Book/Chapter 1.md",
 		"Book/Chapter 2.md",
 	]);
@@ -90,6 +93,141 @@ test("starterLayout puts every entry on one line in order", () => {
 test("isLayoutEmpty", () => {
 	assert.equal(isLayoutEmpty({ lines: [], placements: {} }), true);
 	assert.equal(isLayoutEmpty(layout), false);
+});
+
+/* ---- outline merge ---- */
+
+function outlineRow(over: Partial<OutlineRow> = {}): OutlineRow {
+	return {
+		rowIndex: 0,
+		act: null,
+		folder: null,
+		chapter: null,
+		scene: null,
+		line: null,
+		summary: "",
+		date: null,
+		characters: [],
+		places: [],
+		status: null,
+		...over,
+	};
+}
+
+function plannedEntry(over: Partial<PlannedEntry> = {}): PlannedEntry {
+	return {
+		row: outlineRow(),
+		type: "chapter",
+		label: "Chapter 2",
+		expectedPath: "Book/Chapter 2.md",
+		lineId: "main",
+		...over,
+	};
+}
+
+function plan(over: Partial<OutlineReconciliation> = {}): OutlineReconciliation {
+	return { planned: [], previews: {}, marks: {}, fulfilledPaths: [], unknownLines: [], ...over };
+}
+
+const twoLine: LineLayout = {
+	lines: [
+		{ id: "main", name: "Main", color: "#111", order: 0 },
+		{ id: "side", name: "Side", color: "#222", order: 1 },
+	],
+	placements: {
+		"Book/Chapter 1.md": { lines: ["main"], x: 0 },
+		"Book/Chapter 3.md": { lines: ["main"], x: 1 },
+	},
+};
+
+test("canvasModel splices a ghost card onto its line by manuscript order and re-indexes", () => {
+	const entries = [
+		entry("Book/Chapter 1.md", { title: "Chapter 1", order: 1 }),
+		entry("Book/Chapter 3.md", { title: "Chapter 3", order: 3 }),
+	];
+	const ghost = plannedEntry({
+		row: outlineRow({ chapter: 2 }),
+		label: "Chapter 2",
+		expectedPath: "Book/Chapter 2.md",
+		lineId: "main",
+	});
+	const model = canvasModel(entries, twoLine, plan({ planned: [ghost] }));
+	const main = model.lines.find((l) => l.def.id === "main")!;
+	assert.deepEqual(
+		main.cards.map((c) => (c.entry ? c.entry.title : c.planned!.label)),
+		["Chapter 1", "Chapter 2", "Chapter 3"],
+	);
+	assert.deepEqual(main.cards.map((c) => c.x), [0, 1, 2]);
+	assert.equal(main.cards[1].kind, "planned");
+});
+
+test("canvasModel puts a real card's Summary preview and discrepancy mark on the card", () => {
+	const entries = [entry("Book/Chapter 1.md", { title: "Chapter 1", order: 1 })];
+	const model = canvasModel(
+		entries,
+		twoLine,
+		plan({ previews: { "Book/Chapter 1.md": "Berlín 2029." }, marks: { "Book/Chapter 1.md": "wrong line" } }),
+	);
+	const card = model.lines.find((l) => l.def.id === "main")!.cards[0];
+	assert.equal(card.summary, "Berlín 2029.");
+	assert.equal(card.mark, "wrong line");
+});
+
+test("canvasModel routes a ghost with an unknown line to plannedUnplaced", () => {
+	const ghost = plannedEntry({ lineId: null });
+	const model = canvasModel([], twoLine, plan({ planned: [ghost] }));
+	assert.equal(model.plannedUnplaced.length, 1);
+	assert.equal(model.lines.every((l) => l.cards.length === 0), true);
+});
+
+test("lineOrderFromModel lists real and ghost cards in display order", () => {
+	const entries = [entry("Book/Chapter 1.md", { title: "Chapter 1", order: 1 })];
+	const ghost = plannedEntry({ row: outlineRow({ chapter: 2 }), expectedPath: "Book/Chapter 2.md" });
+	const model = canvasModel(entries, twoLine, plan({ planned: [ghost] }));
+	assert.deepEqual(lineOrderFromModel(model).main, ["Book/Chapter 1.md", "Book/Chapter 2.md"]);
+});
+
+test("canvasModel positions a dragged ghost by its saved placement, not manuscript order", () => {
+	const entries = [
+		entry("Book/Chapter 1.md", { title: "Chapter 1", order: 1 }),
+		entry("Book/Chapter 3.md", { title: "Chapter 3", order: 3 }),
+	];
+	// Chapter 2's ghost was dragged to the front — the line is dense afterwards.
+	const dragged: LineLayout = {
+		...twoLine,
+		placements: {
+			"Book/Chapter 2.md": { lines: ["main"], x: 0 },
+			"Book/Chapter 1.md": { lines: ["main"], x: 1 },
+			"Book/Chapter 3.md": { lines: ["main"], x: 2 },
+		},
+	};
+	const ghost = plannedEntry({ row: outlineRow({ chapter: 2 }), expectedPath: "Book/Chapter 2.md", lineId: "main" });
+	const model = canvasModel(entries, dragged, plan({ planned: [ghost] }));
+	const main = model.lines.find((l) => l.def.id === "main")!;
+	assert.deepEqual(
+		main.cards.map((c) => (c.entry ? c.entry.title : c.planned!.label)),
+		["Chapter 2", "Chapter 1", "Chapter 3"],
+	);
+	assert.equal(main.cards[0].kind, "planned");
+});
+
+test("applyPlannedPlacements seeds a placement at the ghost's slot and densifies the line", () => {
+	const entries = [
+		entry("Book/Chapter 1.md", { title: "Chapter 1", order: 1 }),
+		entry("Book/Chapter 3.md", { title: "Chapter 3", order: 3 }),
+	];
+	const ghost = plannedEntry({ row: outlineRow({ chapter: 2 }), expectedPath: "Book/Chapter 2.md", lineId: "main" });
+	const model = canvasModel(entries, twoLine, plan({ planned: [ghost] }));
+	const next = applyPlannedPlacements(twoLine, model, new Set(["Book/Chapter 2.md"]));
+	assert.deepEqual(next.placements["Book/Chapter 2.md"], { lines: ["main"], x: 1 });
+	assert.deepEqual(next.placements["Book/Chapter 3.md"], { lines: ["main"], x: 2 });
+	assert.deepEqual(next.placements["Book/Chapter 1.md"], { lines: ["main"], x: 0 });
+});
+
+test("applyPlannedPlacements leaves untouched lines alone", () => {
+	const model = canvasModel([entry("Book/Chapter 1.md", { order: 1 })], twoLine, plan());
+	const next = applyPlannedPlacements(twoLine, model, new Set(["Book/whatever.md"]));
+	assert.deepEqual(next.placements, twoLine.placements);
 });
 
 /* ---- editing ops ---- */
