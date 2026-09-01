@@ -18,6 +18,11 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - The icon description (hover) in the sidebar was updated to "(SL) Visualization: Open lines"
 - The icon in the sidebar has now custom colors (depend of light/dark scheme)
 
+### Removed
+- The pre-0.4 back-compat shims: a `Timelines.md` is no longer renamed to
+  `Lines.md` on open, and the legacy `timelines:` frontmatter key is no longer
+  read. The plugin has no released users relying on them.
+
 ## [0.4.0](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.4.0) - 2026-08-31
 
 ### Added

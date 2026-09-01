@@ -20,9 +20,6 @@ export { emptyLineLayout, lineFilePath } from "./lineLayout";
 const MARKER_KEY = "scribe-visualization";
 const MARKER_VALUE = "lines";
 
-/** Pre-0.4 default name, migrated to `DEFAULT_LINE_FILE` on first open. */
-const LEGACY_FILE_NAME = "Timelines.md";
-
 const FRONTMATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/;
 
 /** Extracts and parses the YAML frontmatter block from raw file content. */
@@ -33,22 +30,6 @@ function parseFrontmatterBlock(content: string): unknown {
 		return parseYaml(match[1]);
 	} catch {
 		return null;
-	}
-}
-
-/**
- * If `path` doesn't exist but a legacy `Timelines.md` sits beside it, rename the
- * legacy file into place. Returns nothing; callers just re-resolve `path` after.
- */
-export async function migrateLegacyLineFile(app: App, path: string): Promise<void> {
-	const normalized = normalizePath(path);
-	if (app.vault.getAbstractFileByPath(normalized) instanceof TFile) return;
-
-	const slash = normalized.lastIndexOf("/");
-	const dir = slash === -1 ? "" : normalized.slice(0, slash);
-	const legacy = app.vault.getAbstractFileByPath(dir ? `${dir}/${LEGACY_FILE_NAME}` : LEGACY_FILE_NAME);
-	if (legacy instanceof TFile) {
-		await app.fileManager.renameFile(legacy, normalized);
 	}
 }
 
@@ -73,7 +54,6 @@ export async function writeLineLayout(app: App, path: string, layout: LineLayout
 			fm[MARKER_KEY] = MARKER_VALUE;
 			fm.lines = lines;
 			fm.placements = layout.placements;
-			delete fm.timelines;
 		});
 		return;
 	}

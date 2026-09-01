@@ -3,13 +3,7 @@
 
 import { debounce, ItemView, normalizePath, Scope, TFile, WorkspaceLeaf } from "obsidian";
 import type ScribeVisualizationPlugin from "../main";
-import {
-	emptyLineLayout,
-	lineFilePath,
-	migrateLegacyLineFile,
-	readLineLayout,
-	writeLineLayout,
-} from "../data/lineFile";
+import { emptyLineLayout, lineFilePath, readLineLayout, writeLineLayout } from "../data/lineFile";
 import { LineLayout, NovelEntry } from "../types";
 import {
 	addLine,
@@ -142,7 +136,6 @@ export class LineView extends ItemView {
 
 		if (this.book) {
 			const path = normalizePath(this.linePath());
-			await migrateLegacyLineFile(this.app, path);
 			this.fileExists = this.app.vault.getAbstractFileByPath(path) instanceof TFile;
 			this.layout = await readLineLayout(this.app, path);
 			this.autoPlace();

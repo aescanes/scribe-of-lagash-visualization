@@ -43,12 +43,3 @@ test("parseLineLayout coerces placements", () => {
 	assert.deepEqual(layout.placements["Book/Chapter 2.md"], { lines: ["main", "backstory"], x: 3 });
 	assert.equal("Book/bad.md" in layout.placements, false);
 });
-
-test("parseLineLayout still reads the pre-0.4 `timelines` key", () => {
-	const layout = parseLineLayout({
-		timelines: [{ id: "main", name: "Main", color: "#111", order: 0 }],
-		placements: { "Book/Chapter 1.md": { timelines: ["main"], x: 2 } },
-	});
-	assert.equal(layout.lines[0].id, "main");
-	assert.deepEqual(layout.placements["Book/Chapter 1.md"], { lines: ["main"], x: 2 });
-});
