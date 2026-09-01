@@ -1,23 +1,34 @@
 // SPDX-License-Identifier: MIT
 // Copyright (C) 2026 aescanes
 
-import { Line, LineLayout, NovelEntry, Placement } from "../types";
+import { Line, LineLayout, NovelEntry, Placement, PlannedEntry } from "../types";
+import { byManuscriptOrder, OrderedEntry } from "../data/manuscriptOrder";
+import { OutlineReconciliation, outlineRowNumber } from "../data/outline";
 
 /**
  * Pure layout logic for the book's default view: turns the set of discovered
- * entries plus the saved line layout into a render model, and builds the
- * starter layout for a brand-new book. No Obsidian APIs — unit-tested.
+ * entries plus the saved line layout (and, optionally, the reconciled outline)
+ * into a render model, and builds the starter layout for a brand-new book. No
+ * Obsidian APIs — unit-tested.
  */
 
 export interface CanvasCard {
-	entry: NovelEntry;
+	kind: "real" | "planned";
+	/** The discovered note — set when `kind === "real"`. */
+	entry: NovelEntry | null;
+	/** The planned outline row — set when `kind === "planned"` (a ghost card). */
+	planned: PlannedEntry | null;
 	/** Column index along the horizontal axis. */
 	x: number;
+	/** Outline Summary shown as a card preview, when the owning row has one. */
+	summary: string | null;
+	/** For a real card whose outline row disagrees with the note — advisory text. */
+	mark: string | null;
 }
 
 export interface CanvasLine {
 	def: Line;
-	/** Cards on this line, left to right. */
+	/** Cards on this line, left to right (real and ghost, once the outline is merged). */
 	cards: CanvasCard[];
 }
 
@@ -25,22 +36,71 @@ export interface CanvasModel {
 	lines: CanvasLine[];
 	/** Entries with no placement, or whose placement names only unknown lines. */
 	unplaced: NovelEntry[];
+	/** Planned rows whose `Line` cell matched no line — shown but not placed. */
+	plannedUnplaced: PlannedEntry[];
 	/** Number of columns to size the horizontal axis (at least 1). */
 	columnCount: number;
 }
 
 const DEFAULT_LINE_ID = "main";
 
+const EMPTY_PLAN: OutlineReconciliation = {
+	planned: [],
+	previews: {},
+	marks: {},
+	fulfilledPaths: [],
+	unknownLines: [],
+};
+
 function byX(a: CanvasCard, b: CanvasCard): number {
 	return a.x - b.x;
+}
+
+function realCard(entry: NovelEntry, x: number, plan: OutlineReconciliation): CanvasCard {
+	return {
+		kind: "real",
+		entry,
+		planned: null,
+		x,
+		summary: plan.previews[entry.file.path] ?? null,
+		mark: plan.marks[entry.file.path] ?? null,
+	};
+}
+
+function plannedCard(p: PlannedEntry, x: number, plan: OutlineReconciliation): CanvasCard {
+	return {
+		kind: "planned",
+		entry: null,
+		planned: p,
+		x,
+		summary: p.row.summary || null,
+		mark: plan.marks[p.expectedPath] ?? null,
+	};
+}
+
+function plannedOrderKey(p: PlannedEntry): OrderedEntry {
+	return { path: p.expectedPath, order: outlineRowNumber(p.row), title: p.label };
+}
+
+function cardOrderKey(card: CanvasCard): OrderedEntry {
+	if (card.entry) {
+		return { path: card.entry.file.path, order: card.entry.order, title: card.entry.title };
+	}
+	return plannedOrderKey(card.planned as PlannedEntry);
 }
 
 /**
  * Builds the render model. `entries` should already be filtered to one book and
  * sorted into the desired default order (the index sorts by order key, then
- * title).
+ * title). `plan` is the reconciled outline: its planned rows become ghost cards
+ * spliced onto the line they name, at the spot their manuscript order implies
+ * relative to the real cards already there.
  */
-export function canvasModel(entries: NovelEntry[], layout: LineLayout): CanvasModel {
+export function canvasModel(
+	entries: NovelEntry[],
+	layout: LineLayout,
+	plan: OutlineReconciliation = EMPTY_PLAN,
+): CanvasModel {
 	const lines: CanvasLine[] = [...layout.lines]
 		.sort((a, b) => a.order - b.order)
 		.map((def) => ({ def, cards: [] as CanvasCard[] }));
@@ -62,12 +122,61 @@ export function canvasModel(entries: NovelEntry[], layout: LineLayout): CanvasMo
 
 		const x = placement ? placement.x : i;
 		maxX = Math.max(maxX, x);
-		for (const line of targetLines) line.cards.push({ entry, x });
+		for (const line of targetLines) line.cards.push(realCard(entry, x, plan));
 	});
+
+	// A ghost the user has dragged has its own placement (keyed by the note's
+	// future path) — position it exactly like a real card. The rest fall on the
+	// line their row names, spliced by manuscript order.
+	const plannedUnplaced: PlannedEntry[] = [];
+	const looseByLine = new Map<string, PlannedEntry[]>();
+	for (const p of plan.planned) {
+		const placement = layout.placements[p.expectedPath];
+		const placedLines = placement
+			? placement.lines.map((id) => lineById.get(id)).filter((l): l is CanvasLine => l !== undefined)
+			: [];
+
+		if (placedLines.length > 0 && placement) {
+			maxX = Math.max(maxX, placement.x);
+			for (const line of placedLines) line.cards.push(plannedCard(p, placement.x, plan));
+			continue;
+		}
+		if (!p.lineId || !lineById.has(p.lineId)) {
+			plannedUnplaced.push(p);
+			continue;
+		}
+		const list = looseByLine.get(p.lineId) ?? [];
+		list.push(p);
+		looseByLine.set(p.lineId, list);
+	}
 
 	for (const line of lines) line.cards.sort(byX);
 
-	return { lines, unplaced, columnCount: Math.max(1, maxX + 1) };
+	// Splice the loose ghosts in by manuscript order, then re-index that one
+	// line's cards 0..n for display (saved placements are untouched).
+	for (const line of lines) {
+		const toInsert = looseByLine.get(line.def.id);
+		if (!toInsert || toInsert.length === 0) continue;
+
+		toInsert.sort((a, b) => byManuscriptOrder(plannedOrderKey(a), plannedOrderKey(b)));
+		for (const p of toInsert) {
+			const key = plannedOrderKey(p);
+			let at = line.cards.length;
+			for (let i = 0; i < line.cards.length; i++) {
+				if (byManuscriptOrder(key, cardOrderKey(line.cards[i])) < 0) {
+					at = i;
+					break;
+				}
+			}
+			line.cards.splice(at, 0, plannedCard(p, 0, plan));
+		}
+		line.cards.forEach((card, i) => {
+			card.x = i;
+		});
+		maxX = Math.max(maxX, line.cards.length - 1);
+	}
+
+	return { lines, unplaced, plannedUnplaced, columnCount: Math.max(1, maxX + 1) };
 }
 
 export interface StarterLineOptions {
@@ -121,11 +230,50 @@ export function defaultLineId(layout: LineLayout): string | null {
 	return best ? best.id : null;
 }
 
-/** Per-line ordered list of the visible card paths, taken from a render model. */
+/**
+ * Per-line ordered list of the visible card paths (real notes by their path,
+ * ghosts by the path their note will get), taken from a render model — the
+ * order `moveCard` reorders against.
+ */
 export function lineOrderFromModel(model: CanvasModel): Record<string, string[]> {
 	const out: Record<string, string[]> = {};
-	for (const line of model.lines) out[line.def.id] = line.cards.map((c) => c.entry.file.path);
+	for (const line of model.lines) {
+		out[line.def.id] = line.cards.map((c) =>
+			c.entry ? c.entry.file.path : (c.planned as PlannedEntry).expectedPath,
+		);
+	}
 	return out;
+}
+
+/**
+ * After the notes for `createdPaths` have been created, writes a real placement
+ * for each — at the display slot it held as a ghost — and renumbers the other
+ * cards on those lines densely. Lines with none of `createdPaths` are left as
+ * they were. A ghost that was neither created nor already dragged into place
+ * stays loose (manuscript-positioned, no placement).
+ */
+export function applyPlannedPlacements(
+	layout: LineLayout,
+	model: CanvasModel,
+	createdPaths: Set<string>,
+): LineLayout {
+	const next = cloneLayout(layout);
+	for (const line of model.lines) {
+		const touched = line.cards.some(
+			(c) => c.kind === "planned" && c.planned !== null && createdPaths.has(c.planned.expectedPath),
+		);
+		if (!touched) continue;
+
+		let x = 0;
+		for (const card of line.cards) {
+			const path = card.entry ? card.entry.file.path : card.planned?.expectedPath;
+			if (!path) continue;
+			const looseGhost = card.kind === "planned" && !createdPaths.has(path) && !next.placements[path];
+			if (looseGhost) continue;
+			next.placements[path] = { lines: [line.def.id], x: x++ };
+		}
+	}
+	return next;
 }
 
 function compactLine(layout: LineLayout, lineId: string): void {

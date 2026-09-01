@@ -23,13 +23,19 @@ writes is a per-book **Lines file** that stores the book's default view.
   then drag cards to reorder them or move them to another line, and add /
   rename / recolour / reorder / delete lines from the line headers. Changes
   save to the Lines file (`Lines.md`) automatically; `Mod+Z` undoes.
+- **Outline file** *(optional)* — name a file under **Outline file name** in
+  settings and it's created as an empty Markdown table (Act / Chapter / Scene /
+  Line / Summary). Fill it in to plan the book before the notes exist: rows
+  with no matching note appear as dashed placeholder cards on the line view,
+  and clicking one creates the note (title, Summary, frontmatter) on that line.
+  Once a note exists its Summary shows on the card; a row that disagrees with
+  the real note/folder gets a ⚠ marker — the files always win. See
+  [docs/feature-plans/outline-file-plan.md](docs/feature-plans/outline-file-plan.md).
 
 Planned next: a **chronological view** ordering chapters/scenes by their
-`scribe-visualization-date`, a matrix view grouping them by character, place,
-or situation, and an optional **Outline file** for planning chapters/scenes
-before the notes exist. See
-[docs/feature-plans/line-view-plan.md](docs/feature-plans/line-view-plan.md)
-and [docs/feature-plans/outline-file-plan.md](docs/feature-plans/outline-file-plan.md).
+`scribe-visualization-date`, and a matrix view grouping them by character,
+place, or situation. See
+[docs/feature-plans/line-view-plan.md](docs/feature-plans/line-view-plan.md).
 
 ## Setting up a book
 

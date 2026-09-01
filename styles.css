@@ -247,6 +247,52 @@
 	box-shadow: var(--shadow-l);
 }
 
+/* Ghost card: a planned outline row whose note doesn't exist yet. Click to create it. */
+.scribe-canvas-card--planned {
+	border-style: dashed;
+	background: var(--background-secondary);
+	box-shadow: none;
+	opacity: 0.95;
+}
+
+.scribe-canvas-card--planned:hover {
+	opacity: 1;
+	border-color: var(--interactive-accent);
+	box-shadow: var(--shadow-s);
+}
+
+.scribe-canvas-card--planned .scribe-canvas-card-dot {
+	background: none;
+	border: 1px dashed var(--text-muted);
+}
+
+.scribe-canvas-card-create {
+	margin-top: 4px;
+	font-size: var(--font-ui-smaller);
+	color: var(--text-accent);
+	opacity: 0;
+}
+
+.scribe-canvas-card--planned:hover .scribe-canvas-card-create {
+	opacity: 1;
+}
+
+/* Outline Summary preview + "differs from the outline" marker on a real card. */
+.scribe-canvas-card-summary {
+	margin-top: 4px;
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+.scribe-canvas-card-mark {
+	color: var(--text-warning);
+	cursor: help;
+}
+
 .scribe-canvas-line.is-drop-target {
 	background: color-mix(in srgb, var(--scribe-line-color) 8%, transparent);
 	box-shadow: inset 0 0 0 2px var(--interactive-accent);

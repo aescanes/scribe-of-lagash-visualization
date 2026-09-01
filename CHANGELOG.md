@@ -6,13 +6,25 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
-- Groundwork for an optional per-book **Outline file** — a hand-edited Markdown
-  table (columns Act / Chapter / Scene / Line / Summary, plus optional Folder /
-  Date / Characters / Places / Status) for planning chapters and scenes before
-  the notes exist. A new **Outline file name** setting turns it on; naming a
-  file that doesn't exist yet creates it with an empty table skeleton, and the
-  plugin never rewrites it afterwards. Reading the table, showing placeholder
-  cards on the line view, and creating notes from them come next.
+- **Outline file** — an optional per-book Markdown table for planning chapters
+  and scenes before the notes exist (columns Act / Chapter / Scene / Line /
+  Summary, plus optional Folder / Date / Characters / Places / Status). Turn it
+  on by naming it in the new **Outline file name** setting; a file that doesn't
+  exist yet is created with an empty skeleton, and the plugin never rewrites it.
+  - Rows with no matching note show as dashed **placeholder cards** on the line
+    view, on the line and in the manuscript position the row implies. Drag them
+    to reorder or move them between lines just like real cards (a dragged
+    placeholder that no longer matches its row's Line gets a ⚠ marker). Click
+    one (or the toolbar's **Create N planned notes**) to create the note —
+    parent folders, the Summary as the body, and any Date/Characters/… cells as
+    frontmatter — and it lands where the placeholder was.
+  - A row's **Summary shows on its card** (placeholder or real), and if the row
+    disagrees with reality (wrong line, wrong folder, chapter vs. scene) the
+    card gets a ⚠ marker — the folder/file structure and `Lines.md` still win,
+    nothing is rewritten.
+  - Diagnostics list outline rows that name an unknown line and notes that no
+    row covers. New command **Generate outline from notes** fills a still-empty
+    table from the book's current notes.
 
 ### Changed
 - The icon description (hover) in the sidebar was updated to "(SL) Visualization: Open lines"

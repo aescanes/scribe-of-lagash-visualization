@@ -1,12 +1,17 @@
 // SPDX-License-Identifier: MIT
 // Copyright (C) 2026 aescanes
 
-import { debounce, ItemView, normalizePath, Scope, TFile, WorkspaceLeaf } from "obsidian";
+import { debounce, ItemView, Notice, normalizePath, Scope, TFile, WorkspaceLeaf } from "obsidian";
 import type ScribeVisualizationPlugin from "../main";
 import { emptyLineLayout, lineFilePath, readLineLayout, writeLineLayout } from "../data/lineFile";
-import { LineLayout, NovelEntry } from "../types";
+import { OutlineReconciliation, reconcileOutline } from "../data/outline";
+import { outlineFilePath, readOutline } from "../data/outlineFile";
+import { scaffoldNoteBody } from "../data/noteScaffold";
+import { folderContext } from "../data/pathContext";
+import { LineLayout, NovelEntry, OutlineRow, PlannedEntry } from "../types";
 import {
 	addLine,
+	applyPlannedPlacements,
 	canvasModel,
 	CanvasCard,
 	cloneLayout,
@@ -21,6 +26,7 @@ import {
 	renameLine,
 	starterLayout,
 } from "./canvasModel";
+import { confirm } from "./confirmModal";
 
 export const VIEW_TYPE_LINE_VIEW = "scribe-line-view";
 
@@ -78,6 +84,7 @@ export class LineView extends ItemView {
 	private unsubscribe: (() => void) | null = null;
 	private book: string;
 	private layout: LineLayout = emptyLineLayout();
+	private outlineRows: OutlineRow[] = [];
 	private fileExists = false;
 	private undoStack: LineLayout[] = [];
 	private cardEls = new Map<string, HTMLElement[]>();
@@ -103,6 +110,11 @@ export class LineView extends ItemView {
 		return LINE_ICON_ID;
 	}
 
+	onResize(): void {
+		// Card text re-wraps at the new width — re-measure so they stay uniform.
+		this.equalizeCardHeights();
+	}
+
 	async onOpen(): Promise<void> {
 		this.scope = new Scope(this.app.scope);
 		this.scope.register(["Mod"], "z", () => {
@@ -126,8 +138,27 @@ export class LineView extends ItemView {
 		return lineFilePath(this.book, this.plugin.settings.lineFileName);
 	}
 
+	private outlinePath(): string {
+		return outlineFilePath(this.book, this.plugin.settings.outlineFileName);
+	}
+
 	private currentEntries(): NovelEntry[] {
 		return this.plugin.vaultIndex.getEntriesForBook(this.book);
+	}
+
+	private reconcile(entries: NovelEntry[]): OutlineReconciliation {
+		return reconcileOutline(
+			this.outlineRows,
+			entries,
+			this.layout,
+			this.book,
+			this.plugin.settings.titleLanguage,
+		);
+	}
+
+	private async readOutlineRows(): Promise<OutlineRow[]> {
+		const path = this.outlinePath();
+		return path ? readOutline(this.app, normalizePath(path)) : [];
 	}
 
 	private async openBook(book: string): Promise<void> {
@@ -138,10 +169,12 @@ export class LineView extends ItemView {
 			const path = normalizePath(this.linePath());
 			this.fileExists = this.app.vault.getAbstractFileByPath(path) instanceof TFile;
 			this.layout = await readLineLayout(this.app, path);
+			this.outlineRows = await this.readOutlineRows();
 			this.autoPlace();
 		} else {
 			this.fileExists = false;
 			this.layout = emptyLineLayout();
+			this.outlineRows = [];
 		}
 		this.render();
 	}
@@ -172,6 +205,12 @@ export class LineView extends ItemView {
 			void this.openBook(books[0] ?? "");
 			return;
 		}
+		// Re-read the outline too — editing its table fires a metadata change.
+		void this.refreshOutlineAndRender();
+	}
+
+	private async refreshOutlineAndRender(): Promise<void> {
+		this.outlineRows = await this.readOutlineRows();
 		this.autoPlace();
 		this.render();
 	}
@@ -212,10 +251,12 @@ export class LineView extends ItemView {
 
 		const books = this.plugin.vaultIndex.getBookFolders();
 		const entries = this.book ? this.currentEntries() : [];
-		const viewReady =
-			books.length > 0 && entries.length > 0 && this.fileExists && !isLayoutEmpty(this.layout);
+		const hasContent = entries.length > 0 || this.outlineRows.length > 0;
+		const viewReady = books.length > 0 && hasContent && this.fileExists && !isLayoutEmpty(this.layout);
 
-		this.renderToolbar(root, books, viewReady);
+		const recon = viewReady ? this.reconcile(entries) : null;
+
+		this.renderToolbar(root, books, recon);
 
 		if (books.length === 0) {
 			this.renderNotice(
@@ -225,24 +266,44 @@ export class LineView extends ItemView {
 			return;
 		}
 
-		if (entries.length === 0) {
+		if (!hasContent) {
 			this.renderNotice(
 				root,
-				`No chapters or scenes found in "${this.book}". Name notes like "Chapter 1" or "Scene 2".`,
+				`No chapters or scenes found in "${this.book}". Name notes like "Chapter 1" or "Scene 2"` +
+					`${this.plugin.settings.outlineFileName ? `, or add rows to "${this.outlinePath()}"` : ""}.`,
 			);
 			return;
 		}
 
-		if (!viewReady) {
+		if (!viewReady || !recon) {
 			this.renderCreatePrompt(root, entries);
 			return;
 		}
 
-		this.renderLines(root, entries);
-		this.renderUnrecognized(root, entries);
+		this.renderLines(root, entries, recon);
+		this.renderDiagnostics(root, entries, recon);
+		this.equalizeCardHeights();
 	}
 
-	private renderToolbar(root: HTMLElement, books: string[], viewReady: boolean): void {
+	/**
+	 * Grows every card to the height of the tallest, so a row of cards stays
+	 * uniform. Deferred to the next frame so the measurement sees the settled
+	 * layout (line-clamped summaries, a scrollbar that just appeared, web fonts)
+	 * rather than the half-laid-out DOM `render()` just built.
+	 */
+	private equalizeCardHeights(): void {
+		this.contentEl.win.requestAnimationFrame(() => {
+			const cards = Array.from(this.contentEl.querySelectorAll<HTMLElement>(".scribe-canvas-card"));
+			if (cards.length === 0) return;
+			for (const el of cards) el.style.minHeight = "";
+			let tallest = 0;
+			for (const el of cards) tallest = Math.max(tallest, el.offsetHeight);
+			if (tallest === 0) return;
+			for (const el of cards) el.style.minHeight = `${tallest}px`;
+		});
+	}
+
+	private renderToolbar(root: HTMLElement, books: string[], recon: OutlineReconciliation | null): void {
 		const toolbar = root.createDiv({ cls: "scribe-canvas-toolbar" });
 
 		if (books.length > 1) {
@@ -254,10 +315,18 @@ export class LineView extends ItemView {
 			toolbar.createSpan({ cls: "scribe-canvas-book-name", text: books[0] });
 		}
 
-		if (!viewReady) return;
+		if (!recon) return;
 
 		const spacer = toolbar.createDiv({ cls: "scribe-canvas-toolbar-spacer" });
 		spacer.style.flex = "1";
+
+		if (recon.planned.length > 0) {
+			const n = recon.planned.length;
+			const createAll = toolbar.createEl("button", {
+				text: `Create ${n} planned note${n === 1 ? "" : "s"}`,
+			});
+			createAll.addEventListener("click", () => void this.onCreateAll());
+		}
 
 		const undo = toolbar.createEl("button", { text: "Undo" });
 		undo.disabled = this.undoStack.length === 0;
@@ -277,8 +346,10 @@ export class LineView extends ItemView {
 		const box = root.createDiv({ cls: "scribe-canvas-notice" });
 		box.createEl("p", {
 			text:
-				`"${this.book}" has ${entries.length} chapter/scene ` +
-				`note${entries.length === 1 ? "" : "s"} but no lines yet.`,
+				entries.length === 0
+					? `"${this.book}" has an outline but no lines yet.`
+					: `"${this.book}" has ${entries.length} chapter/scene ` +
+						`note${entries.length === 1 ? "" : "s"} but no lines yet.`,
 		});
 		const button = box.createEl("button", { cls: "mod-cta", text: "Create lines" });
 		button.addEventListener("click", async () => {
@@ -289,8 +360,8 @@ export class LineView extends ItemView {
 		});
 	}
 
-	private renderLines(root: HTMLElement, entries: NovelEntry[]): void {
-		const model = canvasModel(entries, this.layout);
+	private renderLines(root: HTMLElement, entries: NovelEntry[], recon: OutlineReconciliation): void {
+		const model = canvasModel(entries, this.layout, recon);
 
 		const scroll = root.createDiv({ cls: "scribe-canvas-scroll" });
 		const board = scroll.createDiv({ cls: "scribe-canvas-board" });
@@ -310,14 +381,32 @@ export class LineView extends ItemView {
 			for (const card of line.cards) this.renderCard(rail, card, false);
 		});
 
-		if (model.unplaced.length > 0) {
+		if (model.unplaced.length > 0 || model.plannedUnplaced.length > 0) {
 			const strip = root.createDiv({ cls: "scribe-canvas-unplaced" });
 			strip.createDiv({
 				cls: "scribe-canvas-unplaced-label",
-				text: `Not on any line (${model.unplaced.length}) — drag onto a line`,
+				text: `Not on any line — drag a card onto a line${
+					model.plannedUnplaced.length > 0 ? " (outline rows without a valid line included)" : ""
+				}`,
 			});
 			const rail = strip.createDiv({ cls: "scribe-canvas-unplaced-rail" });
-			for (const entry of model.unplaced) this.renderCard(rail, { entry, x: 0 }, true);
+			for (const entry of model.unplaced) {
+				this.renderCard(rail, { kind: "real", entry, planned: null, x: 0, summary: null, mark: null }, true);
+			}
+			for (const p of model.plannedUnplaced) {
+				this.renderCard(
+					rail,
+					{
+						kind: "planned",
+						entry: null,
+						planned: p,
+						x: 0,
+						summary: p.row.summary || null,
+						mark: recon.marks[p.expectedPath] ?? null,
+					},
+					true,
+				);
+			}
 		}
 	}
 
@@ -401,21 +490,33 @@ export class LineView extends ItemView {
 	}
 
 	private renderCard(parent: HTMLElement, card: CanvasCard, flow: boolean): void {
-		const { entry, x } = card;
+		if (card.kind === "planned" && card.planned) {
+			this.renderPlannedCard(parent, card.planned, card.x, card.summary, card.mark, flow);
+			return;
+		}
+		if (card.entry) this.renderRealCard(parent, card, flow);
+	}
+
+	private renderRealCard(parent: HTMLElement, card: CanvasCard, flow: boolean): void {
+		const entry = card.entry as NovelEntry;
 		const el = parent.createDiv({
 			cls: `scribe-canvas-card scribe-canvas-card--${entry.type}${flow ? " is-flow" : ""}`,
 		});
 		el.dataset.path = entry.file.path;
-		if (!flow) el.style.setProperty("--scribe-card-x", String(x));
+		if (!flow) el.style.setProperty("--scribe-card-x", String(card.x));
 
 		el.createDiv({ cls: "scribe-canvas-card-dot" });
 		const body = el.createDiv({ cls: "scribe-canvas-card-body" });
 
-		body.createDiv({ cls: "scribe-canvas-card-title", text: entry.title });
+		const title = body.createDiv({ cls: "scribe-canvas-card-title", text: entry.title });
+		if (card.mark) {
+			title.createSpan({ cls: "scribe-canvas-card-mark", text: " ⚠", attr: { "aria-label": card.mark } });
+		}
 		if (entry.context.length > 0) {
 			body.createDiv({ cls: "scribe-canvas-card-context", text: entry.context.join(" - ") });
 		}
 		if (entry.date) body.createDiv({ cls: "scribe-canvas-card-date", text: entry.date });
+		if (card.summary) body.createDiv({ cls: "scribe-canvas-card-summary", text: card.summary });
 
 		const meta: string[] = [];
 		if (entry.characters.length > 0) meta.push(entry.characters.join(", "));
@@ -435,34 +536,175 @@ export class LineView extends ItemView {
 		el.addEventListener("mouseleave", () => this.setLinked(entry.file.path, false));
 	}
 
+	/** A ghost card for a planned outline row whose note doesn't exist yet. */
+	private renderPlannedCard(
+		parent: HTMLElement,
+		planned: PlannedEntry,
+		x: number,
+		summary: string | null,
+		mark: string | null,
+		flow: boolean,
+	): void {
+		const el = parent.createDiv({
+			cls: `scribe-canvas-card scribe-canvas-card--planned${flow ? " is-flow" : ""}`,
+		});
+		el.dataset.path = planned.expectedPath;
+		if (!flow) el.style.setProperty("--scribe-card-x", String(x));
+
+		el.createDiv({ cls: "scribe-canvas-card-dot" });
+		const body = el.createDiv({ cls: "scribe-canvas-card-body" });
+
+		const title = body.createDiv({ cls: "scribe-canvas-card-title", text: planned.label });
+		if (mark) {
+			title.createSpan({ cls: "scribe-canvas-card-mark", text: " ⚠", attr: { "aria-label": mark } });
+		}
+		const context = folderContext(planned.expectedPath, this.book);
+		if (context.length > 0) {
+			body.createDiv({ cls: "scribe-canvas-card-context", text: context.join(" - ") });
+		}
+		if (summary) body.createDiv({ cls: "scribe-canvas-card-summary", text: summary });
+		body.createDiv({ cls: "scribe-canvas-card-create", text: "＋ Create note" });
+
+		el.setAttr("aria-label", `Create note "${planned.expectedPath}"`);
+		el.addEventListener("click", () => {
+			if (this.drag) return;
+			void this.onCreateOne(planned);
+		});
+		// Draggable like a real card: dropping it writes a placement keyed by the
+		// note's future path, so the arrangement sticks before the note exists.
+		el.addEventListener("pointerdown", (e) => this.onCardPointerDown(e, planned.expectedPath, el, flow));
+	}
+
 	private setLinked(path: string, on: boolean): void {
 		const siblings = this.cardEls.get(path);
 		if (!siblings || siblings.length < 2) return;
 		for (const el of siblings) el.toggleClass("is-linked", on);
 	}
 
-	private renderUnrecognized(root: HTMLElement, entries: NovelEntry[]): void {
+	// ---- creating notes from planned rows ----
+
+	private async onCreateOne(planned: PlannedEntry): Promise<void> {
+		const ok = await confirm(this.app, {
+			title: "Create note",
+			body: `Create "${planned.expectedPath}"${planned.lineId ? " and place it on this line" : ""}?`,
+			cta: "Create",
+		});
+		if (ok) await this.createPlanned(new Set([planned.expectedPath]));
+	}
+
+	private async onCreateAll(): Promise<void> {
+		const paths = this.reconcile(this.currentEntries()).planned.map((p) => p.expectedPath);
+		if (paths.length === 0) return;
+		const ok = await confirm(this.app, {
+			title: "Create all planned notes",
+			body: `Create ${paths.length} note${paths.length === 1 ? "" : "s"} from the outline? Notes that already exist are left alone.`,
+			cta: "Create all",
+		});
+		if (ok) await this.createPlanned(new Set(paths));
+	}
+
+	/**
+	 * Creates the notes for `wanted` planned rows (parent folders and a starter
+	 * scaffold), seeds each a placement at the slot its ghost card held, then
+	 * rebuilds the index so they show as real cards.
+	 */
+	private async createPlanned(wanted: Set<string>): Promise<void> {
+		const entries = this.currentEntries();
+		const recon = this.reconcile(entries);
+		// Model with the ghosts still present, so we know where each one sat.
+		const ghostModel = canvasModel(entries, this.layout, recon);
+		const targets = recon.planned.filter((p) => wanted.has(p.expectedPath));
+
+		const created = new Set<string>();
+		let opened: TFile | null = null;
+		for (const p of targets) {
+			const path = normalizePath(p.expectedPath);
+			if (this.app.vault.getAbstractFileByPath(path)) continue;
+
+			const slash = path.lastIndexOf("/");
+			const dir = slash === -1 ? "" : path.slice(0, slash);
+			if (dir && !this.app.vault.getAbstractFileByPath(dir)) {
+				try {
+					await this.app.vault.createFolder(dir);
+				} catch {
+					// A parent may have appeared from a sibling in the same batch.
+				}
+			}
+			try {
+				opened = await this.app.vault.create(path, scaffoldNoteBody(p));
+				created.add(p.expectedPath);
+			} catch (e) {
+				new Notice(`Couldn't create "${path}": ${e instanceof Error ? e.message : e}`);
+			}
+		}
+		if (created.size === 0) return;
+
+		if (!isLayoutEmpty(this.layout)) {
+			this.mutate((l) => applyPlannedPlacements(l, ghostModel, created));
+		}
+		// Pick the new notes up now rather than waiting for the debounced scan.
+		this.plugin.vaultIndex.rebuild();
+
+		if (targets.length === 1 && opened) {
+			await this.app.workspace.getLeaf(false).openFile(opened);
+		}
+	}
+
+	private renderDiagnostics(root: HTMLElement, entries: NovelEntry[], recon: OutlineReconciliation): void {
 		const known = new Set(entries.map((e) => e.file.path));
 		const lineFile = normalizePath(this.linePath());
+		const outlineFile = this.outlinePath() ? normalizePath(this.outlinePath()) : null;
 		const prefix = `${this.book}/`;
 
-		const missing = this.app.vault
+		const unrecognized = this.app.vault
 			.getMarkdownFiles()
-			.filter((f) => f.path.startsWith(prefix) && f.path !== lineFile && !known.has(f.path))
+			.filter(
+				(f) =>
+					f.path.startsWith(prefix) &&
+					f.path !== lineFile &&
+					f.path !== outlineFile &&
+					!known.has(f.path),
+			)
 			.sort((a, b) => a.path.localeCompare(b.path));
 
-		if (missing.length === 0) return;
+		this.renderFileList(
+			root,
+			unrecognized.map((f) => f.path),
+			(n) => `${n} note${n === 1 ? "" : "s"} not recognized as a chapter or scene`,
+		);
 
+		if (this.outlineRows.length > 0) {
+			const orphans = entries
+				.filter((e) => !recon.fulfilledPaths.includes(e.file.path))
+				.map((e) => e.file.path)
+				.sort((a, b) => a.localeCompare(b));
+			this.renderFileList(
+				root,
+				orphans,
+				(n) => `${n} note${n === 1 ? "" : "s"} not in the outline`,
+			);
+		}
+
+		if (recon.unknownLines.length > 0) {
+			this.renderNotice(
+				root,
+				`Outline rows name lines that aren't in "${this.linePath()}": ${recon.unknownLines.join(", ")}. ` +
+					`Add the line, or fix the Line cell.`,
+			);
+		}
+	}
+
+	private renderFileList(root: HTMLElement, paths: string[], summary: (n: number) => string): void {
+		if (paths.length === 0) return;
 		const details = root.createEl("details", { cls: "scribe-canvas-unrecognized" });
-		details.createEl("summary", {
-			text: `${missing.length} note${missing.length === 1 ? "" : "s"} not recognized as a chapter or scene`,
-		});
+		details.createEl("summary", { text: summary(paths.length) });
 		const list = details.createEl("ul");
-		for (const file of missing) {
-			const link = list.createEl("li").createEl("a", { text: file.path, href: "#" });
+		for (const path of paths) {
+			const link = list.createEl("li").createEl("a", { text: path, href: "#" });
 			link.addEventListener("click", (event) => {
 				event.preventDefault();
-				void this.app.workspace.getLeaf(false).openFile(file);
+				const file = this.app.vault.getAbstractFileByPath(path);
+				if (file instanceof TFile) void this.app.workspace.getLeaf(false).openFile(file);
 			});
 		}
 	}
@@ -525,7 +767,8 @@ export class LineView extends ItemView {
 		if (!started) return;
 
 		if (target) {
-			const lineOrder = lineOrderFromModel(canvasModel(this.currentEntries(), this.layout));
+			const entries = this.currentEntries();
+			const lineOrder = lineOrderFromModel(canvasModel(entries, this.layout, this.reconcile(entries)));
 			this.mutate((l) => moveCard(l, drag.path, target.lineId, target.index, lineOrder));
 		} else {
 			this.render();
