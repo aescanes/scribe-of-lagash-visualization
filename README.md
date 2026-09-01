@@ -25,8 +25,11 @@ writes is a per-book **Line file** that stores the book's default view.
   save to the Line file (`Lines.md`) automatically; `Mod+Z` undoes.
 
 Planned next: a **chronological view** ordering chapters/scenes by their
-`scribe-visualization-date`, and a matrix view grouping them by character,
-place, or situation. See [docs/line-view-plan.md](docs/line-view-plan.md).
+`scribe-visualization-date`, a matrix view grouping them by character, place,
+or situation, and an optional **Outline file** for planning chapters/scenes
+before the notes exist. See
+[docs/feature-plans/line-view-plan.md](docs/feature-plans/line-view-plan.md)
+and [docs/feature-plans/outline-file-plan.md](docs/feature-plans/outline-file-plan.md).
 
 ## Setting up a book
 

@@ -200,5 +200,8 @@ empty/missing → `null` or `[]`.
 ## Docs to keep in sync
 
 When behavior or schema changes, update: `README.md`, `CHANGELOG.md`
-("Unreleased"), [`docs/line-view-plan.md`](docs/line-view-plan.md), and
+("Unreleased"), the relevant plan doc under
+[`docs/feature-plans/`](docs/feature-plans/) (one file per feature — e.g.
+[`line-view-plan.md`](docs/feature-plans/line-view-plan.md),
+[`outline-file-plan.md`](docs/feature-plans/outline-file-plan.md)), and
 `CONTRIBUTING.md` if conventions change.
