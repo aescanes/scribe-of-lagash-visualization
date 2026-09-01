@@ -14,8 +14,13 @@ this plugin touches is namespaced `scribe-visualization-*` and centralized in
 
 Core principle: **the plugin does not own the user's prose.** Chapters and scenes
 are ordinary Markdown notes in the vault. The plugin discovers and reads them; it
-never rewrites their body. The only file the plugin writes is a per-book
-**Line file** that stores the book's default view.
+**never rewrites an existing note's body or frontmatter.** What it does write:
+
+- the per-book **Lines file** (`Lines.md`) — its own document, rewritten freely;
+- the per-book **Outline file** — created once with an empty skeleton when the
+  user names it in settings, then never touched again (hand-edited only);
+- **new** chapter/scene notes, only when the user clicks a placeholder card to
+  materialise a planned row (create-only; an existing note is never modified).
 
 Standing preference (from the maintainer): **favour folder structure over
 frontmatter keys and settings, to keep the plugin simple.** Propose a
@@ -26,7 +31,7 @@ folder-based approach before adding a new frontmatter field or setting.
 - **Line view** — the default view, and everything built so far. Chapters/scenes
   are discovered from a **book folder** by parsing note titles; the user creates
   **lines** (horizontal coloured tracks) and drags each card onto a line. The
-  arrangement is saved in the Line file. `LineView`, `VIEW_TYPE_LINE_VIEW`,
+  arrangement is saved in the Lines file. `LineView`, `VIEW_TYPE_LINE_VIEW`,
   ribbon icon / "Open lines" command.
 - **Chronological view** *(planned)* — orders the same chapters/scenes by their
   `scribe-visualization-date`, and only works for notes that have that property.
@@ -51,7 +56,7 @@ folder-based approach before adding a new frontmatter field or setting.
    `Act I/…` before `Act II/…`, and within a folder by the number in the title
    (`byManuscriptOrder` in `vaultIndex.ts`). No `order` frontmatter key.
 
-### The Line file (per book)
+### The Lines file (per book)
 
 Lines and card placements live in **one Markdown file inside the book folder**
 (default `Lines.md`, configurable). Human-readable, diff-friendly, travels with
@@ -87,8 +92,23 @@ Rules:
   chapter/scene note bodies.
 - A newly detected chapter/scene with no placement is auto-added to the topmost
   line so nothing silently disappears.
-- A pre-0.4 `Timelines.md` is renamed to `Lines.md` on first open; the old
-  `timelines:` keys are still read.
+
+### The Outline file (per book) — *in progress*
+
+An **optional** second file beside `Lines.md`: a hand-edited Markdown table for
+planning chapters/scenes *before* the notes exist. Off by default; a name in the
+**Outline file name** setting turns it on, and naming a not-yet-existing file
+creates it with an empty skeleton (marker `scribe-visualization: outline` +
+header row). Columns: `Act | Chapter | Scene | Line | Summary`, plus optional
+`Folder | Date | Characters | Places | Status`; `Line` is a line name/id from
+`Lines.md`.
+
+Rows with no matching note become placeholder ("ghost") cards on the line view;
+clicking one creates the note (`noteScaffold.ts`) and seeds its placement.
+**The folder/file structure and `Lines.md` always win** — a row that disagrees
+with a real note only adds an advisory mark to its card, never a rewrite. Full
+design and build phases: [`docs/feature-plans/outline-file-plan.md`](docs/feature-plans/outline-file-plan.md).
+Data layer landed; canvas rendering and the click-to-create flow are still to come.
 
 ## Architecture
 
@@ -97,16 +117,19 @@ Entry point: [`src/main.ts`](src/main.ts) → `ScribeVisualizationPlugin`.
 | Piece | File | Responsibility |
 |---|---|---|
 | Plugin shell | [`src/main.ts`](src/main.ts) | onload wiring: registers the line view, ribbon icon, command, settings tab; owns the index as a child `Component` |
-| Types | [`src/types.ts`](src/types.ts) | `FRONTMATTER_KEYS` (**single source of truth** for key names), `NovelEntry`, `ParsedTitle`, `Line`, `Placement`, `LineLayout` |
-| Title parser | [`src/data/titleParser.ts`](src/data/titleParser.ts) | Pure, no Obsidian imports: `parseTitle(basename, lang)`; `romanToInt`; `availableLanguages` / `languageLabel`. `LANGUAGE_PATTERNS` has `en` + `es` — a new language is one entry there plus one in `LANGUAGE_LABELS` |
+| Types | [`src/types.ts`](src/types.ts) | `FRONTMATTER_KEYS` (**single source of truth** for key names), `NovelEntry`, `ParsedTitle`, `Line`, `Placement`, `LineLayout`, `OutlineRow`, `PlannedEntry` |
+| Title parser | [`src/data/titleParser.ts`](src/data/titleParser.ts) | Pure, no Obsidian imports: `parseTitle(basename, lang)`; `romanToInt` / `parseNumberToken`; `availableLanguages` / `languageLabel`; `actLabel` / `unitLabel` (words the Outline file builds folders/filenames from). `LANGUAGE_PATTERNS` has `en` + `es` — a new language is one entry there plus one in `LANGUAGE_LABELS` / `ACT_LABELS` |
+| Outline helpers | [`src/data/outline.ts`](src/data/outline.ts) | Pure, unit-tested: `parseOutlineTable` (first GFM table → `OutlineRow[]`), `expectedNotePath`, `reconcileOutline` (rows vs. real entries → `planned` ghost cards + `previews` + discrepancy `marks` + `unknownLines`) |
+| Outline file I/O | [`src/data/outlineFile.ts`](src/data/outlineFile.ts) | `outlineFilePath`, `readOutline` (marker-checked), `ensureOutlineFile` (writes the empty skeleton once, never overwrites) |
+| Note scaffold | [`src/data/noteScaffold.ts`](src/data/noteScaffold.ts) | Pure: `scaffoldNoteBody(planned)` — starter body (`# title`, Summary blockquote, only the frontmatter keys the row filled) for a note created from a ghost card |
 | Vault / book index | [`src/data/vaultIndex.ts`](src/data/vaultIndex.ts) | Scans notes under configured book folders, keeps the title-parsed ones as a live `NovelEntry[]` sorted by `byManuscriptOrder` (folder, then title number), notifies via `onChange`. First scan waits for `onLayoutReady` + `metadataCache` "resolved"; also watches `vault` create/delete/rename, debounced. `rebuild()` is public. `getBookFolders()` / `getEntriesForBook()` |
-| Line-layout helpers | [`src/data/lineLayout.ts`](src/data/lineLayout.ts) | Pure: `parseLineLayout` (coerce loose YAML, reads the legacy `timelines` key), `lineFilePath`, `emptyLineLayout` |
+| Line-layout helpers | [`src/data/lineLayout.ts`](src/data/lineLayout.ts) | Pure: `parseLineLayout` (coerce loose YAML), `lineFilePath`, `emptyLineLayout` |
 | Path breadcrumb | [`src/data/pathContext.ts`](src/data/pathContext.ts) | Pure: `folderContext(filePath, baseFolder)` → folder segments shown under a card title |
-| Line file I/O | [`src/data/lineFile.ts`](src/data/lineFile.ts) | `readLineLayout` / `writeLineLayout` for the per-book `Lines.md` (write preserves the note body via `processFrontMatter`, or creates the file); `migrateLegacyLineFile` renames a stray `Timelines.md` |
+| Lines file I/O | [`src/data/lineFile.ts`](src/data/lineFile.ts) | `readLineLayout` / `writeLineLayout` for the per-book `Lines.md` (write preserves the note body via `processFrontMatter`, or creates the file) |
 | Line render model | [`src/views/canvasModel.ts`](src/views/canvasModel.ts) | Pure, unit-tested: `canvasModel(entries, layout)` → lines + cards + `unplaced`; every layout edit (`moveCard`, `reconcilePlacements`, `addLine` / `renameLine` / `recolorLine` / `moveLine` / `removeLine`, `cloneLayout`, `starterLayout`). **All layout maths live here, not in the view.** |
 | Line view | [`src/views/lineView.ts`](src/views/lineView.ts) | `ItemView` (`VIEW_TYPE_LINE_VIEW`). DOM + pointer-drag only: renders from `canvasModel`, calls the pure ops via `mutate()` (push undo snapshot → apply → debounced save → re-render). In-memory `layout` is authoritative while open; file re-read only on open / book switch |
-| Settings | [`src/settings/`](src/settings/) | Book folder, Line-file name, title language |
-| Styles | [`styles.css`](styles.css) | Obsidian CSS variables only (`var(--...)`) — no hardcoded colours except user-chosen line colours from the Line file. Canvas classes are `.scribe-canvas-*`; per-line colour is `--scribe-line-color` |
+| Settings | [`src/settings/`](src/settings/) | Book folder, Line-file name, Outline-file name (empty = off), title language |
+| Styles | [`styles.css`](styles.css) | Obsidian CSS variables only (`var(--...)`) — no hardcoded colours except user-chosen line colours from the Lines file. Canvas classes are `.scribe-canvas-*`; per-line colour is `--scribe-line-color` |
 
 ### Separation of responsibility
 
@@ -120,9 +143,11 @@ Entry point: [`src/main.ts`](src/main.ts) → `ScribeVisualizationPlugin`.
 
 - **Never hardcode a frontmatter key string literal.** Reference
   `FRONTMATTER_KEYS` from [`src/types.ts`](src/types.ts).
-- **The plugin writes only the Line file.** Never write to a chapter/scene
-  note's body or frontmatter unless a task explicitly calls for it and the user
-  has agreed.
+- **Never modify an existing chapter/scene note's body or frontmatter.** The
+  plugin writes its own documents (the Lines file, and the Outline file's initial
+  skeleton) and may *create* a new note from a planned outline row, but editing
+  prose the user wrote is off-limits unless a task explicitly calls for it and
+  the user has agreed.
 - **TypeScript with `strictNullChecks`.** Avoid `any` where a real type exists.
 - **Comments explain *why*, not *what*.** Match the existing sparse style.
 - **Keep diffs focused** — no drive-by formatting or refactoring mixed into a
@@ -184,7 +209,7 @@ CHANGELOG section into the tag message). Full steps in
 
 Every key is **optional** — a note becomes a chapter/scene purely by its title,
 its order by folder structure + the title number, its line membership by the
-Line file. These keys just add detail the cards can show:
+Lines file. These keys just add detail the cards can show:
 
 | Key | Type | Use |
 |---|---|---|

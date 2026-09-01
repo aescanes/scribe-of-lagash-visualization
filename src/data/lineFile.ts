@@ -8,7 +8,7 @@ import { emptyLineLayout, parseLineLayout } from "./lineLayout";
 export { emptyLineLayout, lineFilePath } from "./lineLayout";
 
 /**
- * Reads and writes the per-book "Line file" (default "Lines.md") that stores a
+ * Reads and writes the per-book "Lines file" (default "Lines.md") that stores a
  * book's default view — its lines and card placements. The file is a normal
  * Markdown note whose frontmatter holds the data and whose body is free for the
  * user's own notes; writes preserve that body.
@@ -19,9 +19,6 @@ export { emptyLineLayout, lineFilePath } from "./lineLayout";
 
 const MARKER_KEY = "scribe-visualization";
 const MARKER_VALUE = "lines";
-
-/** Pre-0.4 default name, migrated to `DEFAULT_LINE_FILE` on first open. */
-const LEGACY_FILE_NAME = "Timelines.md";
 
 const FRONTMATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/;
 
@@ -36,22 +33,6 @@ function parseFrontmatterBlock(content: string): unknown {
 	}
 }
 
-/**
- * If `path` doesn't exist but a legacy `Timelines.md` sits beside it, rename the
- * legacy file into place. Returns nothing; callers just re-resolve `path` after.
- */
-export async function migrateLegacyLineFile(app: App, path: string): Promise<void> {
-	const normalized = normalizePath(path);
-	if (app.vault.getAbstractFileByPath(normalized) instanceof TFile) return;
-
-	const slash = normalized.lastIndexOf("/");
-	const dir = slash === -1 ? "" : normalized.slice(0, slash);
-	const legacy = app.vault.getAbstractFileByPath(dir ? `${dir}/${LEGACY_FILE_NAME}` : LEGACY_FILE_NAME);
-	if (legacy instanceof TFile) {
-		await app.fileManager.renameFile(legacy, normalized);
-	}
-}
-
 export async function readLineLayout(app: App, path: string): Promise<LineLayout> {
 	const file = app.vault.getAbstractFileByPath(normalizePath(path));
 	if (!(file instanceof TFile)) return emptyLineLayout();
@@ -60,7 +41,7 @@ export async function readLineLayout(app: App, path: string): Promise<LineLayout
 }
 
 /**
- * Persists a layout to the Line file, creating it if needed and keeping any
+ * Persists a layout to the Lines file, creating it if needed and keeping any
  * existing note body intact.
  */
 export async function writeLineLayout(app: App, path: string, layout: LineLayout): Promise<void> {
@@ -73,7 +54,6 @@ export async function writeLineLayout(app: App, path: string, layout: LineLayout
 			fm[MARKER_KEY] = MARKER_VALUE;
 			fm.lines = lines;
 			fm.placements = layout.placements;
-			delete fm.timelines;
 		});
 		return;
 	}

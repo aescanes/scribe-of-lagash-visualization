@@ -10,7 +10,7 @@ import type { TFile } from "obsidian";
  * generic names like "date" or "status" could mean something different to each.
  *
  * Chapter/scene classification and order come from the folder structure and the
- * note title, not frontmatter; line membership comes from the Line file. These
+ * note title, not frontmatter; line membership comes from the Lines file. These
  * keys only add optional detail the cards can show.
  */
 export const FRONTMATTER_KEYS = {
@@ -78,10 +78,49 @@ export interface Placement {
 
 /**
  * The book's default view — its lines and where each chapter/scene card sits on
- * them. Persisted to the per-book "Line file" (default "Lines.md") inside the
+ * them. Persisted to the per-book "Lines file" (default "Lines.md") inside the
  * book folder. Keyed by vault-relative note path.
  */
 export interface LineLayout {
 	lines: Line[];
 	placements: Record<string, Placement>;
+}
+
+/**
+ * One row of the optional per-book Outline file's table — a chapter or scene
+ * the author has planned but may not have written yet. Cells are kept raw
+ * (numbers parsed, everything else a string) so `reconcileOutline` can compare
+ * them against real notes without losing information.
+ */
+export interface OutlineRow {
+	/** Position in the table, top to bottom; used to order planned entries. */
+	rowIndex: number;
+	act: string | null;
+	/** Explicit folder override; when absent it's derived from `act`. */
+	folder: string | null;
+	chapter: number | null;
+	/** Present only on a row that plans a scene (nested under its chapter). */
+	scene: number | null;
+	/** Line name or id, matched against `Line.name` / `Line.id` in Lines.md. */
+	line: string | null;
+	summary: string;
+	date: string | null;
+	characters: string[];
+	places: string[];
+	status: string | null;
+}
+
+/**
+ * An OutlineRow with no matching note yet — rendered as a placeholder ("ghost")
+ * card on the line view. Clicking it creates the real note at `expectedPath`.
+ */
+export interface PlannedEntry {
+	row: OutlineRow;
+	type: EntryType;
+	/** Human label for the card, e.g. "Chapter 3". */
+	label: string;
+	/** Vault-relative path the note will be created at. */
+	expectedPath: string;
+	/** Resolved line id, or null when `row.line` matches no line in Lines.md. */
+	lineId: string | null;
 }

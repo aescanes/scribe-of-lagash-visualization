@@ -2,6 +2,7 @@
 // Copyright (C) 2026 aescanes
 
 import { addIcon, Plugin, WorkspaceLeaf } from "obsidian";
+import { ensureOutlineFile, outlineFilePath } from "./data/outlineFile";
 import { VaultIndex } from "./data/vaultIndex";
 import { DEFAULT_SETTINGS, ScribeVisualizationSettings } from "./settings/settings";
 import { ScribeVisualizationSettingTab } from "./settings/settingsTab";
@@ -35,6 +36,11 @@ export default class ScribeVisualizationPlugin extends Plugin {
 		});
 
 		this.addSettingTab(new ScribeVisualizationSettingTab(this.app, this));
+
+		// Covers an Outline file name that was already set (synced settings, a
+		// fresh install pointed at an existing data.json) before this session
+		// ever called saveSettings().
+		this.app.workspace.onLayoutReady(() => void this.ensureOutlineFiles());
 	}
 
 	onunload(): void {
@@ -48,6 +54,16 @@ export default class ScribeVisualizationPlugin extends Plugin {
 	async saveSettings(): Promise<void> {
 		await this.saveData(this.settings);
 		this.vaultIndex.rebuild();
+		await this.ensureOutlineFiles();
+	}
+
+	/** Creates the empty-table skeleton for each configured book once an Outline file is named. */
+	private async ensureOutlineFiles(): Promise<void> {
+		const { bookFolders, outlineFileName } = this.settings;
+		if (!outlineFileName) return;
+		for (const book of bookFolders) {
+			await ensureOutlineFile(this.app, outlineFilePath(book, outlineFileName));
+		}
 	}
 
 	private async activateView(viewType: string): Promise<void> {

@@ -43,12 +43,29 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName("Line file name")
-			.setDesc("Name of the Line file created inside the book folder to store its default view.")
+			.setName("Lines file name")
+			.setDesc("Name of the Lines file created inside the book folder to store its default view.")
 			.addText((text) => {
 				text.setValue(this.plugin.settings.lineFileName);
 				text.onChange(async (value) => {
 					this.plugin.settings.lineFileName = value.trim() || "Lines.md";
+					await this.plugin.saveSettings();
+				});
+			});
+
+		new Setting(containerEl)
+			.setName("Outline file name")
+			.setDesc(
+				"Optional. Name a Markdown file to plan chapters/scenes as a table before " +
+					"the notes exist (columns: Act, Chapter, Scene, Line, Summary, …). If it " +
+					"doesn't exist yet, it's created empty for you to fill in. Leave empty to " +
+					"turn this off.",
+			)
+			.addText((text) => {
+				text.setPlaceholder("Outline.md");
+				text.setValue(this.plugin.settings.outlineFileName);
+				text.onChange(async (value) => {
+					this.plugin.settings.outlineFileName = value.trim();
 					await this.plugin.saveSettings();
 				});
 			});

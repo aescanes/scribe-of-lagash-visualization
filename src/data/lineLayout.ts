@@ -21,7 +21,7 @@ function trimSlashes(path: string): string {
 	return path.replace(/^\/+/, "").replace(/\/+$/, "");
 }
 
-/** Vault-relative path to a book's Line file. */
+/** Vault-relative path to a book's Lines file. */
 export function lineFilePath(bookFolder: string, fileName: string): string {
 	const folder = trimSlashes(bookFolder);
 	const name = trimSlashes(fileName.trim()) || DEFAULT_LINE_FILE;
@@ -48,10 +48,8 @@ export function parseLineLayout(raw: unknown): LineLayout {
 	if (!raw || typeof raw !== "object") return layout;
 	const obj = raw as Record<string, unknown>;
 
-	// `timelines` is the pre-0.4 key name; still read it so old files load.
-	const rawLines = Array.isArray(obj.lines) ? obj.lines : obj.timelines;
-	if (Array.isArray(rawLines)) {
-		rawLines.forEach((item, i) => {
+	if (Array.isArray(obj.lines)) {
+		obj.lines.forEach((item, i) => {
 			if (!item || typeof item !== "object") return;
 			const t = item as Record<string, unknown>;
 			const id = asString(t.id, "");
@@ -71,7 +69,7 @@ export function parseLineLayout(raw: unknown): LineLayout {
 			if (!value || typeof value !== "object") continue;
 			const p = value as Record<string, unknown>;
 			const placement: Placement = {
-				lines: asStringArray(Array.isArray(p.lines) ? p.lines : p.timelines),
+				lines: asStringArray(p.lines),
 				x: asNumber(p.x, 0),
 			};
 			layout.placements[path] = placement;

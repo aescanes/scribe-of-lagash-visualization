@@ -77,7 +77,7 @@ export interface StarterLineOptions {
 }
 
 /**
- * A first layout for a book that has no Line file yet: a single line with every
+ * A first layout for a book that has no Lines file yet: a single line with every
  * entry placed on it, in the order given.
  */
 export function starterLayout(entries: NovelEntry[], line: StarterLineOptions): LineLayout {
