@@ -5,6 +5,15 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- Groundwork for an optional per-book **Outline file** — a hand-edited Markdown
+  table (columns Act / Chapter / Scene / Line / Summary, plus optional Folder /
+  Date / Characters / Places / Status) for planning chapters and scenes before
+  the notes exist. A new **Outline file name** setting turns it on; naming a
+  file that doesn't exist yet creates it with an empty table skeleton, and the
+  plugin never rewrites it afterwards. Reading the table, showing placeholder
+  cards on the line view, and creating notes from them come next.
+
 ### Changed
 - The icon description (hover) in the sidebar was updated to "(SL) Visualization: Open lines"
 - The icon in the sidebar has now custom colors (depend of light/dark scheme)
@@ -22,7 +31,7 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - **"Timeline" is now "line".** The horizontal tracks are *lines*, a book has a
   *line view* (ribbon icon / "Open lines" command), and its layout is stored in
-  a **Line file** (`Lines.md`; an existing `Timelines.md` is renamed on first
+  a **Lines file** (`Lines.md`; an existing `Timelines.md` is renamed on first
   open). Types, settings, and CSS classes renamed to match.
 - Line view restyled: each line is a thin coloured rule with the chapter/scene
   cards sitting on top of it, instead of a tinted band. Cards stay opaque on
@@ -37,7 +46,7 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   view (and a coming chronological view) replace them.
 - The `scribe-visualization-type`, `-order`, and `-timelines` frontmatter keys.
   A note is a chapter/scene by its **title**, its order by **folder structure
-  then title number**, and its line membership by the Line file. `-date`,
+  then title number**, and its line membership by the Lines file. `-date`,
   `-characters`, `-places`, and `-status` stay.
 
 ## [0.3.0](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.3.0) - 2026-08-31

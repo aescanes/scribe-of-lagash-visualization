@@ -9,8 +9,15 @@ export interface ScribeVisualizationSettings {
 	 */
 	bookFolders: string[];
 
-	/** Name of the per-book Line file that stores the default view. */
+	/** Name of the per-book Lines file that stores the default view. */
 	lineFileName: string;
+
+	/**
+	 * Name of the optional per-book Outline file — a hand-edited table planning
+	 * chapters/scenes ahead of the notes. Empty means the feature is off; naming
+	 * a file that doesn't exist yet creates it with an empty table skeleton.
+	 */
+	outlineFileName: string;
 
 	/** Language pattern table used to parse note titles. */
 	titleLanguage: string;
@@ -19,5 +26,6 @@ export interface ScribeVisualizationSettings {
 export const DEFAULT_SETTINGS: ScribeVisualizationSettings = {
 	bookFolders: [],
 	lineFileName: "Lines.md",
+	outlineFileName: "",
 	titleLanguage: "en",
 };

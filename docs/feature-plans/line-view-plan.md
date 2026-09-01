@@ -14,7 +14,7 @@ as a historical record.
 A book's default view: horizontal, coloured **lines**. Chapter / scene cards are
 discovered from a **book folder** (by parsing note titles), each placed on one
 line, and can be dragged between lines and reordered. The arrangement persists
-to a per-book **Line file** (`Lines.md`).
+to a per-book **Lines file** (`Lines.md`).
 
 (An earlier draft had a card living on multiple lines at once; that was
 prototyped, disliked, and dropped — see the reverted "multi-timeline
@@ -178,7 +178,7 @@ membership" prototype was built and dropped).
   the coming chronological view.
 - **Frontmatter keys** — `scribe-visualization-type` / `-order` / `-timelines`
   removed. Chapter/scene comes from the title, order from folder structure +
-  title number (`byManuscriptOrder`), line membership from the Line file.
+  title number (`byManuscriptOrder`), line membership from the Lines file.
 - **i18n** — `titleParser.ts` now ships `en` and `es` pattern tables
   (`Capítulo` / `Cap.`, `Escena` / `Esc.`, `Prólogo` / `Epílogo` / …, accents
   optional). `languageLabel()` gives the settings dropdown friendly names

@@ -13,7 +13,7 @@ in your vault. Point the plugin at the folder that holds a book and it
 recognises chapters and scenes from their titles ("Chapter 1", "Scene II",
 "Prologue", …); a little `scribe-visualization-*` frontmatter is optional and
 only needed to override the title or add detail. The only file the plugin ever
-writes is a per-book **Line file** that stores the book's default view.
+writes is a per-book **Lines file** that stores the book's default view.
 
 ## Current features
 
@@ -22,7 +22,7 @@ writes is a per-book **Line file** that stores the book's default view.
   sitting on a line. Pick "Create lines" the first time to seed a "Main line",
   then drag cards to reorder them or move them to another line, and add /
   rename / recolour / reorder / delete lines from the line headers. Changes
-  save to the Line file (`Lines.md`) automatically; `Mod+Z` undoes.
+  save to the Lines file (`Lines.md`) automatically; `Mod+Z` undoes.
 
 Planned next: a **chronological view** ordering chapters/scenes by their
 `scribe-visualization-date`, a matrix view grouping them by character, place,

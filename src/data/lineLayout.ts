@@ -21,7 +21,7 @@ function trimSlashes(path: string): string {
 	return path.replace(/^\/+/, "").replace(/\/+$/, "");
 }
 
-/** Vault-relative path to a book's Line file. */
+/** Vault-relative path to a book's Lines file. */
 export function lineFilePath(bookFolder: string, fileName: string): string {
 	const folder = trimSlashes(bookFolder);
 	const name = trimSlashes(fileName.trim()) || DEFAULT_LINE_FILE;

@@ -4,7 +4,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { availableLanguages, languageLabel, parseTitle, romanToInt } from "./titleParser";
+import {
+	actLabel,
+	availableLanguages,
+	languageLabel,
+	parseNumberToken,
+	parseTitle,
+	romanToInt,
+	unitLabel,
+} from "./titleParser";
 
 test("romanToInt decodes well-formed numerals", () => {
 	assert.equal(romanToInt("I"), 1);
@@ -65,4 +73,19 @@ test("availableLanguages / languageLabel", () => {
 	assert.deepEqual(availableLanguages().sort(), ["en", "es"]);
 	assert.equal(languageLabel("es"), "Español");
 	assert.equal(languageLabel("xx"), "xx");
+});
+
+test("parseNumberToken parses digits and roman numerals, rejects the rest", () => {
+	assert.equal(parseNumberToken("12"), 12);
+	assert.equal(parseNumberToken("iv"), 4);
+	assert.equal(parseNumberToken("nine"), null);
+	assert.equal(parseNumberToken(""), null);
+});
+
+test("actLabel / unitLabel give the Outline file its folder and filename words", () => {
+	assert.equal(actLabel(), "Act");
+	assert.equal(actLabel("es"), "Acto");
+	assert.equal(actLabel("xx"), "Act");
+	assert.equal(unitLabel("chapter"), "Chapter");
+	assert.equal(unitLabel("scene", "es"), "Escena");
 });

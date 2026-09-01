@@ -77,6 +77,12 @@ const LANGUAGE_LABELS: Record<string, string> = {
 	es: "Español",
 };
 
+/** Word used to name a planned row's folder when it has no explicit `Folder` cell. */
+const ACT_LABELS: Record<string, string> = {
+	en: "Act",
+	es: "Acto",
+};
+
 export const DEFAULT_LANGUAGE = "en";
 
 export function availableLanguages(): string[] {
@@ -86,6 +92,17 @@ export function availableLanguages(): string[] {
 /** Human-readable name for a language code, for the settings dropdown. */
 export function languageLabel(code: string): string {
 	return LANGUAGE_LABELS[code] ?? code;
+}
+
+/** The word ("Act" / "Acto") an Outline row's Act cell is prefixed with to name its folder. */
+export function actLabel(language: string = DEFAULT_LANGUAGE): string {
+	return ACT_LABELS[language] ?? ACT_LABELS[DEFAULT_LANGUAGE];
+}
+
+/** The unit word ("Chapter" / "Capítulo", "Scene" / "Escena") a note's filename is built from. */
+export function unitLabel(type: EntryType, language: string = DEFAULT_LANGUAGE): string {
+	const table = LANGUAGE_PATTERNS[language] ?? LANGUAGE_PATTERNS[DEFAULT_LANGUAGE];
+	return table.numbered.find((p) => p.type === type)?.unit ?? titleCase(type);
 }
 
 const CANONICAL_ROMAN = /^M{0,3}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$/i;
@@ -105,7 +122,8 @@ export function romanToInt(input: string): number | null {
 	return total;
 }
 
-function parseNumberToken(token: string): number | null {
+/** Parses a chapter/scene number token — plain digits or a roman numeral. */
+export function parseNumberToken(token: string): number | null {
 	if (/^\d+$/.test(token)) {
 		const n = Number.parseInt(token, 10);
 		return Number.isFinite(n) ? n : null;

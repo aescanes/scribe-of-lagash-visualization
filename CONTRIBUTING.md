@@ -38,7 +38,8 @@ npx eslint src
 ```
 
 Unit tests live next to the code as `*.test.ts` and cover the pure modules
-(title parsing, book-layout coercion). `npm test` compiles them with esbuild —
+(title parsing, line-layout coercion, outline-table parsing and reconciliation,
+note scaffolding). `npm test` compiles them with esbuild —
 already a build dependency — and runs them through Node's built-in test runner;
 no separate test framework is pulled in.
 
@@ -58,9 +59,12 @@ no separate test framework is pulled in.
 - Note titles are classified by [`src/data/titleParser.ts`](src/data/titleParser.ts),
   a pure module with no Obsidian imports. Keep it that way — add new languages
   as extra entries in its pattern table, not as calls into the vault.
-- The plugin writes exactly one file: the per-book Line file handled by
-  [`src/data/lineFile.ts`](src/data/lineFile.ts). Never add code that writes to
-  a chapter/scene note.
+- Never add code that modifies an existing chapter/scene note. The plugin
+  writes its own documents — the per-book Lines file
+  ([`src/data/lineFile.ts`](src/data/lineFile.ts)) and the initial skeleton of
+  the optional Outline file ([`src/data/outlineFile.ts`](src/data/outlineFile.ts))
+  — and may *create* a new note from a planned outline row, but it does not
+  touch prose the user wrote.
 
 ## Dependencies
 

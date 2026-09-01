@@ -8,7 +8,7 @@ import { emptyLineLayout, parseLineLayout } from "./lineLayout";
 export { emptyLineLayout, lineFilePath } from "./lineLayout";
 
 /**
- * Reads and writes the per-book "Line file" (default "Lines.md") that stores a
+ * Reads and writes the per-book "Lines file" (default "Lines.md") that stores a
  * book's default view — its lines and card placements. The file is a normal
  * Markdown note whose frontmatter holds the data and whose body is free for the
  * user's own notes; writes preserve that body.
@@ -60,7 +60,7 @@ export async function readLineLayout(app: App, path: string): Promise<LineLayout
 }
 
 /**
- * Persists a layout to the Line file, creating it if needed and keeping any
+ * Persists a layout to the Lines file, creating it if needed and keeping any
  * existing note body intact.
  */
 export async function writeLineLayout(app: App, path: string, layout: LineLayout): Promise<void> {
