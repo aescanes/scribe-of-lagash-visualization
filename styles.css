@@ -1,3 +1,17 @@
+/* ---- Ribbon icon ---- */
+
+/* The line-view icon follows the theme everywhere (currentColor); only the
+   ribbon button gets the brand colour, lighter on dark themes for legibility. */
+.scribe-ribbon-icon,
+.scribe-ribbon-icon:hover {
+	color: #81096b;
+}
+
+.theme-dark .scribe-ribbon-icon,
+.theme-dark .scribe-ribbon-icon:hover {
+	color: #b851a5;
+}
+
 /* ---- Line view ---- */
 
 .scribe-canvas-view {

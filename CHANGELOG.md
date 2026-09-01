@@ -5,6 +5,10 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+- The icon description (hover) in the sidebar was updated to "(SL) Visualization: Open lines"
+- The icon in the sidebar has now custom colors (depend of light/dark scheme)
+
 ## [0.4.0](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.4.0) - 2026-08-31
 
 ### Added

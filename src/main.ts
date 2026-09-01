@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 // Copyright (C) 2026 aescanes
 
-import { Plugin, WorkspaceLeaf } from "obsidian";
+import { addIcon, Plugin, WorkspaceLeaf } from "obsidian";
 import { VaultIndex } from "./data/vaultIndex";
 import { DEFAULT_SETTINGS, ScribeVisualizationSettings } from "./settings/settings";
 import { ScribeVisualizationSettingTab } from "./settings/settingsTab";
-import { LineView, VIEW_TYPE_LINE_VIEW } from "./views/lineView";
+import { LINE_ICON_ID, LINE_ICON_SVG, LineView, VIEW_TYPE_LINE_VIEW } from "./views/lineView";
 
 export default class ScribeVisualizationPlugin extends Plugin {
 	settings: ScribeVisualizationSettings;
@@ -20,14 +20,16 @@ export default class ScribeVisualizationPlugin extends Plugin {
 		}));
 		this.addChild(this.vaultIndex);
 
+		addIcon(LINE_ICON_ID, LINE_ICON_SVG);
+
 		this.registerView(VIEW_TYPE_LINE_VIEW, (leaf) => new LineView(leaf, this));
 
-		this.addRibbonIcon("chart-no-axes-gantt", "Open lines", () => {
+		this.addRibbonIcon(LINE_ICON_ID, "(SL) Visualization: Open lines", () => {
 			this.activateView(VIEW_TYPE_LINE_VIEW);
-		});
+		}).addClass("scribe-ribbon-icon");
 
 		this.addCommand({
-			id: "open-lines",
+			id: "open-scribe-visualization-lines",
 			name: "Open lines",
 			callback: () => this.activateView(VIEW_TYPE_LINE_VIEW),
 		});
