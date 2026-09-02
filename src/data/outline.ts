@@ -108,6 +108,26 @@ export function parseOutlineTable(markdownBody: string): OutlineRow[] {
 	return rows;
 }
 
+/**
+ * Distinct, non-empty `Line` cell values in the order they first appear in the
+ * table. Dedupe is case-insensitive and keeps the first spelling seen — the
+ * names used to seed lines from the outline and to spot lines the outline
+ * references that Lines.md doesn't have yet.
+ */
+export function outlineLineNames(rows: OutlineRow[]): string[] {
+	const names: string[] = [];
+	const seen = new Set<string>();
+	for (const row of rows) {
+		const name = row.line?.trim();
+		if (!name) continue;
+		const key = name.toLowerCase();
+		if (seen.has(key)) continue;
+		seen.add(key);
+		names.push(name);
+	}
+	return names;
+}
+
 /** "chapter" for a chapter row, "scene" for a row with a Scene value. */
 export function outlineRowType(row: OutlineRow): EntryType {
 	return row.scene !== null ? "scene" : "chapter";

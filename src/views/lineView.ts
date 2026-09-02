@@ -4,7 +4,7 @@
 import { debounce, ItemView, Notice, normalizePath, Scope, setIcon, TFile, WorkspaceLeaf } from "obsidian";
 import type ScribeVisualizationPlugin from "../main";
 import { emptyLineLayout, lineFilePath, readLineLayout, writeLineLayout } from "../data/lineFile";
-import { OutlineReconciliation, reconcileOutline } from "../data/outline";
+import { outlineLineNames, OutlineReconciliation, reconcileOutline } from "../data/outline";
 import { outlineFilePath, readOutline } from "../data/outlineFile";
 import { scaffoldNoteBody } from "../data/noteScaffold";
 import { folderContext } from "../data/pathContext";
@@ -25,6 +25,7 @@ import {
 	removeLine,
 	renameLine,
 	starterLayout,
+	starterLayoutFromOutline,
 } from "./canvasModel";
 import { confirm } from "./confirmModal";
 
@@ -215,6 +216,31 @@ export class LineView extends ItemView {
 		this.render();
 	}
 
+	/**
+	 * Outline `Line` values that Lines.md doesn't have yet, matched by id or name
+	 * case-insensitively. Empty until the book has a Lines file with lines — the
+	 * empty-state "Create lines from outline" prompt covers that case. The line
+	 * view never adds these on its own (a typo the user then corrects would leave
+	 * a stray line behind); the toolbar's refresh button applies them on demand.
+	 */
+	private missingOutlineLines(): string[] {
+		if (!this.fileExists || isLayoutEmpty(this.layout)) return [];
+		const have = new Set<string>();
+		for (const line of this.layout.lines) {
+			have.add(line.id.toLowerCase());
+			have.add(line.name.toLowerCase());
+		}
+		return outlineLineNames(this.outlineRows).filter((n) => !have.has(n.toLowerCase()));
+	}
+
+	/** Adds a line for each `missingOutlineLines` name — an explicit, undoable action. */
+	private createOutlineLines(): void {
+		const missing = this.missingOutlineLines();
+		if (missing.length === 0) return;
+		this.mutate((l) => missing.reduce((acc, name) => addLine(acc, name, STARTER_LINE_COLOR).layout, l));
+		new Notice(`Added ${missing.length} line${missing.length === 1 ? "" : "s"} from the outline`);
+	}
+
 	private isEditingText(): boolean {
 		const active = this.contentEl.doc.activeElement;
 		return active instanceof HTMLInputElement && this.contentEl.contains(active);
@@ -320,6 +346,17 @@ export class LineView extends ItemView {
 		const spacer = toolbar.createDiv({ cls: "scribe-canvas-toolbar-spacer" });
 		spacer.style.flex = "1";
 
+		const missingLines = this.missingOutlineLines();
+		if (missingLines.length > 0) {
+			const label = `Add ${missingLines.length} line${missingLines.length === 1 ? "" : "s"} named in the outline`;
+			const refresh = toolbar.createEl("button", {
+				cls: "scribe-canvas-refresh",
+				attr: { "aria-label": label, title: label },
+			});
+			setIcon(refresh, "refresh-cw");
+			refresh.addEventListener("click", () => this.createOutlineLines());
+		}
+
 		if (recon.planned.length > 0) {
 			const n = recon.planned.length;
 			const createAll = toolbar.createEl("button", {
@@ -343,18 +380,35 @@ export class LineView extends ItemView {
 	}
 
 	private renderCreatePrompt(root: HTMLElement, entries: NovelEntry[]): void {
+		const outlineLines = outlineLineNames(this.outlineRows);
+		const fromOutline = outlineLines.length > 0;
+
 		const box = root.createDiv({ cls: "scribe-canvas-notice" });
 		box.createEl("p", {
 			text:
-				entries.length === 0
+				(entries.length === 0
 					? `"${this.book}" has an outline but no lines yet.`
 					: `"${this.book}" has ${entries.length} chapter/scene ` +
-						`note${entries.length === 1 ? "" : "s"} but no lines yet.`,
+						`note${entries.length === 1 ? "" : "s"} but no lines yet.`) +
+				(fromOutline
+					? ` The outline names ${outlineLines.length} line${outlineLines.length === 1 ? "" : "s"} to start from.`
+					: ""),
 		});
-		const button = box.createEl("button", { cls: "mod-cta", text: "Create lines" });
+		const button = box.createEl("button", {
+			cls: "mod-cta",
+			text: fromOutline ? "Create lines from outline" : "Create lines",
+		});
 		button.addEventListener("click", async () => {
 			button.disabled = true;
-			const layout = starterLayout(entries, { name: "Main line", color: STARTER_LINE_COLOR });
+			const layout = fromOutline
+				? starterLayoutFromOutline(
+						entries,
+						this.outlineRows,
+						this.book,
+						this.plugin.settings.titleLanguage,
+						STARTER_LINE_COLOR,
+					)
+				: starterLayout(entries, { name: "Main line", color: STARTER_LINE_COLOR });
 			await writeLineLayout(this.app, this.linePath(), layout);
 			await this.openBook(this.book);
 		});
@@ -689,8 +743,8 @@ export class LineView extends ItemView {
 		if (recon.unknownLines.length > 0) {
 			this.renderNotice(
 				root,
-				`Outline rows name lines that aren't in "${this.linePath()}": ${recon.unknownLines.join(", ")}. ` +
-					`Add the line, or fix the Line cell.`,
+				`These outline lines aren't in "${this.linePath()}" yet: ${recon.unknownLines.join(", ")}. ` +
+					`Use the ⟳ button in the toolbar to add them, or fix the Line cell.`,
 			);
 		}
 	}

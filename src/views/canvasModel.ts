@@ -1,9 +1,15 @@
 // SPDX-License-Identifier: MIT
 // Copyright (C) 2026 aescanes
 
-import { Line, LineLayout, NovelEntry, Placement, PlannedEntry } from "../types";
+import { Line, LineLayout, NovelEntry, OutlineRow, Placement, PlannedEntry } from "../types";
 import { byManuscriptOrder, OrderedEntry } from "../data/manuscriptOrder";
-import { OutlineReconciliation, outlineRowNumber } from "../data/outline";
+import {
+	expectedNotePath,
+	outlineLineNames,
+	OutlineReconciliation,
+	outlineRowNumber,
+	outlineRowType,
+} from "../data/outline";
 
 /**
  * Pure layout logic for the book's default view: turns the set of discovered
@@ -199,6 +205,52 @@ export function starterLayout(entries: NovelEntry[], line: StarterLineOptions): 
 		lines: [{ id, name: line.name, color: line.color, order: 0 }],
 		placements,
 	};
+}
+
+/**
+ * A first layout for a book whose outline names lines: one line per distinct
+ * outline `Line` value (in table order, all `color`), with each real entry
+ * placed on the line its outline row names — or the first line when no row
+ * matches or the row names no line. Falls back to `starterLayout`'s single
+ * "Main line" when the outline names no lines. Ghost cards for the still-unwritten
+ * rows are added afterwards by `canvasModel` from the reconciled outline.
+ */
+export function starterLayoutFromOutline(
+	entries: NovelEntry[],
+	rows: OutlineRow[],
+	book: string,
+	language: string,
+	color: string,
+): LineLayout {
+	const names = outlineLineNames(rows);
+	if (names.length === 0) return starterLayout(entries, { name: "Main line", color });
+
+	let layout: LineLayout = { lines: [], placements: {} };
+	const idByRef = new Map<string, string>();
+	for (const name of names) {
+		const added = addLine(layout, name, color);
+		layout = added.layout;
+		idByRef.set(name.toLowerCase(), added.id);
+	}
+	const firstId = layout.lines[0].id;
+	for (const line of layout.lines) idByRef.set(line.id.toLowerCase(), line.id);
+
+	const lineIdFor = (entry: NovelEntry): string => {
+		const row =
+			rows.find((r) => expectedNotePath(r, book, language) === entry.file.path) ??
+			rows.find((r) => outlineRowType(r) === entry.type && outlineRowNumber(r) === entry.order);
+		const ref = row?.line?.trim().toLowerCase();
+		return (ref && idByRef.get(ref)) || firstId;
+	};
+
+	const nextX = new Map<string, number>();
+	for (const entry of entries) {
+		const lineId = lineIdFor(entry);
+		const x = nextX.get(lineId) ?? 0;
+		nextX.set(lineId, x + 1);
+		layout.placements[entry.file.path] = { lines: [lineId], x };
+	}
+	return layout;
 }
 
 /** True when the layout has no lines defined (needs the "create lines" flow). */
