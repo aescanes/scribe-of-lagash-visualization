@@ -127,9 +127,12 @@ version — that happens once, at release time.
 
 The tag push triggers [`.github/workflows/release.yml`](.github/workflows/release.yml),
 which builds and publishes a GitHub Release containing `main.js`,
-`manifest.json`, and `styles.css`. That workflow fails the release if the tag
-name doesn't match `manifest.json`'s version, so bump *before* tagging (which
-`npm version` does in the right order).
+`manifest.json`, and `styles.css`. The release body is that version's
+`CHANGELOG.md` section (extracted by [`release-notes.mjs`](release-notes.mjs),
+the same text that lands in the tag message) followed by GitHub's
+auto-generated "What's Changed" / "Full Changelog" notes. That workflow fails
+the release if the tag name doesn't match `manifest.json`'s version, so bump
+*before* tagging (which `npm version` does in the right order).
 
 If a minimum Obsidian version bump is needed, edit `minAppVersion` in
 `manifest.json` before step 3 so the new `versions.json` entry records it.

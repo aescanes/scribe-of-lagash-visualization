@@ -242,8 +242,10 @@ required, since `.npmrc`'s `ignore-scripts=true` otherwise skips the hooks. The
 `## [Unreleased]` to `## [<version>] - <date>`) then
 [`version-bump.mjs`](version-bump.mjs) (syncs `manifest.json` / `versions.json`);
 the `postversion` hook runs [`version-tag.mjs`](version-tag.mjs) (writes that
-CHANGELOG section into the tag message). Full steps in
-[CONTRIBUTING.md](CONTRIBUTING.md).
+CHANGELOG section into the tag message). The release workflow then puts the same
+CHANGELOG section (via [`release-notes.mjs`](release-notes.mjs)) at the top of
+the GitHub Release body, above the auto-generated "What's Changed" notes. Full
+steps in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Frontmatter schema
 
