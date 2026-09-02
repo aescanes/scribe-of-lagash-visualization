@@ -18,8 +18,10 @@ export interface ScribeVisualizationSettings {
 	/**
 	 * Name of the optional per-book Outline file — a hand-edited table planning
 	 * chapters/scenes ahead of the notes. Empty means the feature is off; naming
-	 * a file that doesn't exist yet creates it with an empty table skeleton. The
-	 * plugin prefixes it with "(SL) " on disk (see `withScribePrefix`).
+	 * a file that doesn't exist yet creates it with an empty table skeleton whose
+	 * header comment explains which columns to fill for each book layout (see
+	 * `ensureOutlineFile`). The plugin prefixes it with "(SL) " on disk (see
+	 * `withScribePrefix`).
 	 */
 	outlineFileName: string;
 

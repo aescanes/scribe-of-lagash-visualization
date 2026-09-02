@@ -50,15 +50,76 @@ plugin scans that folder and classifies each note by its **title**:
 | `Prologue`, `Epilogue`, `Interlude` | chapter (no number) |
 | anything else | ignored |
 
-English and Spanish are supported (`Capítulo 3`, `Escena II`, `Prólogo`, …) —
-pick the language under **Title language** in settings. Leave **Book folder**
-empty to scan the whole vault instead.
+Leave **Book folder** empty to scan the whole vault instead.
 
-Manuscript order comes from the **folder structure** (all of `Act I/…` before
-`Act II/…`) and then the number in the title. Sub-folders also become a
-breadcrumb under the title on each card: a note at
+### Recognised title words
+
+The **Title language** setting picks which language's words the plugin looks for
+at the **start** of a note's title. The number may be digits or a roman numeral
+(`IV`), an optional `.` can follow the keyword, and matching is
+case-insensitive. English (`en`) and Spanish (`es`) ship today:
+
+| Meaning | English | Español |
+|---|---|---|
+| Chapter *N* | `Chapter N`, `Chap N`, `Ch N` | `Capítulo N`, `Capitulo N`, `Cap N` |
+| Scene *N* | `Scene N`, `Sc N` | `Escena N`, `Esc N` |
+| Chapter, no number | `Prologue`, `Epilogue`, `Interlude`, `Foreword`, `Afterword`, `Preface` | `Prólogo`, `Epílogo`, `Interludio`, `Prefacio`, `Epígrafe` |
+| Act folder — the word the Outline file prepends to an `Act` cell when it builds a path | `Act` | `Acto` |
+
+So with **Title language** set to Español, `Cap. 3 — La caída` is chapter 3 and
+`Escena II` is scene 2. Adding a language is one more pattern table in
+[`src/data/titleParser.ts`](src/data/titleParser.ts) — nothing else changes.
+
+### Book structure
+
+A note's place in the manuscript comes from **where it sits in folders**, not
+from frontmatter. Any of these layouts works — but pick **one per book**:
+
+| Layout | On disk (under the book folder) |
+|---|---|
+| Chapters as files | `Chapter 1.md`, `Chapter 2.md`, … |
+| …grouped in acts | `Act I/Chapter 1.md`, `Act II/Chapter 5.md`, … |
+| Chapters as folders of scenes | `Chapter 1/Scene 1.md`, `Chapter 1/Scene 2.md`, … |
+| …grouped in acts | `Act I/Chapter 1/Scene 1.md`, … |
+| Scenes with no chapter | `Scene 1.md`, or `Act I/Scene 1.md` |
+| Deeper nesting | `Act I/Part 2/Chapter 3.md` — every folder just adds to the breadcrumb |
+
+A scene's chapter is simply its containing folder — there is no `parent` key.
+`Prologue.md` / `Epilogue.md` / `Interlude.md` can go anywhere; having no number,
+they sort after the numbered notes in the same folder.
+
+> **Don't mix "chapter as a file" and "chapter as a folder" in the same book.**
+> If you do, every file-chapter sorts before any folder-chapter's scenes. Pick
+> one style and convert the whole book to it.
+
+Manuscript order is then: folder path first (all of `Act I/…` before `Act II/…`;
+a numbered folder sorts by its number, so `Chapter 2/` comes before
+`Chapter 10/`), then the number in the title, then the title text. Sub-folders
+also show as a breadcrumb under each card — a note at
 `My Novel/Act I/Chapter I/Scene 1.md` (book folder `My Novel`) shows "Scene 1"
 with "Act I - Chapter I" underneath.
+
+### Planning ahead with the Outline file
+
+When you plan a book in the **Outline file** table before writing the notes,
+fill the columns that match your layout:
+
+| Layout | Columns to fill | The row's note |
+|---|---|---|
+| Chapters as files | `Chapter` | `Chapter 1.md` |
+| …grouped in acts | `Act` + `Chapter` | `Act I/Chapter 1.md` |
+| Scenes in chapter folders | `Chapter` + `Scene` | `Chapter 1/Scene 2.md` |
+| …grouped in acts | `Act` + `Chapter` + `Scene` | `Act I/Chapter 1/Scene 2.md` |
+| Scenes with no chapter | `Scene` (+ optional `Act`) | `Scene 2.md` |
+| Custom folder | `Folder` (overrides `Act`) | `<Folder>/Chapter 1.md` |
+
+Numbers may be digits or roman numerals; the `Act` / `Chapter` / `Scene` words
+and folder names follow the **Title language** setting. `Line` is a line name or
+id from the Lines file; `Summary` shows on the card and becomes the note body
+when you create it. A row with neither a `Chapter` nor a `Scene` value is
+ignored, and un-numbered units (`Prologue`, …) can't be planned here — create
+those notes directly. The Outline file created for you carries these same notes
+as a comment at the top.
 
 ### Optional frontmatter
 

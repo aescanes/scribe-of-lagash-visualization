@@ -4,7 +4,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { generateOutlineTable, replaceFirstTable } from "../../src/data/outlineGenerate";
+import { generateOutlineTable, isOutlineRowable, replaceFirstTable } from "../../src/data/outlineGenerate";
 import { parseOutlineTable } from "../../src/data/outline";
 import { LineLayout, NovelEntry } from "../../src/types";
 
@@ -83,6 +83,22 @@ test("generateOutlineTable: a scene directly under the book (no chapter folder) 
 		{ folder: rows[0].folder, chapter: rows[0].chapter, scene: rows[0].scene },
 		{ folder: null, chapter: null, scene: 2 },
 	);
+});
+
+test("isOutlineRowable is false only for an unnumbered standalone unit", () => {
+	assert.equal(isOutlineRowable(entry("Book/Chapter 1.md", { type: "chapter", order: 1 })), true);
+	assert.equal(isOutlineRowable(entry("Book/Scene 1.md", { type: "scene", order: 1 })), true);
+	assert.equal(isOutlineRowable(entry("Book/Prologue.md", { type: "chapter", order: null })), false);
+});
+
+test("generateOutlineTable omits unnumbered standalone units (Prologue) instead of emitting a dead row", () => {
+	const entries = [
+		entry("Book/Prologue.md", { type: "chapter", order: null, title: "Prologue", context: [] }),
+		entry("Book/Chapter 1.md", { type: "chapter", order: 1, context: [] }),
+	];
+	const rows = parseOutlineTable(generateOutlineTable(entries, layout));
+	assert.equal(rows.length, 1);
+	assert.equal(rows[0].chapter, 1);
 });
 
 test("replaceFirstTable swaps the skeleton table but keeps the surrounding text", () => {

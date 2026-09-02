@@ -21,7 +21,10 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 		containerEl.createEl("p", {
 			text:
 				"Point the plugin at the folder that holds a book's notes. Notes are " +
-				"classified as chapters or scenes by their title (e.g. \"Chapter 1\", \"Scene II\").",
+				"classified as chapters or scenes by their title (e.g. \"Chapter 1\", \"Scene II\"); " +
+				"their manuscript order comes from the folder structure. A chapter can be a " +
+				"single note or a folder of scene notes — pick one style per book, don't mix them. " +
+				"See the plugin's README for the supported layouts.",
 		});
 
 		new Setting(containerEl)
@@ -62,9 +65,9 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 			.setDesc(
 				"Optional. Name a Markdown file to plan chapters/scenes as a table before " +
 					"the notes exist (columns: Act, Chapter, Scene, Line, Summary, …). If it " +
-					"doesn't exist yet, it's created empty for you to fill in. Leave empty to " +
-					"turn this off. The file is prefixed with \"(SL) \", e.g. \"Outline\" " +
-					"becomes \"(SL) Outline.md\".",
+					"doesn't exist yet, it's created empty, with a comment explaining which " +
+					"columns to fill for each book layout. Leave empty to turn this off. The " +
+					"file is prefixed with \"(SL) \", e.g. \"Outline\" becomes \"(SL) Outline.md\".",
 			)
 			.addText((text) => {
 				text.setPlaceholder("Outline.md");

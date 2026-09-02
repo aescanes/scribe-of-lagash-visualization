@@ -4,7 +4,7 @@
 import { addIcon, Notice, normalizePath, Plugin, WorkspaceLeaf } from "obsidian";
 import { lineFilePath, readLineLayout } from "./data/lineFile";
 import { ensureOutlineFile, outlineFilePath, writeGeneratedOutline } from "./data/outlineFile";
-import { generateOutlineTable } from "./data/outlineGenerate";
+import { generateOutlineTable, isOutlineRowable } from "./data/outlineGenerate";
 import { VaultIndex } from "./data/vaultIndex";
 import { DEFAULT_SETTINGS, ScribeVisualizationSettings } from "./settings/settings";
 import { ScribeVisualizationSettingTab } from "./settings/settingsTab";
@@ -90,15 +90,24 @@ export default class ScribeVisualizationPlugin extends Plugin {
 			return;
 		}
 
+		const rowable = entries.filter(isOutlineRowable).length;
+		const skipped = entries.length - rowable;
+		if (rowable === 0) {
+			new Notice("Only unnumbered notes (e.g. Prologue) found — the outline table can't represent those.");
+			return;
+		}
+
 		const layout = await readLineLayout(
 			this.app,
 			normalizePath(lineFilePath(book, this.settings.lineFileName)),
 		);
 		const table = generateOutlineTable(entries, layout, this.settings.titleLanguage);
 		const wrote = await writeGeneratedOutline(this.app, path, table);
+		const skippedNote =
+			skipped > 0 ? ` Skipped ${skipped} unnumbered note${skipped === 1 ? "" : "s"} (e.g. Prologue).` : "";
 		new Notice(
 			wrote
-				? `Wrote ${entries.length} row${entries.length === 1 ? "" : "s"} to "${path}".`
+				? `Wrote ${rowable} row${rowable === 1 ? "" : "s"} to "${path}".${skippedNote}`
 				: `"${path}" already has an outline — left it untouched.`,
 		);
 	}

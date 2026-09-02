@@ -51,10 +51,18 @@ folder-based approach before adding a new frontmatter field or setting.
    decoded. Notes whose title matches nothing are surfaced in a
    "not recognized" list.
 3. The scene → chapter relationship is **folder nesting only** — a scene note
-   lives inside its chapter's folder. No `parent` frontmatter key.
+   lives inside its chapter's folder. No `parent` frontmatter key. A book uses
+   **one style throughout**: chapters are all standalone notes, or all folders
+   of scene notes — mixing misorders (all file-chapters sort before any
+   folder-chapter's scenes). The supported layouts are documented in the README
+   and in the comment `ensureOutlineFile` writes at the top of a new Outline
+   file.
 4. Manuscript order is **folder structure, then title number** — all of
    `Act I/…` before `Act II/…`, and within a folder by the number in the title
-   (`byManuscriptOrder` in `vaultIndex.ts`). No `order` frontmatter key.
+   (`byManuscriptOrder` in `data/manuscriptOrder.ts`, used by `vaultIndex.ts`).
+   Folder segments are compared level by level, by their embedded number when
+   both siblings carry one (`Chapter 2` before `Chapter 10`, `Act IX` before
+   `Act X`) and as plain text otherwise. No `order` frontmatter key.
 
 ### The Lines file (per book)
 

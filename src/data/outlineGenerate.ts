@@ -17,6 +17,16 @@ function cell(value: string | number | null): string {
 	return value === null || value === undefined ? "" : String(value);
 }
 
+/**
+ * Whether an entry can be written as an Outline row. The table is keyed by
+ * Chapter / Scene number, so a standalone unit with no number ("Prologue",
+ * "Epilogue", "Interlude") has no row — `parseOutlineTable` would drop it anyway.
+ * The "Generate outline from notes" command reports how many it skipped.
+ */
+export function isOutlineRowable(entry: NovelEntry): boolean {
+	return entry.type === "scene" || entry.order !== null;
+}
+
 export function generateOutlineTable(
 	entries: NovelEntry[],
 	layout: LineLayout,
@@ -24,7 +34,7 @@ export function generateOutlineTable(
 ): string {
 	const lineNameById = new Map(layout.lines.map((l) => [l.id, l.name]));
 
-	const rows = entries.map((entry) => {
+	const rows = entries.filter(isOutlineRowable).map((entry) => {
 		const isScene = entry.type === "scene";
 		const folder = (isScene ? entry.context.slice(0, -1) : entry.context).join("/");
 		const chapterFolder = isScene ? entry.context[entry.context.length - 1] : undefined;

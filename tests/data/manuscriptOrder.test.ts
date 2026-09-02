@@ -46,3 +46,40 @@ test("same number, same folder falls back to title", () => {
 		["Scene A", "Scene B"],
 	);
 });
+
+test("numbered chapter folders sort by number, not lexically (Chapter 10 after Chapter 2)", () => {
+	assert.deepEqual(
+		[
+			e("Book/Chapter 10/Scene 1.md", 1),
+			e("Book/Chapter 2/Scene 2.md", 2),
+			e("Book/Chapter 2/Scene 1.md", 1),
+			e("Book/Chapter 1/Scene 1.md", 1),
+		]
+			.sort(byManuscriptOrder)
+			.map((i) => i.path),
+		[
+			"Book/Chapter 1/Scene 1.md",
+			"Book/Chapter 2/Scene 1.md",
+			"Book/Chapter 2/Scene 2.md",
+			"Book/Chapter 10/Scene 1.md",
+		],
+	);
+});
+
+test("roman-numeral act folders sort by value", () => {
+	assert.deepEqual(
+		[e("Book/Act II/Chapter 1.md", 1), e("Book/Act X/Chapter 1.md", 1), e("Book/Act IX/Chapter 1.md", 1)]
+			.sort(byManuscriptOrder)
+			.map((i) => i.path),
+		["Book/Act II/Chapter 1.md", "Book/Act IX/Chapter 1.md", "Book/Act X/Chapter 1.md"],
+	);
+});
+
+test("a non-numeric folder still sorts as a plain string", () => {
+	assert.deepEqual(
+		[e("Book/Backstory/Chapter 1.md", 1), e("Book/Act I/Chapter 1.md", 1)]
+			.sort(byManuscriptOrder)
+			.map((i) => i.path),
+		["Book/Act I/Chapter 1.md", "Book/Backstory/Chapter 1.md"],
+	);
+});
