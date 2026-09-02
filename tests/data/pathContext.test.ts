@@ -4,7 +4,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { folderContext, formatFolderContext } from "./pathContext";
+import { folderContext, formatFolderContext } from "../../src/data/pathContext";
 
 test("folderContext returns the segments between the book folder and the file", () => {
 	assert.deepEqual(folderContext("Book/Act I/Chapter I/Scene 1.md", "Book"), ["Act I", "Chapter I"]);

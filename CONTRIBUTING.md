@@ -42,11 +42,13 @@ npm run build
 npm run validate   # typecheck + test + lint (also run by the pre-commit hook)
 ```
 
-Unit tests live next to the code as `*.test.ts` and cover the pure modules
-(title parsing, line-layout coercion, outline-table parsing and reconciliation,
-note scaffolding). `npm test` compiles them with esbuild —
-already a build dependency — and runs them through Node's built-in test runner;
-no separate test framework is pulled in.
+Unit tests live under `tests/`, which mirrors `src/` — the spec for
+`src/data/outline.ts` is `tests/data/outline.test.ts` and imports its subject
+from `../../src/data/outline`. They cover the pure modules (title parsing,
+line-layout coercion, outline-table parsing and reconciliation, note
+scaffolding). `npm test` compiles them with esbuild — already a build
+dependency — and runs them through Node's built-in test runner; no separate
+test framework is pulled in.
 
 ## Code conventions
 
@@ -85,7 +87,7 @@ Releases are cut from `main` by a maintainer. Feature PRs must **not** bump the
 version — that happens once, at release time.
 
 1. Make sure `main` is up to date, the working tree is clean, and
-   `npm run build && npm test && npx eslint src` all pass.
+   `npm run build && npm test && npx eslint src tests` all pass.
 2. Check that `CHANGELOG.md`'s `## [Unreleased]` section lists everything in this
    release, written for a reader of `git show <tag>` — it becomes the tag
    message. You do **not** rename the heading yourself; the bump does that.

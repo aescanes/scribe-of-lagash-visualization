@@ -4,7 +4,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { byManuscriptOrder, OrderedEntry } from "./manuscriptOrder";
+import { byManuscriptOrder, OrderedEntry } from "../../src/data/manuscriptOrder";
 
 function e(path: string, order: number | null): OrderedEntry {
 	return { path, order, title: path.split("/").pop()?.replace(/\.md$/, "") ?? path };

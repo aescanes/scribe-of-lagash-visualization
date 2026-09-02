@@ -20,9 +20,9 @@ import {
 	renameLine,
 	starterLayout,
 	starterLayoutFromOutline,
-} from "./canvasModel";
-import { LineLayout, NovelEntry, OutlineRow, PlannedEntry } from "../types";
-import { OutlineReconciliation } from "../data/outline";
+} from "../../src/views/canvasModel";
+import { LineLayout, NovelEntry, OutlineRow, PlannedEntry } from "../../src/types";
+import { OutlineReconciliation } from "../../src/data/outline";
 
 function entry(path: string, over: Partial<NovelEntry> = {}): NovelEntry {
 	return {

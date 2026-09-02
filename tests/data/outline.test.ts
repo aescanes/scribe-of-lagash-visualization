@@ -11,8 +11,8 @@ import {
 	outlineRowType,
 	parseOutlineTable,
 	reconcileOutline,
-} from "./outline";
-import { LineLayout, NovelEntry, OutlineRow } from "../types";
+} from "../../src/data/outline";
+import { LineLayout, NovelEntry, OutlineRow } from "../../src/types";
 
 function entry(path: string, over: Partial<NovelEntry> = {}): NovelEntry {
 	return {
@@ -135,6 +135,23 @@ test("expectedNotePath omits the folder segment when there's no Act or Folder", 
 	assert.equal(expectedNotePath(row({ chapter: 3 }), "Book"), "Book/Chapter 3.md");
 });
 
+test("expectedNotePath: a scene row with no Chapter sits directly in its folder", () => {
+	assert.equal(expectedNotePath(row({ scene: 2 }), "Book"), "Book/Scene 2.md");
+	assert.equal(expectedNotePath(row({ act: "I", scene: 2 }), "Book"), "Book/Act I/Scene 2.md");
+});
+
+test("expectedNotePath works with no book folder (whole-vault scan)", () => {
+	assert.equal(expectedNotePath(row({ chapter: 1 }), ""), "Chapter 1.md");
+	assert.equal(expectedNotePath(row({ act: "I", chapter: 1 }), ""), "Act I/Chapter 1.md");
+});
+
+test("expectedNotePath keeps a multi-segment Folder cell", () => {
+	assert.equal(
+		expectedNotePath(row({ folder: "Act I/Part 2", chapter: 1 }), "Book"),
+		"Book/Act I/Part 2/Chapter 1.md",
+	);
+});
+
 const layout: LineLayout = {
 	lines: [
 		{ id: "main", name: "Main line", color: "#111", order: 0 },
@@ -152,6 +169,40 @@ test("reconcileOutline matches a fulfilled row by expected path and adds a Summa
 	assert.deepEqual(result.planned, []);
 	assert.equal(result.previews["Book/Chapter 1.md"], "Opening scene.");
 	assert.equal(result.marks["Book/Chapter 1.md"], undefined);
+});
+
+test("reconcileOutline matches a scene note nested under its chapter folder (Act / Chapter / Scene)", () => {
+	const entries = [
+		entry("Book/Act I/Chapter 1/Scene 2.md", { type: "scene", order: 2, context: ["Act I", "Chapter 1"] }),
+	];
+	const rows = [row({ act: "I", chapter: 1, scene: 2, line: "Main line" })];
+	const result = reconcileOutline(rows, entries, layout, "Book");
+	assert.deepEqual(result.planned, []);
+	assert.deepEqual(result.fulfilledPaths, ["Book/Act I/Chapter 1/Scene 2.md"]);
+	assert.equal(result.marks["Book/Act I/Chapter 1/Scene 2.md"], undefined);
+});
+
+test("reconcileOutline matches a scene note under a chapter folder with no Act", () => {
+	const entries = [entry("Book/Chapter 2/Scene 1.md", { type: "scene", order: 1, context: ["Chapter 2"] })];
+	const rows = [row({ chapter: 2, scene: 1 })];
+	const result = reconcileOutline(rows, entries, layout, "Book");
+	assert.deepEqual(result.fulfilledPaths, ["Book/Chapter 2/Scene 1.md"]);
+	assert.equal(result.marks["Book/Chapter 2/Scene 1.md"], undefined);
+});
+
+test("reconcileOutline plans an unwritten scene row inside its chapter folder", () => {
+	const result = reconcileOutline([row({ chapter: 1, scene: 2, line: "Main line" })], [], layout, "Book");
+	assert.equal(result.planned.length, 1);
+	assert.equal(result.planned[0].expectedPath, "Book/Chapter 1/Scene 2.md");
+	assert.equal(result.planned[0].label, "Scene 2");
+	assert.equal(result.planned[0].type, "scene");
+});
+
+test("reconcileOutline flags a scene note that sits in the wrong folder", () => {
+	const entries = [entry("Book/Chapter 1/Scene 2.md", { type: "scene", order: 2, context: ["Chapter 1"] })];
+	const rows = [row({ act: "I", chapter: 1, scene: 2 })];
+	const result = reconcileOutline(rows, entries, layout, "Book");
+	assert.match(result.marks["Book/Chapter 1/Scene 2.md"], /outline expects it under "Book\/Act I\/Chapter 1"/);
 });
 
 test("reconcileOutline falls back to type+number matching when the path differs", () => {

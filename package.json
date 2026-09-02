@@ -8,7 +8,7 @@
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
 		"test": "node esbuild.test.mjs && node --test .test-build",
 		"typecheck": "tsc -noEmit -skipLibCheck",
-		"lint": "eslint src",
+		"lint": "eslint src tests",
 		"validate": "npm run typecheck && npm test && npm run lint",
 		"version": "node version-changelog.mjs && node version-bump.mjs && git add CHANGELOG.md manifest.json versions.json",
 		"postversion": "node version-tag.mjs",

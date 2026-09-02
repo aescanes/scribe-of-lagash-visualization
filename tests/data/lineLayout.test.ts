@@ -4,7 +4,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { emptyLineLayout, lineFilePath, parseLineLayout, withScribePrefix } from "./lineLayout";
+import { emptyLineLayout, lineFilePath, parseLineLayout, withScribePrefix } from "../../src/data/lineLayout";
 
 test("lineFilePath joins folder and name, tolerating slashes", () => {
 	assert.equal(lineFilePath("Book", "Lines.md"), "Book/(SL) Lines.md");

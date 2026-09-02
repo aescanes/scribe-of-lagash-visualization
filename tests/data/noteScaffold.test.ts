@@ -4,8 +4,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { scaffoldNoteBody } from "./noteScaffold";
-import { OutlineRow, PlannedEntry } from "../types";
+import { scaffoldNoteBody } from "../../src/data/noteScaffold";
+import { OutlineRow, PlannedEntry } from "../../src/types";
 
 function row(over: Partial<OutlineRow> = {}): OutlineRow {
 	return {

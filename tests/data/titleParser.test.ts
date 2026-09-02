@@ -12,7 +12,7 @@ import {
 	parseTitle,
 	romanToInt,
 	unitLabel,
-} from "./titleParser";
+} from "../../src/data/titleParser";
 
 test("romanToInt decodes well-formed numerals", () => {
 	assert.equal(romanToInt("I"), 1);

@@ -205,8 +205,8 @@ npm run prepare  # activate Husky hooks — needed once, since ignore-scripts=tr
                  # keeps `npm install` from running `prepare` itself
 npm run dev      # esbuild watch → main.js (inline sourcemap)
 npm run build    # tsc --noEmit type-check + minified production bundle → main.js
-npm test         # esbuild-compile src/**/*.test.ts → .test-build, run node --test
-npm run lint     # eslint src (flat config in eslint.config.mjs, ESLint 9)
+npm test         # esbuild-compile tests/**/*.test.ts → .test-build, run node --test
+npm run lint     # eslint src tests (flat config in eslint.config.mjs, ESLint 9)
 npm run validate # typecheck + test + lint — what the pre-commit hook runs
 ```
 
@@ -217,10 +217,13 @@ A Husky pre-commit hook ([`.husky/pre-commit`](.husky/pre-commit)) runs
 CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs `npm run build`,
 `npm test`, and eslint on push/PR to `main`. All must pass before a PR.
 
-Tests use Node's built-in `node:test` — **no test framework dependency**.
-[`esbuild.test.mjs`](esbuild.test.mjs) transpiles the `*.test.ts` files (obsidian
-and Node builtins left external) into `.test-build/`. Only pure modules with no
-Obsidian imports are unit-tested; keep such logic in its own file (e.g.
+Tests use Node's built-in `node:test` — **no test framework dependency**. They
+live under [`tests/`](tests/), which mirrors `src/`: the spec for
+`src/data/outline.ts` is `tests/data/outline.test.ts` and imports its subject
+from `../../src/data/outline`. [`esbuild.test.mjs`](esbuild.test.mjs) transpiles
+the `tests/**/*.test.ts` files (obsidian and Node builtins left external) into
+`.test-build/`. Only pure modules with no Obsidian imports are unit-tested; keep
+such logic in its own file (e.g.
 [`src/data/lineLayout.ts`](src/data/lineLayout.ts) split out from `lineFile.ts`)
 so it can be imported without pulling in `obsidian`.
 
