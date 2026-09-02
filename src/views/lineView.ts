@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (C) 2026 aescanes
 
-import { debounce, ItemView, Notice, normalizePath, Scope, TFile, WorkspaceLeaf } from "obsidian";
+import { debounce, ItemView, Notice, normalizePath, Scope, setIcon, TFile, WorkspaceLeaf } from "obsidian";
 import type ScribeVisualizationPlugin from "../main";
 import { emptyLineLayout, lineFilePath, readLineLayout, writeLineLayout } from "../data/lineFile";
 import { OutlineReconciliation, reconcileOutline } from "../data/outline";
@@ -432,11 +432,12 @@ export class LineView extends ItemView {
 				this.editLineName(nameRow, id, name);
 			}
 		});
-		nameRow.createSpan({
+		const countEl = nameRow.createSpan({
 			cls: "scribe-canvas-line-count",
-			text: `(${count})`,
 			attr: { "aria-label": `${count} card${count === 1 ? "" : "s"}` },
 		});
+		setIcon(countEl.createSpan({ cls: "scribe-canvas-line-count-icon" }), "layers");
+		countEl.createSpan({ text: String(count) });
 
 		const controls = header.createDiv({ cls: "scribe-canvas-line-controls" });
 

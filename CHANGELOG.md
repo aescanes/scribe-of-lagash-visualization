@@ -10,6 +10,7 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   configured name, so they stand out among the book's notes — e.g. `StoryLines`
   becomes `(SL) StoryLines.md` and the default becomes `(SL) Lines.md`. Set the
   name without the prefix in settings; the plugin adds it.
+- The line names will use the same color that the line and we add an icon in the count cards number.
 
 ## [0.5.0](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.5.0) - 2026-09-01
 

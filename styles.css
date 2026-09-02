@@ -102,7 +102,7 @@
 /* Line name + card count. Clicking the name swaps this row for an input. */
 .scribe-canvas-line-name-row {
 	display: flex;
-	align-items: baseline;
+	align-items: center;
 	gap: 5px;
 }
 
@@ -111,7 +111,7 @@
 	min-width: 0;
 	padding: 2px 4px;
 	font-weight: 600;
-	color: var(--text-normal);
+	color: var(--scribe-line-color);
 	border-radius: var(--radius-s);
 	cursor: text;
 	white-space: nowrap;
@@ -180,9 +180,21 @@
 
 .scribe-canvas-line-count {
 	flex: none;
+	display: inline-flex;
+	align-items: center;
+	gap: 3px;
 	font-size: var(--font-ui-medium);
-	color: var(--text-muted);
+	color: var(--scribe-line-color);
 	font-weight: 600;
+}
+
+.scribe-canvas-line-count-icon {
+	display: inline-flex;
+}
+
+.scribe-canvas-line-count-icon .svg-icon {
+	width: 15px;
+	height: 15px;
 }
 
 .scribe-canvas-line-rail {
@@ -234,6 +246,12 @@
 	border-left: 3px solid var(--scribe-line-color);
 }
 
+/* :hover sets `border-color` (all four sides), which would wipe the coloured
+   left edge — re-assert the line colour so every rail card keeps it. */
+.scribe-canvas-line-rail .scribe-canvas-card:hover {
+	border-left-color: var(--scribe-line-color);
+}
+
 .scribe-canvas-card.is-linked {
 	outline: 2px solid var(--interactive-accent);
 	outline-offset: 1px;
@@ -263,7 +281,7 @@
 
 .scribe-canvas-card--planned .scribe-canvas-card-dot {
 	background: none;
-	border: 1px dashed var(--text-muted);
+	border: 1px dashed var(--scribe-line-color);
 }
 
 .scribe-canvas-card-create {
@@ -314,11 +332,14 @@
 	height: 8px;
 	margin-top: 5px;
 	border-radius: 50%;
-	background: var(--interactive-accent);
+	background: var(--scribe-line-color);
 }
 
+/* Scenes keep a lighter dot than chapters — an outline of the line colour
+   rather than a filled disc. */
 .scribe-canvas-card--scene .scribe-canvas-card-dot {
-	background: var(--text-muted);
+	background: none;
+	box-shadow: inset 0 0 0 2px var(--scribe-line-color);
 }
 
 .scribe-canvas-card-body {
