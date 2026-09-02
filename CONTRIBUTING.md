@@ -19,9 +19,15 @@ concern. This particular plugin covers chapter/scene visualization
 
 ```bash
 npm install
-npm run dev    # watch build, outputs main.js
-npm run build  # type-check + production build
+npm run prepare  # activate the Husky git hooks (see note below)
+npm run dev      # watch build, outputs main.js
+npm run build    # type-check + production build
 ```
+
+`.npmrc` sets `ignore-scripts=true`, so `npm install` does **not** run the
+`prepare` script that installs the Husky hooks. Run `npm run prepare` once
+after cloning to enable the pre-commit hook, which runs `npm run validate`
+(`npm run typecheck && npm test && npm run lint`) before every commit.
 
 To try your changes in a real vault, copy (or symlink) `manifest.json`,
 `main.js`, and `styles.css` into
@@ -33,8 +39,7 @@ Before opening a PR, make sure all of these pass:
 
 ```bash
 npm run build
-npm test
-npx eslint src
+npm run validate   # typecheck + test + lint (also run by the pre-commit hook)
 ```
 
 Unit tests live next to the code as `*.test.ts` and cover the pure modules
