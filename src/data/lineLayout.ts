@@ -13,6 +13,19 @@ import { Line, LineLayout, Placement } from "../types";
 export const DEFAULT_LINE_FILE = "Lines.md";
 export const DEFAULT_LINE_COLOR = "#888888";
 
+/** Prefix put on every file the plugin manages, so they stand out in the vault. */
+export const SCRIBE_FILE_PREFIX = "(SL) ";
+
+/**
+ * Prefixes a file name with "(SL) ". Idempotent — a name the user already typed
+ * with the prefix (or an empty name) is returned unchanged.
+ */
+export function withScribePrefix(fileName: string): string {
+	const name = fileName.trim();
+	if (!name || name.startsWith(SCRIBE_FILE_PREFIX)) return name;
+	return `${SCRIBE_FILE_PREFIX}${name}`;
+}
+
 export function emptyLineLayout(): LineLayout {
 	return { lines: [], placements: {} };
 }
@@ -24,7 +37,7 @@ function trimSlashes(path: string): string {
 /** Vault-relative path to a book's Lines file. */
 export function lineFilePath(bookFolder: string, fileName: string): string {
 	const folder = trimSlashes(bookFolder);
-	const name = trimSlashes(fileName.trim()) || DEFAULT_LINE_FILE;
+	const name = withScribePrefix(trimSlashes(fileName.trim()) || DEFAULT_LINE_FILE);
 	return folder ? `${folder}/${name}` : name;
 }
 

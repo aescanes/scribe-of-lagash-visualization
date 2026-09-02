@@ -59,8 +59,10 @@ folder-based approach before adding a new frontmatter field or setting.
 ### The Lines file (per book)
 
 Lines and card placements live in **one Markdown file inside the book folder**
-(default `Lines.md`, configurable). Human-readable, diff-friendly, travels with
-the book. Shape:
+(default `Lines.md`, configurable). The plugin prefixes the configured name with
+`(SL) ` on disk — `StoryLines` → `(SL) StoryLines.md`, the default → `(SL)
+Lines.md` — via `withScribePrefix` in `lineLayout.ts`. Human-readable,
+diff-friendly, travels with the book. Shape:
 
 ```yaml
 ---
@@ -99,7 +101,8 @@ An **optional** second file beside `Lines.md`: a hand-edited Markdown table for
 planning chapters/scenes *before* the notes exist. Off by default; a name in the
 **Outline file name** setting turns it on, and naming a not-yet-existing file
 creates it with an empty skeleton (marker `scribe-visualization: outline` +
-header row). Columns: `Act | Chapter | Scene | Line | Summary`, plus optional
+header row). The configured name is `(SL) `-prefixed on disk, same as the Lines
+file. Columns: `Act | Chapter | Scene | Line | Summary`, plus optional
 `Folder | Date | Characters | Places | Status`; `Line` is a line name/id from
 `Lines.md`.
 

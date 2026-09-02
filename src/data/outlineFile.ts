@@ -3,6 +3,7 @@
 
 import { App, normalizePath, parseYaml, TFile } from "obsidian";
 import { OutlineRow } from "../types";
+import { withScribePrefix } from "./lineLayout";
 import { parseOutlineTable } from "./outline";
 import { replaceFirstTable } from "./outlineGenerate";
 
@@ -36,7 +37,7 @@ function hasMarker(frontmatter: unknown): boolean {
 
 /** Vault-relative path to a book's Outline file, or "" when unnamed (feature off). */
 export function outlineFilePath(bookFolder: string, fileName: string): string {
-	const name = fileName.trim();
+	const name = withScribePrefix(fileName.trim());
 	if (!name) return "";
 	const folder = bookFolder.replace(/^\/+/, "").replace(/\/+$/, "");
 	return folder ? `${folder}/${name}` : name;

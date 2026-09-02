@@ -5,6 +5,12 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+- The Lines file and Outline file are now created with a `(SL) ` prefix on their
+  configured name, so they stand out among the book's notes — e.g. `StoryLines`
+  becomes `(SL) StoryLines.md` and the default becomes `(SL) Lines.md`. Set the
+  name without the prefix in settings; the plugin adds it.
+
 ## [0.5.0](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.5.0) - 2026-09-01
 
 ### Added

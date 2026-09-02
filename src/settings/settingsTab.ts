@@ -44,7 +44,11 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Lines file name")
-			.setDesc("Name of the Lines file created inside the book folder to store its default view.")
+			.setDesc(
+				"Name of the Lines file created inside the book folder to store its default view. " +
+					'The plugin prefixes it with "(SL) " so it stands out — e.g. "StoryLines" ' +
+					'becomes "(SL) StoryLines.md".',
+			)
 			.addText((text) => {
 				text.setValue(this.plugin.settings.lineFileName);
 				text.onChange(async (value) => {
@@ -59,7 +63,8 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 				"Optional. Name a Markdown file to plan chapters/scenes as a table before " +
 					"the notes exist (columns: Act, Chapter, Scene, Line, Summary, …). If it " +
 					"doesn't exist yet, it's created empty for you to fill in. Leave empty to " +
-					"turn this off.",
+					"turn this off. The file is prefixed with \"(SL) \", e.g. \"Outline\" " +
+					"becomes \"(SL) Outline.md\".",
 			)
 			.addText((text) => {
 				text.setPlaceholder("Outline.md");

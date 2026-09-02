@@ -4,13 +4,21 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { emptyLineLayout, lineFilePath, parseLineLayout } from "./lineLayout";
+import { emptyLineLayout, lineFilePath, parseLineLayout, withScribePrefix } from "./lineLayout";
 
 test("lineFilePath joins folder and name, tolerating slashes", () => {
-	assert.equal(lineFilePath("Book", "Lines.md"), "Book/Lines.md");
-	assert.equal(lineFilePath("/Book/The City/", "Lines.md"), "Book/The City/Lines.md");
-	assert.equal(lineFilePath("Book", "  "), "Book/Lines.md");
-	assert.equal(lineFilePath("", "Lines.md"), "Lines.md");
+	assert.equal(lineFilePath("Book", "Lines.md"), "Book/(SL) Lines.md");
+	assert.equal(lineFilePath("/Book/The City/", "Lines.md"), "Book/The City/(SL) Lines.md");
+	assert.equal(lineFilePath("Book", "  "), "Book/(SL) Lines.md");
+	assert.equal(lineFilePath("", "Lines.md"), "(SL) Lines.md");
+	assert.equal(lineFilePath("Book", "StoryLines"), "Book/(SL) StoryLines");
+});
+
+test("withScribePrefix adds the (SL) prefix once", () => {
+	assert.equal(withScribePrefix("StoryLines"), "(SL) StoryLines");
+	assert.equal(withScribePrefix("  StoryLines  "), "(SL) StoryLines");
+	assert.equal(withScribePrefix("(SL) StoryLines"), "(SL) StoryLines");
+	assert.equal(withScribePrefix(""), "");
 });
 
 test("parseLineLayout returns an empty layout for junk input", () => {
