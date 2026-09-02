@@ -351,7 +351,7 @@ export class LineView extends ItemView {
 			const label = `Add ${missingLines.length} line${missingLines.length === 1 ? "" : "s"} named in the outline`;
 			const refresh = toolbar.createEl("button", {
 				cls: "scribe-canvas-refresh",
-				attr: { "aria-label": label, title: label },
+				attr: { "aria-label": label },
 			});
 			setIcon(refresh, "refresh-cw");
 			refresh.addEventListener("click", () => this.createOutlineLines());
@@ -744,7 +744,7 @@ export class LineView extends ItemView {
 			this.renderNotice(
 				root,
 				`These outline lines aren't in "${this.linePath()}" yet: ${recon.unknownLines.join(", ")}. ` +
-					`Use the ⟳ button in the toolbar to add them, or fix the Line cell.`,
+					`Use the refresh button in the toolbar to add them, or fix the Line cell.`,
 			);
 		}
 	}
