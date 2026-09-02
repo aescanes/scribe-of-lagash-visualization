@@ -1,7 +1,7 @@
 {
 	"id": "scribe-of-lagash-visualization",
 	"name": "Scribe of Lagash: Visualization",
-	"version": "0.5.0",
+	"version": "0.6.0",
 	"minAppVersion": "1.10.0",
 	"description": "Visualize your novel's chapters and scenes: arrange them on lines and group them into matrices by character, place, or situation.",
 	"author": "aescanes",
