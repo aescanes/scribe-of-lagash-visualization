@@ -7,13 +7,16 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [0.6.1](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.6.1) - 2026-09-02
 
+### Changed
+- Add release notes from CHANGELOG file.
+
 ## [0.6.0](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.6.0) - 2026-09-02
 
 ### Added
 - The outline file's `Line` column can now create lines. When a book has no
   Lines file, the "Create lines from outline" prompt builds one line per `Line`
   value and places each existing note on the line its outline row names. When a
-  Lines file already exists and the outline names a line it doesn't have, a ⟳
+  Lines file already exists and the outline names a line it doesn't have, a refresh
   button appears in the toolbar; clicking it adds those lines (theme-accent
   colour) in one undoable step. Lines are only ever added — never renamed,
   recoloured, reordered, removed, and no existing card is moved.
