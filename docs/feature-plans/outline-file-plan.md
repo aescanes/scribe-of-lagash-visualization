@@ -169,6 +169,35 @@ affordance.
 
 ---
 
+## Phase 6 — outline-driven lines ✅ done
+
+Before this phase, a `Line` value that matched no line in `Lines.md` left its
+ghost cards stranded in the "Not on any line" strip; the only fix was to add the
+line by hand. Now the `Line` column can create lines.
+
+- `outlineLineNames(rows)` (pure, in `outline.ts`) — distinct non-empty `Line`
+  values in first-appearance order, case-insensitive dedupe.
+- **Lines file present:** the view never creates lines automatically — a `Line`
+  typo the user later corrects would otherwise leave a stray line behind.
+  Instead `LineView.missingOutlineLines()` computes the `outlineLineNames` not
+  present by id or name, and a ⟳ (`refresh-cw`) toolbar button — shown only when
+  that list is non-empty — calls `createOutlineLines()`, which appends a line
+  (theme accent) for each as a single `mutate()` (undoable, saved). A `Notice`
+  reports the count.
+- **No Lines file yet:** the empty-state prompt becomes "Create lines from
+  outline" when the outline names lines, and builds the layout with
+  `starterLayoutFromOutline(entries, rows, book, language, color)` (pure, in
+  `canvasModel.ts`): one line per `outlineLineNames` value, each real entry
+  placed on the line its matching row names (first line as fallback). Falls back
+  to the single "Main line" `starterLayout` when the outline names no lines.
+- **Additive only.** Never renames / recolours / reorders / removes a line, and
+  never repositions an existing note's card. Placements are seeded from the
+  outline only when `Lines.md` is first created.
+- `reconcileOutline`'s `unknownLines` diagnostic notice points the user at the
+  ⟳ button (or at fixing the `Line` cell).
+
+---
+
 ## Open questions to resolve as we go
 
 - Exact wording/placement of the discrepancy tooltip and the unknown-line /

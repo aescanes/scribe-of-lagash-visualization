@@ -19,6 +19,7 @@ import {
 	removeLine,
 	renameLine,
 	starterLayout,
+	starterLayoutFromOutline,
 } from "./canvasModel";
 import { LineLayout, NovelEntry, OutlineRow, PlannedEntry } from "../types";
 import { OutlineReconciliation } from "../data/outline";
@@ -93,6 +94,81 @@ test("starterLayout puts every entry on one line in order", () => {
 test("isLayoutEmpty", () => {
 	assert.equal(isLayoutEmpty({ lines: [], placements: {} }), true);
 	assert.equal(isLayoutEmpty(layout), false);
+});
+
+test("starterLayoutFromOutline makes one line per outline Line value, in table order", () => {
+	const rows = [
+		outlineRow({ rowIndex: 0, chapter: 1, line: "Present" }),
+		outlineRow({ rowIndex: 1, chapter: 2, line: "Flashbacks" }),
+		outlineRow({ rowIndex: 2, chapter: 3, line: "present" }),
+	];
+	const built = starterLayoutFromOutline([], rows, "Book", "en", "#abc");
+	assert.deepEqual(
+		built.lines.map((l) => l.name),
+		["Present", "Flashbacks"],
+	);
+	assert.deepEqual(
+		built.lines.map((l) => l.order),
+		[0, 1],
+	);
+});
+
+test("starterLayoutFromOutline places each entry on the line its row names", () => {
+	const rows = [
+		outlineRow({ chapter: 1, line: "Present" }),
+		outlineRow({ chapter: 2, line: "Flashbacks" }),
+	];
+	const entries = [
+		entry("Book/Chapter 1.md", { type: "chapter", order: 1 }),
+		entry("Book/Chapter 2.md", { type: "chapter", order: 2 }),
+	];
+	const built = starterLayoutFromOutline(entries, rows, "Book", "en", "#abc");
+	const present = built.lines[0].id;
+	const flashbacks = built.lines[1].id;
+	assert.deepEqual(built.placements["Book/Chapter 1.md"], { lines: [present], x: 0 });
+	assert.deepEqual(built.placements["Book/Chapter 2.md"], { lines: [flashbacks], x: 0 });
+});
+
+test("starterLayoutFromOutline drops an unmatched entry onto the first line", () => {
+	const rows = [outlineRow({ chapter: 1, line: "Present" }), outlineRow({ chapter: 2, line: "Flashbacks" })];
+	const entries = [
+		entry("Book/Chapter 1.md", { type: "chapter", order: 1 }),
+		entry("Book/Chapter 9.md", { type: "chapter", order: 9 }),
+	];
+	const built = starterLayoutFromOutline(entries, rows, "Book", "en", "#abc");
+	assert.deepEqual(built.placements["Book/Chapter 9.md"], { lines: [built.lines[0].id], x: 1 });
+});
+
+test("a ghost lands on the line starterLayoutFromOutline created for it", () => {
+	const rows = [
+		outlineRow({ chapter: 1, line: "Flashbacks" }),
+		outlineRow({ chapter: 2, line: "Flashbacks" }),
+	];
+	const built = starterLayoutFromOutline([], rows, "Book", "en", "#abc");
+	const flashbacks = built.lines[0].id;
+	const ghost = plannedEntry({
+		row: outlineRow({ chapter: 1 }),
+		label: "Chapter 1",
+		expectedPath: "Book/Chapter 1.md",
+		lineId: flashbacks,
+	});
+	const model = canvasModel([], built, plan({ planned: [ghost] }));
+	const line = model.lines.find((l) => l.def.id === flashbacks)!;
+	assert.equal(line.cards.length, 1);
+	assert.equal(line.cards[0].planned!.label, "Chapter 1");
+	assert.equal(model.plannedUnplaced.length, 0);
+});
+
+test("starterLayoutFromOutline falls back to a single Main line when no row names a line", () => {
+	const built = starterLayoutFromOutline(
+		[entry("Book/Chapter 1.md")],
+		[outlineRow({ chapter: 1 })],
+		"Book",
+		"en",
+		"#abc",
+	);
+	assert.equal(built.lines.length, 1);
+	assert.equal(built.lines[0].name, "Main line");
 });
 
 /* ---- outline merge ---- */

@@ -114,6 +114,15 @@ file. Columns: `Act | Chapter | Scene | Line | Summary`, plus optional
   their `Line` cell names, spliced into the manuscript order the real cards
   imply. Clicking one (or the toolbar's "Create N planned notes") creates the
   note via `noteScaffold.ts` and seeds its placement at that slot.
+- The `Line` column can **create** lines, but the view never does it on its own
+  (a `Line` typo the user then fixes would leave a stray line behind). When
+  `Lines.md` already exists, a ⟳ button in the toolbar appears whenever the
+  outline names a line `Lines.md` lacks; clicking it adds those lines
+  (theme-accent, appended last) as one undoable step. When there's no `Lines.md`
+  yet, the "Create lines from outline" prompt seeds it with one line per
+  distinct `Line` value (`starterLayoutFromOutline`) and puts each real note on
+  the line its row names. Either way it's additive only: no rename, recolour,
+  reorder, remove, or moving an existing note's card.
 - Ghost cards are **draggable** like real ones: a drop writes a `Lines.md`
   placement keyed by the note's future path, so `canvasModel` positions it there
   instead of by manuscript order, and the note lands there when created.
@@ -121,9 +130,11 @@ file. Columns: `Act | Chapter | Scene | Line | Summary`, plus optional
   row disagrees with reality: for a fulfilled row, the note's line / folder /
   type; for a ghost, a `Line` cell that's empty, names no known line, or was
   dragged away from. `reconcileOutline` computes all of these into `marks`
-  (keyed by note path or expected path). **The folder/file structure and `Lines.md` always win** — nothing is
-  ever rewritten to match the table, and the plugin never rewrites the table
-  itself (the `Generate outline from notes` command only fills a still-empty one).
+  (keyed by note path or expected path). **The folder/file structure and `Lines.md` always win** — an
+  existing note or line is never edited to match the table (adding a missing
+  line from the `Line` column is the one exception, and it's purely additive),
+  and the plugin never rewrites the table itself (the `Generate outline from
+  notes` command only fills a still-empty one).
 - Both the notes and the outline are re-read every time the view opens and on
   every index change.
 
@@ -139,7 +150,7 @@ Entry point: [`src/main.ts`](src/main.ts) → `ScribeVisualizationPlugin`.
 | Plugin shell | [`src/main.ts`](src/main.ts) | onload wiring: registers the line view, ribbon icon, the "Open lines" / "Generate outline from notes" commands, settings tab; owns the index as a child `Component`; `ensureOutlineFiles` creates the skeleton when the setting names it |
 | Types | [`src/types.ts`](src/types.ts) | `FRONTMATTER_KEYS` (**single source of truth** for key names), `NovelEntry`, `ParsedTitle`, `Line`, `Placement`, `LineLayout`, `OutlineRow`, `PlannedEntry` |
 | Title parser | [`src/data/titleParser.ts`](src/data/titleParser.ts) | Pure, no Obsidian imports: `parseTitle(basename, lang)`; `romanToInt` / `parseNumberToken`; `availableLanguages` / `languageLabel`; `actLabel` / `unitLabel` (words the Outline file builds folders/filenames from). `LANGUAGE_PATTERNS` has `en` + `es` — a new language is one entry there plus one in `LANGUAGE_LABELS` / `ACT_LABELS` |
-| Outline helpers | [`src/data/outline.ts`](src/data/outline.ts) | Pure, unit-tested: `parseOutlineTable` (first GFM table → `OutlineRow[]`), `expectedNotePath`, `outlineRowType` / `outlineRowNumber`, `reconcileOutline` (rows vs. real entries → `planned` ghost cards + `previews` + discrepancy `marks` + `fulfilledPaths` + `unknownLines`) |
+| Outline helpers | [`src/data/outline.ts`](src/data/outline.ts) | Pure, unit-tested: `parseOutlineTable` (first GFM table → `OutlineRow[]`), `expectedNotePath`, `outlineRowType` / `outlineRowNumber`, `outlineLineNames` (distinct `Line` cell values, first-appearance order), `reconcileOutline` (rows vs. real entries → `planned` ghost cards + `previews` + discrepancy `marks` + `fulfilledPaths` + `unknownLines`) |
 | Outline file I/O | [`src/data/outlineFile.ts`](src/data/outlineFile.ts) | `outlineFilePath`, `readOutline` (marker-checked), `ensureOutlineFile` (writes the empty skeleton once), `writeGeneratedOutline` (fills a still-empty table only) |
 | Outline generation | [`src/data/outlineGenerate.ts`](src/data/outlineGenerate.ts) | Pure: `generateOutlineTable(entries, layout)` → a table body from existing notes; `replaceFirstTable` swaps it in, keeping other text |
 | Note scaffold | [`src/data/noteScaffold.ts`](src/data/noteScaffold.ts) | Pure: `scaffoldNoteBody(planned)` — starter body for a note created from a ghost card: only the frontmatter keys the row filled, then the Summary as the body (no `# title` heading — the filename is the title) |
@@ -147,8 +158,8 @@ Entry point: [`src/main.ts`](src/main.ts) → `ScribeVisualizationPlugin`.
 | Line-layout helpers | [`src/data/lineLayout.ts`](src/data/lineLayout.ts) | Pure: `parseLineLayout` (coerce loose YAML), `lineFilePath`, `emptyLineLayout` |
 | Path breadcrumb | [`src/data/pathContext.ts`](src/data/pathContext.ts) | Pure: `folderContext(filePath, baseFolder)` → folder segments shown under a card title |
 | Lines file I/O | [`src/data/lineFile.ts`](src/data/lineFile.ts) | `readLineLayout` / `writeLineLayout` for the per-book `Lines.md` (write preserves the note body via `processFrontMatter`, or creates the file) |
-| Line render model | [`src/views/canvasModel.ts`](src/views/canvasModel.ts) | Pure, unit-tested: `canvasModel(entries, layout, outline?)` → lines + real/ghost `cards` + `unplaced` + `plannedUnplaced`; every layout edit (`moveCard`, `reconcilePlacements`, `applyPlannedPlacements`, `addLine` / `renameLine` / `recolorLine` / `moveLine` / `removeLine`, `cloneLayout`, `starterLayout`). **All layout maths live here, not in the view.** |
-| Line view | [`src/views/lineView.ts`](src/views/lineView.ts) | `ItemView` (`VIEW_TYPE_LINE_VIEW`). DOM + pointer-drag only: renders from `canvasModel`, calls the pure ops via `mutate()` (push undo snapshot → apply → debounced save → re-render). Reads `Lines.md` + the outline on open / book switch / index change; creates notes from ghost cards via a `confirm` modal |
+| Line render model | [`src/views/canvasModel.ts`](src/views/canvasModel.ts) | Pure, unit-tested: `canvasModel(entries, layout, outline?)` → lines + real/ghost `cards` + `unplaced` + `plannedUnplaced`; every layout edit (`moveCard`, `reconcilePlacements`, `applyPlannedPlacements`, `addLine` / `renameLine` / `recolorLine` / `moveLine` / `removeLine`, `cloneLayout`, `starterLayout`, `starterLayoutFromOutline` — a first layout with one line per outline `Line` value, entries seeded onto the line their row names). **All layout maths live here, not in the view.** |
+| Line view | [`src/views/lineView.ts`](src/views/lineView.ts) | `ItemView` (`VIEW_TYPE_LINE_VIEW`). DOM + pointer-drag only: renders from `canvasModel`, calls the pure ops via `mutate()` (push undo snapshot → apply → debounced save → re-render). Reads `Lines.md` + the outline on open / book switch / index change; a toolbar ⟳ button (shown only when `missingOutlineLines()` is non-empty) adds the lines the outline names but `Lines.md` lacks, as one undoable `mutate`; creates notes from ghost cards via a `confirm` modal |
 | Confirm modal | [`src/views/confirmModal.ts`](src/views/confirmModal.ts) | `confirm(app, {title, body, cta})` → `Promise<boolean>` (Obsidian ships no confirm primitive) |
 | Settings | [`src/settings/`](src/settings/) | Book folder, Line-file name, Outline-file name (empty = off), title language |
 | Styles | [`styles.css`](styles.css) | Obsidian CSS variables only (`var(--...)`) — no hardcoded colours except user-chosen line colours from the Lines file. Canvas classes are `.scribe-canvas-*`; per-line colour is `--scribe-line-color` |

@@ -39,6 +39,20 @@
 	padding: var(--size-2-1) var(--size-4-2);
 }
 
+/* Icon-only "add the lines the outline names" button. */
+.scribe-canvas-toolbar button.scribe-canvas-refresh {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: var(--size-2-1) var(--size-4-3);
+}
+
+.scribe-canvas-refresh .svg-icon {
+	width: 16px;
+	height: 16px;
+	stroke-width: 2.75px;
+}
+
 .scribe-canvas-notice {
 	padding: var(--size-4-6) var(--size-4-4);
 	color: var(--text-muted);

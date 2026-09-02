@@ -4,7 +4,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { expectedNotePath, outlineRowNumber, outlineRowType, parseOutlineTable, reconcileOutline } from "./outline";
+import {
+	expectedNotePath,
+	outlineLineNames,
+	outlineRowNumber,
+	outlineRowType,
+	parseOutlineTable,
+	reconcileOutline,
+} from "./outline";
 import { LineLayout, NovelEntry, OutlineRow } from "../types";
 
 function entry(path: string, over: Partial<NovelEntry> = {}): NovelEntry {
@@ -232,4 +239,17 @@ test("reconcileOutline reports which real notes matched a row (for orphan detect
 test("reconcileOutline is a no-op for an empty table", () => {
 	const result = reconcileOutline([], [], layout, "Book");
 	assert.deepEqual(result, { planned: [], previews: {}, marks: {}, fulfilledPaths: [], unknownLines: [] });
+});
+
+test("outlineLineNames lists distinct Line values in first-appearance order", () => {
+	const rows = [
+		row({ chapter: 1, line: "Flashbacks" }),
+		row({ chapter: 2, line: "Main" }),
+		row({ chapter: 3, line: "flashbacks" }),
+		row({ chapter: 4, line: "  Main  " }),
+		row({ chapter: 5, line: null }),
+		row({ chapter: 6, line: "" }),
+	];
+	assert.deepEqual(outlineLineNames(rows), ["Flashbacks", "Main"]);
+	assert.deepEqual(outlineLineNames([]), []);
 });
