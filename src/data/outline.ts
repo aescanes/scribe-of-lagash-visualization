@@ -16,7 +16,7 @@ type ColumnName =
 	| "chapter"
 	| "scene"
 	| "line"
-	| "summary"
+	| "synopsis"
 	| "date"
 	| "characters"
 	| "places"
@@ -98,7 +98,7 @@ export function parseOutlineTable(markdownBody: string): OutlineRow[] {
 			chapter,
 			scene,
 			line: toStringOrNull(cellAt(cells, "line")),
-			summary: cellAt(cells, "summary"),
+			summary: cellAt(cells, "synopsis"),
 			date: toStringOrNull(cellAt(cells, "date")),
 			characters: toStringArray(cellAt(cells, "characters")),
 			places: toStringArray(cellAt(cells, "places")),
@@ -242,12 +242,12 @@ export function reconcileOutline(
 
 			const draggedTo = placedLineOf.get(expectedPath);
 			if (!row.line) {
-				marks[expectedPath] = "no line set in the outline";
+				marks[expectedPath] = "no line set in the story outline";
 			} else if (rowLineId === null) {
-				marks[expectedPath] = `outline's line "${row.line}" isn't in Lines.md`;
+				marks[expectedPath] = `story outline's line "${row.line}" isn't in StoryLines.md`;
 			} else if (draggedTo && draggedTo !== rowLineId) {
 				marks[expectedPath] =
-					`outline says "${lineNameById.get(rowLineId) ?? row.line}", moved to ` +
+					`story outline says "${lineNameById.get(rowLineId) ?? row.line}", moved to ` +
 					`"${lineNameById.get(draggedTo) ?? draggedTo}"`;
 			}
 			continue;
@@ -260,22 +260,22 @@ export function reconcileOutline(
 		const issues: string[] = [];
 		if (row.line) {
 			if (rowLineId === null) {
-				issues.push(`outline's line "${row.line}" isn't in Lines.md`);
+				issues.push(`story outline's line "${row.line}" isn't in StoryLines.md`);
 			} else {
 				const actualLineId = placedLineOf.get(path);
 				if (actualLineId && actualLineId !== rowLineId) {
 					issues.push(
-						`outline says "${lineNameById.get(rowLineId) ?? row.line}", placed on ` +
+						`story outline says "${lineNameById.get(rowLineId) ?? row.line}", placed on ` +
 							`"${lineNameById.get(actualLineId) ?? actualLineId}"`,
 					);
 				}
 			}
 		}
 		if (folderOf(expectedPath) !== folderOf(path)) {
-			issues.push(`outline expects it under "${folderOf(expectedPath) || trimSlashes(book)}"`);
+			issues.push(`story outline expects it under "${folderOf(expectedPath) || trimSlashes(book)}"`);
 		}
 		if (matched.type !== type) {
-			issues.push(`outline plans it as a ${type}, note is a ${matched.type}`);
+			issues.push(`story outline plans it as a ${type}, note is a ${matched.type}`);
 		}
 		if (issues.length > 0) marks[path] = issues.join("; ");
 	}

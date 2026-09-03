@@ -13,23 +13,24 @@ in your vault. Point the plugin at the folder that holds a book and it
 recognises chapters and scenes from their titles ("Chapter 1", "Scene II",
 "Prologue", …); a little `scribe-visualization-*` frontmatter is optional and
 only needed to override the title or add detail. The only file the plugin ever
-writes is a per-book **Lines file** that stores the book's default view.
+writes is a per-book **StoryLines file** that stores the book's default view.
 
 ## Current features
 
-- **Line view** — the book's default view (ribbon icon / "Open lines" command).
+- **StoryLines view** — the book's default view (ribbon icon / "Open StoryLines" command).
   Horizontal, colored **lines** for a book, with each chapter/scene as a card
   sitting on a line. Pick "Create lines" the first time to seed a "Main line",
   then drag cards to reorder them or move them to another line, and add /
   rename / recolour / reorder / delete lines from the line headers. Changes
-  save to the Lines file (`Lines.md`) automatically; `Mod+Z` undoes.
-- **Outline file** *(optional)* — name a file under **Outline file name** in
-  settings and it's created as an empty Markdown table (Act / Chapter / Scene /
-  Line / Summary). Fill it in to plan the book before the notes exist: rows
-  with no matching note appear as dashed placeholder cards on the line view,
-  and clicking one creates the note (title, Summary, frontmatter) on that line.
-  Once a note exists its Summary shows on the card; a row that disagrees with
-  the real note/folder gets a ⚠ marker — the files always win. See
+  save to the StoryLines file (`StoryLines.md`) automatically; `Mod+Z` undoes.
+- **Story Outline file** *(optional)* — name a file under **Story Outline file
+  name** in settings and it's created as an empty Markdown table (Act /
+  Chapter / Scene / Line / Synopsis). Fill it in to plan the book before the
+  notes exist: rows with no matching note appear as dashed placeholder cards
+  on the StoryLines view, and clicking one creates the note (title, Synopsis,
+  frontmatter) on that line. Once a note exists its Synopsis shows on the
+  card; a row that disagrees with the real note/folder gets a ⚠ marker — the
+  files always win. See
   [docs/feature-plans/outline-file-plan.md](docs/feature-plans/outline-file-plan.md).
 
 Planned next: a **chronological view** ordering chapters/scenes by their
@@ -64,7 +65,7 @@ case-insensitive. English (`en`) and Spanish (`es`) ship today:
 | Chapter *N* | `Chapter N`, `Chap N`, `Ch N` | `Capítulo N`, `Capitulo N`, `Cap N` |
 | Scene *N* | `Scene N`, `Sc N` | `Escena N`, `Esc N` |
 | Chapter, no number | `Prologue`, `Epilogue`, `Interlude`, `Foreword`, `Afterword`, `Preface` | `Prólogo`, `Epílogo`, `Interludio`, `Prefacio`, `Epígrafe` |
-| Act folder — the word the Outline file prepends to an `Act` cell when it builds a path | `Act` | `Acto` |
+| Act folder — the word the Story Outline file prepends to an `Act` cell when it builds a path | `Act` | `Acto` |
 
 So with **Title language** set to Español, `Cap. 3 — La caída` is chapter 3 and
 `Escena II` is scene 2. Adding a language is one more pattern table in
@@ -99,10 +100,10 @@ also show as a breadcrumb under each card — a note at
 `My Novel/Act I/Chapter I/Scene 1.md` (book folder `My Novel`) shows "Scene 1"
 with "Act I - Chapter I" underneath.
 
-### Planning ahead with the Outline file
+### Planning ahead with the Story Outline file
 
-When you plan a book in the **Outline file** table before writing the notes,
-fill the columns that match your layout:
+When you plan a book in the **Story Outline file** table before writing the
+notes, fill the columns that match your layout:
 
 | Layout | Columns to fill | The row's note |
 |---|---|---|
@@ -115,11 +116,11 @@ fill the columns that match your layout:
 
 Numbers may be digits or roman numerals; the `Act` / `Chapter` / `Scene` words
 and folder names follow the **Title language** setting. `Line` is a line name or
-id from the Lines file; `Summary` shows on the card and becomes the note body
-when you create it. A row with neither a `Chapter` nor a `Scene` value is
+id from the StoryLines file; `Synopsis` shows on the card and becomes the note
+body when you create it. A row with neither a `Chapter` nor a `Scene` value is
 ignored, and un-numbered units (`Prologue`, …) can't be planned here — create
-those notes directly. The Outline file created for you carries these same notes
-as a comment at the top.
+those notes directly. The Story Outline file created for you carries these
+same notes as a comment at the top.
 
 ### Optional frontmatter
 

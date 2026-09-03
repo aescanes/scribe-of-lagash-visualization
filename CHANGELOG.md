@@ -11,18 +11,22 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `Chapter 10` sort between `Chapter 1` and `Chapter 2`. Roman-numeral act
   folders (`Act IX` vs `Act X`) sort by value too; non-numbered folders still
   sort as plain text.
-- **Generate outline from notes** no longer emits an empty, unusable row for a
-  standalone unit (`Prologue`, `Epilogue`, …) — the Outline table is keyed by
-  Chapter/Scene number and can't represent those. The command's notice now
-  reports how many notes it skipped.
+- **Generate story outline from notes** no longer emits an empty, unusable row
+  for a standalone unit (`Prologue`, `Epilogue`, …) — the Story Outline table
+  is keyed by Chapter/Scene number and can't represent those. The command's
+  notice now reports how many notes it skipped.
 
 ### Changed
+- Renamed the "Lines" feature to **StoryLines** and the "Outline" feature to
+  **Story Outline** throughout the UI and docs (settings, commands, notices,
+  the view's tab title), and the outline table's **Summary** column to
+  **Synopsis**. The default StoryLines file name is now `StoryLines.md`.
 - Create new directory for `tests`.
 - Documented the supported book layouts (chapters as files vs. folders of
   scenes, acts, chapterless scenes, deeper nesting) and the rule that a book
   must pick one chapter style — in the README, the plugin settings, and the
-  comment written at the top of a new Outline file. The Outline file comment now
-  also spells out which columns to fill for each layout.
+  comment written at the top of a new Story Outline file. The Story Outline
+  file comment now also spells out which columns to fill for each layout.
 - The README now lists every recognised title word per language (English and
   Spanish), as an English-keyed table.
 

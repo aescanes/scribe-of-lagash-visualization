@@ -11,7 +11,7 @@ import { DEFAULT_LANGUAGE, parseTitle } from "./titleParser";
  * is read back from its chapter folder's name.
  */
 
-const COLUMNS = ["Folder", "Chapter", "Scene", "Line", "Summary"];
+const COLUMNS = ["Folder", "Chapter", "Scene", "Line", "Synopsis"];
 
 function cell(value: string | number | null): string {
 	return value === null || value === undefined ? "" : String(value);

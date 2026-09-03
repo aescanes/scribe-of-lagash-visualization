@@ -9,7 +9,7 @@ import { emptyLineLayout, lineFilePath, parseLineLayout, withScribePrefix } from
 test("lineFilePath joins folder and name, tolerating slashes", () => {
 	assert.equal(lineFilePath("Book", "Lines.md"), "Book/(SL) Lines.md");
 	assert.equal(lineFilePath("/Book/The City/", "Lines.md"), "Book/The City/(SL) Lines.md");
-	assert.equal(lineFilePath("Book", "  "), "Book/(SL) Lines.md");
+	assert.equal(lineFilePath("Book", "  "), "Book/(SL) StoryLines.md");
 	assert.equal(lineFilePath("", "Lines.md"), "(SL) Lines.md");
 	assert.equal(lineFilePath("Book", "StoryLines"), "Book/(SL) StoryLines");
 });

@@ -48,7 +48,7 @@ function row(over: Partial<OutlineRow> = {}): OutlineRow {
 }
 
 const TABLE = [
-	"| Act | Chapter | Line      | Summary        |",
+	"| Act | Chapter | Line      | Synopsis       |",
 	"| --- | ------- | --------- | -------------- |",
 	"| I   | 1       | [M]       | Berlín 2029.   |",
 	"| I   | 2       | Main line | Investigación. |",
@@ -101,9 +101,9 @@ test("parseOutlineTable: the created skeleton (help comment + empty row) has no 
 		"     Scenes in chapter folders . . . . . Chapter + Scene        -> Chapter 1/Scene 2.md",
 		"     Also recognised: Folder, Date, Characters, Places, Status. -->",
 		"",
-		"| Act | Chapter | Scene | Line | Summary |",
-		"| --- | ------- | ----- | ---- | ------- |",
-		"|     |         |       |      |         |",
+		"| Act | Chapter | Scene | Line | Synopsis |",
+		"| --- | ------- | ----- | ---- | -------- |",
+		"|     |         |       |      |          |",
 		"",
 	].join("\n");
 	assert.deepEqual(parseOutlineTable(skeleton), []);
@@ -266,8 +266,8 @@ test("reconcileOutline marks a ghost that was dragged onto a different line", ()
 test("reconcileOutline marks a ghost whose row has no line or an unknown line", () => {
 	const rows = [row({ chapter: 7 }), row({ chapter: 8, line: "Nope" })];
 	const result = reconcileOutline(rows, [], layout, "Book");
-	assert.equal(result.marks["Book/Chapter 7.md"], "no line set in the outline");
-	assert.match(result.marks["Book/Chapter 8.md"], /outline's line "Nope" isn't in Lines.md/);
+	assert.equal(result.marks["Book/Chapter 7.md"], "no line set in the story outline");
+	assert.match(result.marks["Book/Chapter 8.md"], /outline's line "Nope" isn't in StoryLines.md/);
 });
 
 test("reconcileOutline keeps the no-valid-line mark even after the ghost is dragged onto a line", () => {
@@ -281,8 +281,8 @@ test("reconcileOutline keeps the no-valid-line mark even after the ghost is drag
 		},
 	};
 	const result = reconcileOutline(rows, [], dragged, "Book");
-	assert.equal(result.marks["Book/Chapter 7.md"], "no line set in the outline");
-	assert.match(result.marks["Book/Chapter 8.md"], /outline's line "Nope" isn't in Lines.md/);
+	assert.equal(result.marks["Book/Chapter 7.md"], "no line set in the story outline");
+	assert.match(result.marks["Book/Chapter 8.md"], /outline's line "Nope" isn't in StoryLines.md/);
 });
 
 test("reconcileOutline collects unresolved Line names for diagnostics", () => {

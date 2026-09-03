@@ -27,19 +27,19 @@ export default class ScribeVisualizationPlugin extends Plugin {
 
 		this.registerView(VIEW_TYPE_LINE_VIEW, (leaf) => new LineView(leaf, this));
 
-		this.addRibbonIcon(LINE_ICON_ID, "(SL) Visualization: Open lines", () => {
+		this.addRibbonIcon(LINE_ICON_ID, "(SL) Visualization: Open StoryLines", () => {
 			this.activateView(VIEW_TYPE_LINE_VIEW);
 		}).addClass("scribe-ribbon-icon");
 
 		this.addCommand({
 			id: "open-scribe-visualization-lines",
-			name: "Open lines",
+			name: "Open StoryLines",
 			callback: () => this.activateView(VIEW_TYPE_LINE_VIEW),
 		});
 
 		this.addCommand({
 			id: "generate-outline-from-notes",
-			name: "Generate outline from notes",
+			name: "Generate story outline from notes",
 			callback: () => void this.generateOutline(),
 		});
 
@@ -79,21 +79,21 @@ export default class ScribeVisualizationPlugin extends Plugin {
 		const book = this.vaultIndex.getBookFolders()[0] ?? "";
 		const path = outlineFilePath(book, this.settings.outlineFileName);
 		if (!path) {
-			new Notice("Set an Outline file name in the plugin settings first.");
+			new Notice("Set a Story Outline file name in the plugin settings first.");
 			return;
 		}
 
 		await ensureOutlineFile(this.app, path);
 		const entries = this.vaultIndex.getEntriesForBook(book);
 		if (entries.length === 0) {
-			new Notice("No chapter or scene notes to build an outline from.");
+			new Notice("No chapter or scene notes to build a story outline from.");
 			return;
 		}
 
 		const rowable = entries.filter(isOutlineRowable).length;
 		const skipped = entries.length - rowable;
 		if (rowable === 0) {
-			new Notice("Only unnumbered notes (e.g. Prologue) found — the outline table can't represent those.");
+			new Notice("Only unnumbered notes (e.g. Prologue) found — the story outline table can't represent those.");
 			return;
 		}
 
@@ -108,7 +108,7 @@ export default class ScribeVisualizationPlugin extends Plugin {
 		new Notice(
 			wrote
 				? `Wrote ${rowable} row${rowable === 1 ? "" : "s"} to "${path}".${skippedNote}`
-				: `"${path}" already has an outline — left it untouched.`,
+				: `"${path}" already has a story outline — left it untouched.`,
 		);
 	}
 

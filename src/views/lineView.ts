@@ -104,7 +104,7 @@ export class LineView extends ItemView {
 	}
 
 	getDisplayText(): string {
-		return "Lines";
+		return "StoryLines";
 	}
 
 	getIcon(): string {
@@ -238,7 +238,7 @@ export class LineView extends ItemView {
 		const missing = this.missingOutlineLines();
 		if (missing.length === 0) return;
 		this.mutate((l) => missing.reduce((acc, name) => addLine(acc, name, STARTER_LINE_COLOR).layout, l));
-		new Notice(`Added ${missing.length} line${missing.length === 1 ? "" : "s"} from the outline`);
+		new Notice(`Added ${missing.length} line${missing.length === 1 ? "" : "s"} from the story outline`);
 	}
 
 	private isEditingText(): boolean {
@@ -348,7 +348,7 @@ export class LineView extends ItemView {
 
 		const missingLines = this.missingOutlineLines();
 		if (missingLines.length > 0) {
-			const label = `Add ${missingLines.length} line${missingLines.length === 1 ? "" : "s"} named in the outline`;
+			const label = `Add ${missingLines.length} line${missingLines.length === 1 ? "" : "s"} named in the story outline`;
 			const refresh = toolbar.createEl("button", {
 				cls: "scribe-canvas-refresh",
 				attr: { "aria-label": label },
@@ -387,16 +387,16 @@ export class LineView extends ItemView {
 		box.createEl("p", {
 			text:
 				(entries.length === 0
-					? `"${this.book}" has an outline but no lines yet.`
+					? `"${this.book}" has a story outline but no lines yet.`
 					: `"${this.book}" has ${entries.length} chapter/scene ` +
 						`note${entries.length === 1 ? "" : "s"} but no lines yet.`) +
 				(fromOutline
-					? ` The outline names ${outlineLines.length} line${outlineLines.length === 1 ? "" : "s"} to start from.`
+					? ` The story outline names ${outlineLines.length} line${outlineLines.length === 1 ? "" : "s"} to start from.`
 					: ""),
 		});
 		const button = box.createEl("button", {
 			cls: "mod-cta",
-			text: fromOutline ? "Create lines from outline" : "Create lines",
+			text: fromOutline ? "Create lines from story outline" : "Create lines",
 		});
 		button.addEventListener("click", async () => {
 			button.disabled = true;
@@ -440,7 +440,7 @@ export class LineView extends ItemView {
 			strip.createDiv({
 				cls: "scribe-canvas-unplaced-label",
 				text: `Not on any line — drag a card onto a line${
-					model.plannedUnplaced.length > 0 ? " (outline rows without a valid line included)" : ""
+					model.plannedUnplaced.length > 0 ? " (story outline rows without a valid line included)" : ""
 				}`,
 			});
 			const rail = strip.createDiv({ cls: "scribe-canvas-unplaced-rail" });
@@ -743,7 +743,7 @@ export class LineView extends ItemView {
 		if (recon.unknownLines.length > 0) {
 			this.renderNotice(
 				root,
-				`These outline lines aren't in "${this.linePath()}" yet: ${recon.unknownLines.join(", ")}. ` +
+				`These story outline lines aren't in "${this.linePath()}" yet: ${recon.unknownLines.join(", ")}. ` +
 					`Use the refresh button in the toolbar to add them, or fix the Line cell.`,
 			);
 		}

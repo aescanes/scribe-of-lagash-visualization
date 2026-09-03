@@ -10,7 +10,7 @@ import { Line, LineLayout, Placement } from "../types";
  * unit-testable.
  */
 
-export const DEFAULT_LINE_FILE = "Lines.md";
+export const DEFAULT_LINE_FILE = "StoryLines.md";
 export const DEFAULT_LINE_COLOR = "#888888";
 
 /** Prefix put on every file the plugin manages, so they stand out in the vault. */

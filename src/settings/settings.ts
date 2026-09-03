@@ -31,7 +31,7 @@ export interface ScribeVisualizationSettings {
 
 export const DEFAULT_SETTINGS: ScribeVisualizationSettings = {
 	bookFolders: [],
-	lineFileName: "Lines.md",
+	lineFileName: "StoryLines.md",
 	outlineFileName: "",
 	titleLanguage: "en",
 };
