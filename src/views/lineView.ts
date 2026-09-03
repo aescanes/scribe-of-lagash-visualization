@@ -289,7 +289,7 @@ export class LineView extends ItemView {
 		if (books.length === 0) {
 			this.renderNotice(
 				root,
-				"Add a book folder in the plugin settings (Settings → Scribe of Lagash: Visualization) to build its lines.",
+				"Add a book folder in the plugin settings (Settings → Scribe of Lagash - Visualization) to build its lines.",
 			);
 			return;
 		}

@@ -38,7 +38,7 @@ hand-editable table in the body:
 scribe-visualization: outline
 ---
 
-<!-- Managed by Scribe of Lagash: Visualization.
+<!-- Managed by Scribe of Lagash - Visualization.
      Columns: Act | Chapter | Scene | Line | Summary  (Folder/Date/Characters/Places/Status optional).
      "Line" is a line name or id from Lines.md. Click a ghost card in the line view to create its note. -->
 

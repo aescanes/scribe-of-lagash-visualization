@@ -74,7 +74,7 @@ export async function ensureOutlineFile(app: App, path: string): Promise<void> {
 		`${MARKER_KEY}: ${MARKER_VALUE}`,
 		"---",
 		"",
-		"<!-- Managed by Scribe of Lagash: Visualization — created once, never",
+		"<!-- Managed by Scribe of Lagash - Visualization — created once, never",
 		"     rewritten by the plugin. Edit the table below by hand; click a",
 		"     placeholder card in the StoryLines view to create a row's note.",
 		"     A guide to the columns is at the bottom of this file. -->",

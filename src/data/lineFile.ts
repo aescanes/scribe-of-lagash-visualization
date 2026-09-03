@@ -64,7 +64,7 @@ export async function writeLineLayout(app: App, path: string, layout: LineLayout
 		serializeForNewFile({ lines, placements: layout.placements }),
 		"---",
 		"",
-		"<!-- Managed by Scribe of Lagash: Visualization. Notes about this book can go below. -->",
+		"<!-- Managed by Scribe of Lagash - Visualization. Notes about this book can go below. -->",
 		"",
 	].join("\n");
 	await app.vault.create(normalized, body);

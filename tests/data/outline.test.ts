@@ -97,7 +97,7 @@ test("parseOutlineTable returns [] when there is no table", () => {
 
 test("parseOutlineTable: the created skeleton (help comment + empty row) has no data rows", () => {
 	const skeleton = [
-		"<!-- Managed by Scribe of Lagash: Visualization — created once, never rewritten.",
+		"<!-- Managed by Scribe of Lagash - Visualization — created once, never rewritten.",
 		"     Chapters as files, no acts . . . . . Chapter                -> Chapter 1.md",
 		"     Scenes in chapter folders . . . . . Chapter + Scene        -> Chapter 1/Scene 2.md",
 		"     Also recognised: Folder, Date, Characters, Places, Status. -->",

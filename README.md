@@ -1,4 +1,4 @@
-# Scribe of Lagash: Visualization
+# Scribe of Lagash - Visualization
 
 ![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Minimum Obsidian version](https://img.shields.io/badge/obsidian-%E2%89%A51.10.0-8b6cef)

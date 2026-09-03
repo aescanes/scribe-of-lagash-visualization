@@ -4,7 +4,7 @@ Guidance for AI agents working on this repository. Read this before making chang
 
 ## Concept
 
-**Scribe of Lagash: Visualization** is an Obsidian plugin that helps novelists
+**Scribe of Lagash - Visualization** is an Obsidian plugin that helps novelists
 visualize their chapters and scenes. It is the first plugin in the
 **"Scribe of Lagash"** series — a set of independent, single-concern Obsidian
 plugins for planning and writing novels. Future plugins in the series reuse the
