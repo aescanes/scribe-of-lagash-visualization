@@ -5,6 +5,13 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+- The plugin no longer detaches its StoryLines view on unload. Obsidian already
+  tears down a plugin's views when it unloads; doing it by hand also threw away
+  the leaf's position, so the view jumped back to a new tab instead of
+  reopening where you had docked it.
+- We fixed several errors found in the automatic code analysis from Obsidian.  
+
 ## [0.7.1](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.7.1) - 2026-09-03
 
 ## [0.7.0](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.7.0) - 2026-09-03

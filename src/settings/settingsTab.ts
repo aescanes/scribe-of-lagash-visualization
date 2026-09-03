@@ -17,7 +17,7 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 
-		containerEl.createEl("h2", { text: "Scribe of Lagash - Visualization" });
+		new Setting(containerEl).setName("Scribe of Lagash - Visualization").setHeading();
 		containerEl.createEl("p", {
 			text:
 				"Point the plugin at the folder that holds a book's notes. Notes are " +
@@ -26,9 +26,9 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 		});
 		containerEl.createEl("p", {
 			text:
-				"An chapter/scene can be a " +
+				"A chapter/scene can be a " +
 				"single note or a folder — pick one style per book, don't mix them. " +
-				"See the plugin's README for the supported layouts",
+				"See the plugin's README for the supported layouts.",
 		});
 
 		new Setting(containerEl)
@@ -76,9 +76,8 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 					frag.createEl("br");
 					frag.createEl("br");
 					frag.appendText(
-						"The plugin " +
-							"will created an empty file  with a comment explaining which " +
-							"columns to fill for each book layout. Leave empty to turn this off. The " +
+						"The plugin creates an empty file with a guide below the table " +
+							"explaining which columns to fill for each book layout. Leave empty to turn this off. The " +
 							"file is prefixed with \"(SL) \", e.g. \"Story Outline\" becomes \"(SL) Story Outline.md\".",
 					);
 				}),

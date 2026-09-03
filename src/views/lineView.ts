@@ -323,11 +323,11 @@ export class LineView extends ItemView {
 		this.contentEl.win.requestAnimationFrame(() => {
 			const cards = Array.from(this.contentEl.querySelectorAll<HTMLElement>(".scribe-canvas-card"));
 			if (cards.length === 0) return;
-			for (const el of cards) el.style.minHeight = "";
+			for (const el of cards) el.style.removeProperty("min-height");
 			let tallest = 0;
 			for (const el of cards) tallest = Math.max(tallest, el.offsetHeight);
 			if (tallest === 0) return;
-			for (const el of cards) el.style.minHeight = `${tallest}px`;
+			for (const el of cards) el.style.setProperty("min-height", `${tallest}px`);
 		});
 	}
 
@@ -345,8 +345,7 @@ export class LineView extends ItemView {
 
 		if (!recon) return;
 
-		const spacer = toolbar.createDiv({ cls: "scribe-canvas-toolbar-spacer" });
-		spacer.style.flex = "1";
+		toolbar.createDiv({ cls: "scribe-canvas-toolbar-spacer" });
 
 		const missingLines = this.missingOutlineLines();
 		if (missingLines.length > 0) {
@@ -862,8 +861,8 @@ export class LineView extends ItemView {
 
 		target.rail.parentElement?.addClass("is-drop-target");
 		const bar = target.rail.createDiv({ cls: "scribe-canvas-drop-bar" });
-		bar.style.left = `${target.index * COLUMN_WIDTH}px`;
-		bar.style.width = `${COLUMN_WIDTH}px`;
+		// Width comes from the CSS var; only the slot offset is dynamic.
+		bar.style.setProperty("left", `${target.index * COLUMN_WIDTH}px`);
 		this.drag.bar = bar;
 	}
 

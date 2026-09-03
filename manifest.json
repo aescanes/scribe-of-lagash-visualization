@@ -3,7 +3,7 @@
 	"name": "Scribe of Lagash - Visualization",
 	"version": "0.7.1",
 	"minAppVersion": "1.10.0",
-	"description": "Visualize your novel's chapters and scenes: arrange them on lines and group them into matrices by character, place, or situation.",
+	"description": "Visualize your novel: arrange chapters and scenes as cards on colored story lines, and plan ahead with an outline whose rows become real notes.",
 	"author": "aescanes",
 	"authorUrl": "",
 	"fundingUrl": "",

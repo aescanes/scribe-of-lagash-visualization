@@ -7,7 +7,7 @@
 // src/, and each spec imports its subject from ../../src/....
 
 import esbuild from "esbuild";
-import builtins from "builtin-modules";
+import { builtinModules as builtins } from "node:module";
 
 await esbuild.build({
 	entryPoints: ["tests/**/*.test.ts"],

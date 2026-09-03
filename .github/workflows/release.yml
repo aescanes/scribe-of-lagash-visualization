@@ -7,6 +7,9 @@ on:
 
 permissions:
   contents: write
+  # Build provenance attestation for the release assets (see the Attest step).
+  id-token: write
+  attestations: write
 
 jobs:
   release:
@@ -31,6 +34,18 @@ jobs:
             echo "manifest.json version ($MANIFEST_VERSION) does not match tag (${{ github.ref_name }})"
             exit 1
           fi
+
+      # Signs the exact files this workflow built, with the workflow's own OIDC
+      # identity, so `gh attestation verify <file> --repo <this repo>` passes.
+      # GitHub's automatic release attestation (from Immutable Releases) uses a
+      # different signer identity and does not satisfy that check on its own.
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            main.js
+            manifest.json
+            styles.css
 
       - name: Build release notes from CHANGELOG.md
         run: node release-notes.mjs "${{ github.ref_name }}" > RELEASE_NOTES.md

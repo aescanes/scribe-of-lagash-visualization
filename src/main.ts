@@ -51,10 +51,6 @@ export default class ScribeVisualizationPlugin extends Plugin {
 		this.app.workspace.onLayoutReady(() => void this.ensureOutlineFiles());
 	}
 
-	onunload(): void {
-		this.app.workspace.detachLeavesOfType(VIEW_TYPE_LINE_VIEW);
-	}
-
 	async loadSettings(): Promise<void> {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 	}
