@@ -96,6 +96,61 @@ function cardOrderKey(card: CanvasCard): OrderedEntry {
 }
 
 /**
+ * The default column for every card — real and planned — on the shared
+ * manuscript axis: the real entries (already manuscript-sorted upstream) and
+ * the planned outline rows merged into one list, sorted by manuscript order,
+ * each path mapped to its index. This is where a card sits until the user drags
+ * it, and the target `alignToOutlineOrder` snaps back to.
+ */
+export function manuscriptColumns(
+	entries: NovelEntry[],
+	planned: PlannedEntry[] = [],
+): Map<string, number> {
+	const keys: OrderedEntry[] = [
+		...entries.map((e) => ({ path: e.file.path, order: e.order, title: e.title })),
+		...planned.map(plannedOrderKey),
+	];
+	keys.sort(byManuscriptOrder);
+	const out = new Map<string, number>();
+	keys.forEach((key, i) => out.set(key.path, i));
+	return out;
+}
+
+/**
+ * Enforces a strictly increasing column per line without closing gaps: a card
+ * whose column would land on or before its left neighbour is pushed just past
+ * it, everything else keeps the column it was given. Runs at render time only —
+ * saved placements are untouched.
+ */
+function resolveColumns(cards: CanvasCard[]): void {
+	cards.sort(byX);
+	let min = -1;
+	for (const card of cards) {
+		if (card.x <= min) card.x = min + 1;
+		min = card.x;
+	}
+}
+
+/**
+ * Writes `path`'s placement as `(lineId, column)`, first shoving any card
+ * already sitting on that column (and everything to its right on the same line)
+ * one column over. Shared by the drag handler and planned-note creation so both
+ * follow the same "drop onto an occupied column pushes right" rule.
+ */
+function placeAt(layout: LineLayout, path: string, lineId: string, column: number): void {
+	const col = Math.max(0, Math.trunc(column));
+	const clash = Object.entries(layout.placements).some(
+		([p, pl]) => p !== path && pl.lines.includes(lineId) && pl.x === col,
+	);
+	if (clash) {
+		for (const [p, pl] of Object.entries(layout.placements)) {
+			if (p !== path && pl.lines.includes(lineId) && pl.x >= col) pl.x += 1;
+		}
+	}
+	layout.placements[path] = { lines: [lineId], x: col };
+}
+
+/**
  * Builds the render model. `entries` should already be filtered to one book and
  * sorted into the desired default order (the index sorts by order key, then
  * title). `plan` is the reconciled outline: its planned rows become ghost cards
@@ -113,9 +168,9 @@ export function canvasModel(
 	const lineById = new Map(lines.map((line) => [line.def.id, line]));
 
 	const unplaced: NovelEntry[] = [];
-	let maxX = 0;
+	const defaultCol = manuscriptColumns(entries, plan.planned);
 
-	entries.forEach((entry, i) => {
+	entries.forEach((entry) => {
 		const placement = layout.placements[entry.file.path];
 		const targetLines = placement
 			? placement.lines.map((id) => lineById.get(id)).filter((l): l is CanvasLine => l !== undefined)
@@ -126,8 +181,7 @@ export function canvasModel(
 			return;
 		}
 
-		const x = placement ? placement.x : i;
-		maxX = Math.max(maxX, x);
+		const x = placement.x;
 		for (const line of targetLines) line.cards.push(realCard(entry, x, plan));
 	});
 
@@ -143,7 +197,6 @@ export function canvasModel(
 			: [];
 
 		if (placedLines.length > 0 && placement) {
-			maxX = Math.max(maxX, placement.x);
 			for (const line of placedLines) line.cards.push(plannedCard(p, placement.x, plan));
 			continue;
 		}
@@ -158,8 +211,8 @@ export function canvasModel(
 
 	for (const line of lines) line.cards.sort(byX);
 
-	// Splice the loose ghosts in by manuscript order, then re-index that one
-	// line's cards 0..n for display (saved placements are untouched).
+	// Splice the loose ghosts onto the line their row names, at the array spot
+	// their manuscript order implies, carrying their manuscript column.
 	for (const line of lines) {
 		const toInsert = looseByLine.get(line.def.id);
 		if (!toInsert || toInsert.length === 0) continue;
@@ -174,15 +227,19 @@ export function canvasModel(
 					break;
 				}
 			}
-			line.cards.splice(at, 0, plannedCard(p, 0, plan));
+			line.cards.splice(at, 0, plannedCard(p, defaultCol.get(p.expectedPath) ?? at, plan));
 		}
-		line.cards.forEach((card, i) => {
-			card.x = i;
-		});
-		maxX = Math.max(maxX, line.cards.length - 1);
 	}
 
-	return { lines, unplaced, plannedUnplaced, columnCount: Math.max(1, maxX + 1) };
+	// Settle every line's columns (push apart overlaps, keep gaps) and size the
+	// horizontal axis to the widest card.
+	let columnCount = 1;
+	for (const line of lines) {
+		resolveColumns(line.cards);
+		for (const card of line.cards) columnCount = Math.max(columnCount, card.x + 1);
+	}
+
+	return { lines, unplaced, plannedUnplaced, columnCount };
 }
 
 /**
@@ -245,7 +302,9 @@ export function starterLayout(entries: NovelEntry[], line: StarterLineOptions): 
  * A first layout for a book whose outline names lines: one line per distinct
  * outline `Line` value (in table order, each given its own random color), with
  * each real entry placed on the line its outline row names — or the first
- * line when no row matches or the row names no line. Falls back to
+ * line when no row matches or the row names no line. Each entry's column is its
+ * position in the manuscript, shared across every line, so cards line up by
+ * reading order regardless of which line they sit on. Falls back to
  * `starterLayout`'s single "Main line" when the outline names no lines. Ghost
  * cards for the still-unwritten rows are added afterwards by `canvasModel`
  * from the reconciled outline.
@@ -277,13 +336,9 @@ export function starterLayoutFromOutline(
 		return (ref && idByRef.get(ref)) || firstId;
 	};
 
-	const nextX = new Map<string, number>();
-	for (const entry of entries) {
-		const lineId = lineIdFor(entry);
-		const x = nextX.get(lineId) ?? 0;
-		nextX.set(lineId, x + 1);
-		layout.placements[entry.file.path] = { lines: [lineId], x };
-	}
+	entries.forEach((entry, i) => {
+		layout.placements[entry.file.path] = { lines: [lineIdFor(entry)], x: i };
+	});
 	return layout;
 }
 
@@ -317,26 +372,10 @@ export function defaultLineId(layout: LineLayout): string | null {
 }
 
 /**
- * Per-line ordered list of the visible card paths (real notes by their path,
- * ghosts by the path their note will get), taken from a render model — the
- * order `moveCard` reorders against.
- */
-export function lineOrderFromModel(model: CanvasModel): Record<string, string[]> {
-	const out: Record<string, string[]> = {};
-	for (const line of model.lines) {
-		out[line.def.id] = line.cards.map((c) =>
-			c.entry ? c.entry.file.path : (c.planned as PlannedEntry).expectedPath,
-		);
-	}
-	return out;
-}
-
-/**
  * After the notes for `createdPaths` have been created, writes a real placement
- * for each — at the display slot it held as a ghost — and renumbers the other
- * cards on those lines densely. Lines with none of `createdPaths` are left as
- * they were. A ghost that was neither created nor already dragged into place
- * stays loose (manuscript-positioned, no placement).
+ * for each at the column its ghost card showed at (pushing any card already on
+ * that column right, like a drag). Every other card keeps its placement. A
+ * ghost that was neither created nor already dragged into place stays loose.
  */
 export function applyPlannedPlacements(
 	layout: LineLayout,
@@ -345,70 +384,61 @@ export function applyPlannedPlacements(
 ): LineLayout {
 	const next = cloneLayout(layout);
 	for (const line of model.lines) {
-		const touched = line.cards.some(
-			(c) => c.kind === "planned" && c.planned !== null && createdPaths.has(c.planned.expectedPath),
-		);
-		if (!touched) continue;
-
-		let x = 0;
 		for (const card of line.cards) {
-			const path = card.entry ? card.entry.file.path : card.planned?.expectedPath;
-			if (!path) continue;
-			const looseGhost = card.kind === "planned" && !createdPaths.has(path) && !next.placements[path];
-			if (looseGhost) continue;
-			next.placements[path] = { lines: [line.def.id], x: x++ };
+			if (card.kind !== "planned" || !card.planned) continue;
+			if (!createdPaths.has(card.planned.expectedPath)) continue;
+			placeAt(next, card.planned.expectedPath, line.def.id, card.x);
 		}
 	}
 	return next;
 }
 
-function compactLine(layout: LineLayout, lineId: string): void {
-	const paths = Object.keys(layout.placements)
-		.filter((p) => layout.placements[p].lines.includes(lineId))
-		.sort((a, b) => layout.placements[a].x - layout.placements[b].x);
-	paths.forEach((p, i) => {
-		layout.placements[p].x = i;
-	});
-}
-
 /**
- * Moves a card onto `toLineId` at position `toIndex` (the card leaves whatever
- * line it was on), then renumbers the affected lines so every column index is
- * dense. `lineOrder` is the current visible order per line, from
- * `lineOrderFromModel`.
+ * Moves a card onto `toLineId` at `toColumn`, leaving whatever line it was on.
+ * The exact column is kept — gaps to the left are preserved — and a card
+ * already sitting there (with everything to its right on that line) is shoved
+ * one column over.
  */
 export function moveCard(
 	layout: LineLayout,
 	path: string,
 	toLineId: string,
-	toIndex: number,
-	lineOrder: Record<string, string[]>,
+	toColumn: number,
 ): LineLayout {
 	const next = cloneLayout(layout);
-	const existing = next.placements[path];
-	const fromLines = existing ? existing.lines.filter((id) => id !== toLineId) : [];
-	next.placements[path] = { lines: [toLineId], x: 0 };
+	placeAt(next, path, toLineId, toColumn);
+	return next;
+}
 
-	const target = (lineOrder[toLineId] ?? []).filter((p) => p !== path);
-	const at = Math.max(0, Math.min(Math.trunc(toIndex), target.length));
-	const ordered = [...target.slice(0, at), path, ...target.slice(at)];
-	ordered.forEach((p, i) => {
-		if (next.placements[p]) next.placements[p].x = i;
-	});
-
-	for (const lineId of fromLines) {
-		(lineOrder[lineId] ?? [])
-			.filter((p) => p !== path)
-			.forEach((p, i) => {
-				if (next.placements[p]) next.placements[p].x = i;
-			});
+/**
+ * Snaps the board back to the Story Outline. Ghost cards (planned rows with no
+ * note yet) return to the line their `Line` cell names — any placement a drag
+ * wrote for them is dropped, so `canvasModel` positions them straight from the
+ * outline again. Real notes keep their line (the folder/file structure and a
+ * deliberate drag win over the table), but every placed card's column snaps to
+ * its index in the manuscript-ordered merge of real entries and planned rows.
+ * The undoable "Align cards to Story Outline " action — only offered when a Story
+ * Outline exists, since without one the card order is entirely the user's.
+ */
+export function alignToOutlineOrder(
+	layout: LineLayout,
+	entries: NovelEntry[],
+	plan: OutlineReconciliation = EMPTY_PLAN,
+): LineLayout {
+	const columns = manuscriptColumns(entries, plan.planned);
+	const next = cloneLayout(layout);
+	for (const p of plan.planned) delete next.placements[p.expectedPath];
+	for (const [path, placement] of Object.entries(next.placements)) {
+		const col = columns.get(path);
+		if (col !== undefined) placement.x = col;
 	}
 	return next;
 }
 
 /**
- * Adds any entry that has no placement yet to `lineId` (used on load and when
- * notes are added while the view is open, so nothing silently disappears).
+ * Adds any entry that has no placement yet to `lineId`, at its manuscript
+ * column (the next free column when that one is taken). Used on load and when
+ * notes are added while the view is open, so nothing silently disappears.
  */
 export function reconcilePlacements(
 	layout: LineLayout,
@@ -420,9 +450,17 @@ export function reconcilePlacements(
 	if (missing.length === 0) return { layout, changed: false };
 
 	const next = cloneLayout(layout);
-	// Start after the visible cards already on the line (ignore stale placements).
-	let nextX = entryPaths.filter((p) => next.placements[p]?.lines.includes(lineId)).length;
-	for (const path of missing) next.placements[path] = { lines: [lineId], x: nextX++ };
+	const taken = new Set(
+		Object.values(next.placements)
+			.filter((p) => p.lines.includes(lineId))
+			.map((p) => p.x),
+	);
+	for (const path of missing) {
+		let x = Math.max(0, entryPaths.indexOf(path));
+		while (taken.has(x)) x++;
+		taken.add(x);
+		next.placements[path] = { lines: [lineId], x };
+	}
 	return { layout: next, changed: true };
 }
 
@@ -484,18 +522,20 @@ export function moveLine(layout: LineLayout, id: string, dir: -1 | 1): LineLayou
 
 /**
  * Removes a line. Cards that were only on it fall onto the remaining topmost
- * line; cards also on another line just lose this one.
+ * line, keeping their column (pushed right only where it collides); cards also
+ * on another line just lose this one.
  */
 export function removeLine(layout: LineLayout, id: string): LineLayout {
 	const next = cloneLayout(layout);
 	next.lines = next.lines.filter((t) => t.id !== id);
 	const fallback = defaultLineId(next);
 
-	for (const p of Object.values(next.placements)) {
+	for (const [path, p] of Object.entries(next.placements)) {
 		if (!p.lines.includes(id)) continue;
 		const rest = p.lines.filter((t) => t !== id);
-		p.lines = rest.length > 0 ? rest : fallback ? [fallback] : [];
+		if (rest.length > 0) p.lines = rest;
+		else if (fallback) placeAt(next, path, fallback, p.x);
+		else p.lines = [];
 	}
-	if (fallback) compactLine(next, fallback);
 	return next;
 }

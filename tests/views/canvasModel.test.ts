@@ -6,13 +6,14 @@ import assert from "node:assert/strict";
 
 import {
 	addLine,
+	alignToOutlineOrder,
 	applyPlannedPlacements,
 	canvasModel,
 	cloneLayout,
 	defaultLineId,
 	isLayoutEmpty,
 	layoutsEqual,
-	lineOrderFromModel,
+	manuscriptColumns,
 	moveCard,
 	moveLine,
 	randomLineColor,
@@ -115,7 +116,7 @@ test("starterLayoutFromOutline makes one line per outline Line value, in table o
 	);
 });
 
-test("starterLayoutFromOutline places each entry on the line its row names", () => {
+test("starterLayoutFromOutline places each entry on the line its row names, at its manuscript column", () => {
 	const rows = [
 		outlineRow({ chapter: 1, line: "Present" }),
 		outlineRow({ chapter: 2, line: "Flashbacks" }),
@@ -127,8 +128,10 @@ test("starterLayoutFromOutline places each entry on the line its row names", () 
 	const built = starterLayoutFromOutline(entries, rows, "Book", "en");
 	const present = built.lines[0].id;
 	const flashbacks = built.lines[1].id;
+	// Columns are the shared reading-order axis, not per-line — Chapter 2 sits
+	// one column right of Chapter 1 even though it's on a different line.
 	assert.deepEqual(built.placements["Book/Chapter 1.md"], { lines: [present], x: 0 });
-	assert.deepEqual(built.placements["Book/Chapter 2.md"], { lines: [flashbacks], x: 0 });
+	assert.deepEqual(built.placements["Book/Chapter 2.md"], { lines: [flashbacks], x: 1 });
 });
 
 test("starterLayoutFromOutline drops an unmatched entry onto the first line", () => {
@@ -252,11 +255,39 @@ test("canvasModel routes a ghost with an unknown line to plannedUnplaced", () =>
 	assert.equal(model.lines.every((l) => l.cards.length === 0), true);
 });
 
-test("lineOrderFromModel lists real and ghost cards in display order", () => {
-	const entries = [entry("Book/Chapter 1.md", { title: "Chapter 1", order: 1 })];
+test("manuscriptColumns numbers real entries and planned rows on one shared axis", () => {
+	const entries = [
+		entry("Book/Chapter 1.md", { title: "Chapter 1", order: 1 }),
+		entry("Book/Chapter 3.md", { title: "Chapter 3", order: 3 }),
+	];
 	const ghost = plannedEntry({ row: outlineRow({ chapter: 2 }), expectedPath: "Book/Chapter 2.md" });
-	const model = canvasModel(entries, twoLine, plan({ planned: [ghost] }));
-	assert.deepEqual(lineOrderFromModel(model).main, ["Book/Chapter 1.md", "Book/Chapter 2.md"]);
+	const cols = manuscriptColumns(entries, [ghost]);
+	assert.equal(cols.get("Book/Chapter 1.md"), 0);
+	assert.equal(cols.get("Book/Chapter 2.md"), 1);
+	assert.equal(cols.get("Book/Chapter 3.md"), 2);
+});
+
+test("canvasModel keeps columns aligned across lines by reading order", () => {
+	const layout: LineLayout = {
+		lines: [
+			{ id: "a", name: "A", color: "#1", order: 0 },
+			{ id: "b", name: "B", color: "#2", order: 1 },
+		],
+		placements: {
+			"Book/Chapter 1.md": { lines: ["a"], x: 0 },
+			"Book/Chapter 2.md": { lines: ["b"], x: 1 },
+			"Book/Chapter 3.md": { lines: ["a"], x: 2 },
+			"Book/Chapter 4.md": { lines: ["b"], x: 3 },
+			"Book/Chapter 5.md": { lines: ["a"], x: 4 },
+		},
+	};
+	const entries = [1, 2, 3, 4, 5].map((n) =>
+		entry(`Book/Chapter ${n}.md`, { title: `Chapter ${n}`, order: n }),
+	);
+	const model = canvasModel(entries, layout);
+	assert.deepEqual(model.lines.find((l) => l.def.id === "a")!.cards.map((c) => c.x), [0, 2, 4]);
+	assert.deepEqual(model.lines.find((l) => l.def.id === "b")!.cards.map((c) => c.x), [1, 3]);
+	assert.equal(model.columnCount, 5);
 });
 
 test("canvasModel positions a dragged ghost by its saved placement, not manuscript order", () => {
@@ -283,7 +314,7 @@ test("canvasModel positions a dragged ghost by its saved placement, not manuscri
 	assert.equal(main.cards[0].kind, "planned");
 });
 
-test("applyPlannedPlacements seeds a placement at the ghost's slot and densifies the line", () => {
+test("applyPlannedPlacements seeds a placement at the ghost's column, pushing the clashing card right", () => {
 	const entries = [
 		entry("Book/Chapter 1.md", { title: "Chapter 1", order: 1 }),
 		entry("Book/Chapter 3.md", { title: "Chapter 3", order: 3 }),
@@ -319,8 +350,6 @@ function threeCards(): LineLayout {
 	};
 }
 
-const ORDER = { a: ["c1.md", "c2.md", "c3.md"], b: ["c4.md"] };
-
 test("cloneLayout is a deep copy", () => {
 	const original = threeCards();
 	const copy = cloneLayout(original);
@@ -335,28 +364,91 @@ test("defaultLineId is the topmost line", () => {
 	assert.equal(defaultLineId({ lines: [], placements: {} }), null);
 });
 
-test("moveCard reorders within a line and renumbers densely", () => {
-	const next = moveCard(threeCards(), "c3.md", "a", 0, ORDER);
-	assert.deepEqual(["c3.md", "c1.md", "c2.md"].map((p) => next.placements[p].x), [0, 1, 2]);
+test("moveCard onto an occupied column pushes the occupant and its right neighbours over", () => {
+	const next = moveCard(threeCards(), "c3.md", "a", 0);
+	assert.deepEqual(next.placements["c3.md"], { lines: ["a"], x: 0 });
+	assert.deepEqual(["c1.md", "c2.md"].map((p) => next.placements[p].x), [1, 2]);
 });
 
-test("moveCard moves a card to another line and compacts the source", () => {
-	const next = moveCard(threeCards(), "c2.md", "b", 1, ORDER);
-	assert.deepEqual(next.placements["c2.md"], { lines: ["b"], x: 1 });
-	assert.deepEqual(["c1.md", "c3.md"].map((p) => next.placements[p].x), [0, 1]);
-	assert.deepEqual(["c4.md", "c2.md"].map((p) => next.placements[p].x), [0, 1]);
+test("moveCard onto an empty column keeps the gap and survives a round-trip", () => {
+	const next = moveCard(threeCards(), "c2.md", "a", 7);
+	assert.deepEqual(next.placements["c2.md"], { lines: ["a"], x: 7 });
+	// c1/c3 untouched — no compaction of the vacated column.
+	assert.deepEqual(["c1.md", "c3.md"].map((p) => next.placements[p].x), [0, 2]);
+	const model = canvasModel(
+		[entry("c1.md"), entry("c2.md"), entry("c3.md")],
+		next,
+	);
+	assert.deepEqual(model.lines.find((l) => l.def.id === "a")!.cards.map((c) => c.x), [0, 2, 7]);
 });
 
-test("reconcilePlacements appends unplaced entries after the line's existing cards", () => {
+test("moveCard to another line leaves the source column empty", () => {
+	const next = moveCard(threeCards(), "c2.md", "b", 5);
+	assert.deepEqual(next.placements["c2.md"], { lines: ["b"], x: 5 });
+	assert.deepEqual(["c1.md", "c3.md"].map((p) => next.placements[p].x), [0, 2]);
+	assert.deepEqual(next.placements["c4.md"], { lines: ["b"], x: 0 });
+});
+
+test("reconcilePlacements adds unplaced entries at their manuscript column", () => {
 	const { layout: next, changed } = reconcilePlacements(
 		threeCards(),
 		["c1.md", "c4.md", "c5.md", "c6.md"],
 		"b",
 	);
 	assert.equal(changed, true);
-	assert.deepEqual(next.placements["c5.md"], { lines: ["b"], x: 1 });
-	assert.deepEqual(next.placements["c6.md"], { lines: ["b"], x: 2 });
+	assert.deepEqual(next.placements["c5.md"], { lines: ["b"], x: 2 });
+	assert.deepEqual(next.placements["c6.md"], { lines: ["b"], x: 3 });
 	assert.equal(reconcilePlacements(threeCards(), ["c1.md"], "b").changed, false);
+});
+
+test("reconcilePlacements steps past a column already taken on the line", () => {
+	const base = threeCards();
+	base.placements["c9.md"] = { lines: ["b"], x: 1 };
+	const { layout: next } = reconcilePlacements(base, ["c1.md", "cx.md"], "b");
+	// cx.md is index 1, but c9 already holds column 1 → next free is 2.
+	assert.deepEqual(next.placements["cx.md"], { lines: ["b"], x: 2 });
+});
+
+test("alignToOutlineOrder resets every card to its reading-order column, keeping lines", () => {
+	const spread: LineLayout = {
+		lines: [
+			{ id: "a", name: "A", color: "#1", order: 0 },
+			{ id: "b", name: "B", color: "#2", order: 1 },
+		],
+		placements: {
+			"Book/Chapter 1.md": { lines: ["a"], x: 4 },
+			"Book/Chapter 2.md": { lines: ["b"], x: 0 },
+			"Book/Chapter 3.md": { lines: ["a"], x: 9 },
+		},
+	};
+	const entries = [1, 2, 3].map((n) => entry(`Book/Chapter ${n}.md`, { order: n }));
+	const next = alignToOutlineOrder(spread, entries);
+	assert.deepEqual(next.placements["Book/Chapter 1.md"], { lines: ["a"], x: 0 });
+	assert.deepEqual(next.placements["Book/Chapter 2.md"], { lines: ["b"], x: 1 });
+	assert.deepEqual(next.placements["Book/Chapter 3.md"], { lines: ["a"], x: 2 });
+});
+
+test("alignToOutlineOrder drops a dragged ghost's placement so it returns to its outline line", () => {
+	const layout: LineLayout = {
+		lines: [
+			{ id: "line-a", name: "Line A", color: "#1", order: 0 },
+			{ id: "main-line", name: "Main line", color: "#2", order: 1 },
+		],
+		// The Chapter 1 ghost was dragged from Line A onto Main line.
+		placements: { "Book/Chapter 1.md": { lines: ["main-line"], x: 0 } },
+	};
+	const ghost = plannedEntry({
+		row: outlineRow({ chapter: 1, line: "Line A" }),
+		label: "Chapter 1",
+		expectedPath: "Book/Chapter 1.md",
+		lineId: "line-a",
+	});
+	const next = alignToOutlineOrder(layout, [], plan({ planned: [ghost] }));
+	assert.equal(next.placements["Book/Chapter 1.md"], undefined);
+	// With no placement, canvasModel puts the ghost back on the line its row names.
+	const model = canvasModel([], next, plan({ planned: [ghost] }));
+	assert.equal(model.lines.find((l) => l.def.id === "line-a")!.cards.length, 1);
+	assert.equal(model.lines.find((l) => l.def.id === "main-line")!.cards.length, 0);
 });
 
 test("addLine appends with a unique id and the next order", () => {

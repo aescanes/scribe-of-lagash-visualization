@@ -215,6 +215,15 @@
 	position: relative;
 	flex: 1 0 auto;
 	min-width: calc(var(--scribe-col-count) * var(--scribe-col-width));
+	/* Faint guide at every column boundary, so the gaps a user leaves between
+	   cards read as deliberate slots rather than empty space. */
+	background-image: repeating-linear-gradient(
+		to right,
+		transparent 0,
+		transparent calc(var(--scribe-col-width) - 1px),
+		var(--background-modifier-border) calc(var(--scribe-col-width) - 1px),
+		var(--background-modifier-border) var(--scribe-col-width)
+	);
 }
 
 /* The line itself: a thin coloured rule down the middle of the row. */
@@ -338,13 +347,15 @@
 	box-shadow: inset 0 0 0 2px var(--interactive-accent);
 }
 
+/* Highlights the whole column slot the dragged card will land in (width set
+   inline to --scribe-col-width). */
 .scribe-canvas-drop-bar {
 	position: absolute;
 	top: 6px;
 	bottom: 6px;
-	width: 3px;
-	border-radius: 2px;
-	background: var(--interactive-accent);
+	border-radius: var(--radius-s);
+	background: color-mix(in srgb, var(--interactive-accent) 22%, transparent);
+	box-shadow: inset 0 0 0 2px var(--interactive-accent);
 	pointer-events: none;
 }
 

@@ -214,6 +214,20 @@ comes back it needs a fresh design, not this one.
 - Free-form `x` vs. snapped columns — snapped is simpler and matches the
   "manuscript order" mental model; revisit if users want gaps.
   Response: In the first version of the timeline we will have snapped columns, but we will add in the near future the free-form using the propieties (frontmatter)
+  Resolved (Sep 2026): still snapped columns, but **gaps are now allowed**.
+  `Placement.x` is a free column coordinate on a single axis shared by every
+  line (Chapter 4 on line 2 sits in the same column it would occupy if the book
+  were one line). Cards created from the outline take their global manuscript
+  column; the user can drag a card to any column and leave holes, and dropping
+  onto an occupied column pushes the occupant (and its right neighbours on that
+  line) over. No mutation compacts a line any more. When a Story Outline is
+  configured, a toolbar button "Align cards to Story Outline "
+  (`alignToOutlineOrder` in `canvasModel.ts`) snaps the board back to the
+  outline as one undoable step: ghost cards drop any dragged placement and
+  return to the line their `Line` cell names, real notes keep their line, and
+  every placed card's column resets to reading order. Without an outline there
+  is no canonical order to snap to, so the button is hidden. Existing StoryLines
+  files are otherwise left untouched.
 - Should scenes nest under their parent chapter on the canvas, or sit inline?
   Response: the scene → chapter parent is derived purely from folder nesting
   (a scene note lives inside its chapter's folder) — no `scribe-visualization-parent`

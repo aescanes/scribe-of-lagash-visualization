@@ -108,9 +108,11 @@ Rules:
 An **optional** second file beside `Lines.md`: a hand-edited Markdown table for
 planning chapters/scenes *before* the notes exist. Off by default; a name in the
 **Outline file name** setting turns it on, and naming a not-yet-existing file
-creates it with an empty skeleton (marker `scribe-visualization: outline` +
-header row). The configured name is `(SL) `-prefixed on disk, same as the Lines
-file. Columns: `Act | Chapter | Scene | Line | Summary`, plus optional
+creates it with an empty skeleton (marker `scribe-visualization: outline`, an
+empty header table, then a rendered column guide below it — the guide sits after
+the data table so `parseOutlineTable` / `replaceFirstTable`, which act on the
+first table, still target the data one). The configured name is `(SL) `-prefixed
+on disk, same as the Lines file. Columns: `Act | Chapter | Scene | Line | Summary`, plus optional
 `Folder | Date | Characters | Places | Status`; `Line` is a line name/id from
 `Lines.md`.
 
@@ -166,8 +168,8 @@ Entry point: [`src/main.ts`](src/main.ts) → `ScribeVisualizationPlugin`.
 | Line-layout helpers | [`src/data/lineLayout.ts`](src/data/lineLayout.ts) | Pure: `parseLineLayout` (coerce loose YAML), `lineFilePath`, `emptyLineLayout` |
 | Path breadcrumb | [`src/data/pathContext.ts`](src/data/pathContext.ts) | Pure: `folderContext(filePath, baseFolder)` → folder segments shown under a card title |
 | Lines file I/O | [`src/data/lineFile.ts`](src/data/lineFile.ts) | `readLineLayout` / `writeLineLayout` for the per-book `Lines.md` (write preserves the note body via `processFrontMatter`, or creates the file) |
-| Line render model | [`src/views/canvasModel.ts`](src/views/canvasModel.ts) | Pure, unit-tested: `canvasModel(entries, layout, outline?)` → lines + real/ghost `cards` + `unplaced` + `plannedUnplaced`; every layout edit (`moveCard`, `reconcilePlacements`, `applyPlannedPlacements`, `addLine` / `renameLine` / `recolorLine` / `moveLine` / `removeLine`, `cloneLayout`, `starterLayout`, `starterLayoutFromOutline` — a first layout with one line per outline `Line` value, entries seeded onto the line their row names). **All layout maths live here, not in the view.** |
-| Line view | [`src/views/lineView.ts`](src/views/lineView.ts) | `ItemView` (`VIEW_TYPE_LINE_VIEW`). DOM + pointer-drag only: renders from `canvasModel`, calls the pure ops via `mutate()` (push undo snapshot → apply → debounced save → re-render). Reads `Lines.md` + the outline on open / book switch / index change; a toolbar ⟳ button (shown only when `missingOutlineLines()` is non-empty) adds the lines the outline names but `Lines.md` lacks, as one undoable `mutate`; creates notes from ghost cards via a `confirm` modal |
+| Line render model | [`src/views/canvasModel.ts`](src/views/canvasModel.ts) | Pure, unit-tested: `canvasModel(entries, layout, outline?)` → lines + real/ghost `cards` + `unplaced` + `plannedUnplaced`; `manuscriptColumns` (each card's default column on the shared reading-order axis); every layout edit (`moveCard` — drop at an exact column, pushing a card already there and its right neighbours over, no compaction; `alignToOutlineOrder` — snap the board back to the Story Outline: ghost cards drop any dragged placement and return to the line their `Line` cell names, real notes keep their line, every placed card's column snaps to reading order (offered only when a Story Outline exists); `reconcilePlacements`, `applyPlannedPlacements`, `addLine` / `renameLine` / `recolorLine` / `moveLine` / `removeLine`, `cloneLayout`, `starterLayout`, `starterLayoutFromOutline` — a first layout with one line per outline `Line` value, entries seeded onto the line their row names at their manuscript column). **All layout maths live here, not in the view.** |
+| Line view | [`src/views/lineView.ts`](src/views/lineView.ts) | `ItemView` (`VIEW_TYPE_LINE_VIEW`). DOM + pointer-drag only: renders from `canvasModel`, calls the pure ops via `mutate()` (push undo snapshot → apply → debounced save → re-render). Reads `Lines.md` + the outline on open / book switch / index change; a toolbar ⟳ button (shown only when `missingOutlineLines()` is non-empty) adds the lines the outline names but `Lines.md` lacks, an "Align cards to Story Outline " button (shown only while `outlineRows` is non-empty) re-spreads cards onto their reading-order columns, both as one undoable `mutate`; creates notes from ghost cards via a `confirm` modal |
 | Confirm modal | [`src/views/confirmModal.ts`](src/views/confirmModal.ts) | `confirm(app, {title, body, cta})` → `Promise<boolean>` (Obsidian ships no confirm primitive) |
 | Settings | [`src/settings/`](src/settings/) | Book folder, Line-file name, Outline-file name (empty = off), title language |
 | Styles | [`styles.css`](styles.css) | Obsidian CSS variables only (`var(--...)`) — no hardcoded colours except user-chosen line colours from the Lines file. Canvas classes are `.scribe-canvas-*`; per-line colour is `--scribe-line-color` |
@@ -177,8 +179,10 @@ Entry point: [`src/main.ts`](src/main.ts) → `ScribeVisualizationPlugin`.
 - **The view is DOM only.** Every layout mutation is a pure function in
   `canvasModel.ts`, unit-tested. The view calls them through `mutate()`.
 - **Title parsing** is a pure, isolated, per-language module — no Obsidian API
-  calls — so it stays trivially testable. A card's `x` is one shared column
-  index (the manuscript axis).
+  calls — so it stays trivially testable. A card's `x` is a free column
+  coordinate on one axis shared by every line (the manuscript / reading-order
+  axis): cards line up across lines by that column, gaps between cards are
+  allowed and preserved, and no mutation compacts a line.
 
 ## Conventions (enforced — don't violate)
 
