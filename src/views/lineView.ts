@@ -11,13 +11,13 @@ import { folderContext } from "../data/pathContext";
 import { LineLayout, NovelEntry, OutlineRow, PlannedEntry } from "../types";
 import {
 	addLine,
+	alignToOutlineOrder,
 	applyPlannedPlacements,
 	canvasModel,
 	CanvasCard,
 	cloneLayout,
 	defaultLineId,
 	isLayoutEmpty,
-	lineOrderFromModel,
 	moveCard,
 	moveLine,
 	randomLineColor,
@@ -365,6 +365,16 @@ export class LineView extends ItemView {
 				text: `Create ${n} planned note${n === 1 ? "" : "s"}`,
 			});
 			createAll.addEventListener("click", () => void this.onCreateAll());
+		}
+
+		if (this.outlineRows.length > 0) {
+			const align = toolbar.createEl("button", {
+				text: "Align cards to Story Outline ",
+				attr: { "aria-label": "Reset every card to its column and line in the Story Outline" },
+			});
+			align.addEventListener("click", () => {
+				this.mutate((l) => alignToOutlineOrder(l, this.currentEntries(), recon));
+			});
 		}
 
 		const undo = toolbar.createEl("button", { text: "Undo" });
@@ -820,9 +830,7 @@ export class LineView extends ItemView {
 		if (!started) return;
 
 		if (target) {
-			const entries = this.currentEntries();
-			const lineOrder = lineOrderFromModel(canvasModel(entries, this.layout, this.reconcile(entries)));
-			this.mutate((l) => moveCard(l, drag.path, target.lineId, target.index, lineOrder));
+			this.mutate((l) => moveCard(l, drag.path, target.lineId, target.index));
 		} else {
 			this.render();
 		}
@@ -837,7 +845,8 @@ export class LineView extends ItemView {
 			const rail = lineEl.querySelector<HTMLElement>(".scribe-canvas-line-rail");
 			if (!lineId || !rail) continue;
 			const relX = clientX - rail.getBoundingClientRect().left;
-			const index = Math.max(0, Math.round(relX / COLUMN_WIDTH));
+			// The column slot the pointer sits in — drop lands the card there.
+			const index = Math.max(0, Math.floor(relX / COLUMN_WIDTH));
 			return { lineId, index, rail };
 		}
 		return null;
@@ -854,6 +863,7 @@ export class LineView extends ItemView {
 		target.rail.parentElement?.addClass("is-drop-target");
 		const bar = target.rail.createDiv({ cls: "scribe-canvas-drop-bar" });
 		bar.style.left = `${target.index * COLUMN_WIDTH}px`;
+		bar.style.width = `${COLUMN_WIDTH}px`;
 		this.drag.bar = bar;
 	}
 

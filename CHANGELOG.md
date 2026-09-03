@@ -8,6 +8,17 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 - Real cards now show their note's word count, bottom-right, excluding
   frontmatter.
+- **Free column placement on the StoryLines view.** Columns are now a single
+  grid shared by every line: a card's default column is its position in reading
+  order, so a chapter on line 2 lines up with where it would sit if the book
+  were one line. Drag a card to any column and leave gaps between cards;
+  dropping onto a column another card already holds pushes that card (and its
+  right-hand neighbours on the line) over. Faint guides mark the column
+  boundaries. When a Story Outline is configured, a new **Align to Story Outline
+  order** toolbar button snaps the board back to the outline in one undoable
+  step — placeholder cards return to the line their row names and every card's
+  column resets to reading order (real notes keep their line). Existing
+  StoryLines files are otherwise left exactly as they were.
 
 ### Fixed
 - Manuscript order now compares numbered folders by their number, so a book that

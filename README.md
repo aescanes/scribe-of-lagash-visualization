@@ -20,9 +20,13 @@ writes is a per-book **StoryLines file** that stores the book's default view.
 - **StoryLines view** — the book's default view (ribbon icon / "Open StoryLines" command).
   Horizontal, colored **lines** for a book, with each chapter/scene as a card
   sitting on a line. Pick "Create lines" the first time to seed a "Main line",
-  then drag cards to reorder them or move them to another line, and add /
-  rename / recolour / reorder / delete lines from the line headers. Changes
-  save to the StoryLines file (`StoryLines.md`) automatically; `Mod+Z` undoes.
+  then drag cards between lines or along the shared column grid — columns line
+  up across every line by reading order, and you can leave deliberate gaps
+  between cards. Dropping a card onto an occupied column nudges the others
+  right. When a Story Outline is set up, an **Align cards to Story Outline **
+  toolbar button snaps every card back to the outline's reading order. Add /
+  rename / recolour / reorder / delete lines from the line headers. Changes save
+  to the StoryLines file (`StoryLines.md`) automatically; `Mod+Z` undoes.
 - **Story Outline file** *(optional)* — name a file under **Story Outline file
   name** in settings and it's created as an empty Markdown table (Act /
   Chapter / Scene / Line / Synopsis). Fill it in to plan the book before the
@@ -119,8 +123,8 @@ and folder names follow the **Title language** setting. `Line` is a line name or
 id from the StoryLines file; `Synopsis` shows on the card and becomes the note
 body when you create it. A row with neither a `Chapter` nor a `Scene` value is
 ignored, and un-numbered units (`Prologue`, …) can't be planned here — create
-those notes directly. The Story Outline file created for you carries these
-same notes as a comment at the top.
+those notes directly. The Story Outline file created for you repeats this guide
+below the table.
 
 ### Optional frontmatter
 
