@@ -126,12 +126,17 @@ export async function writeGeneratedOutline(app: App, path: string, table: strin
 	const file = app.vault.getAbstractFileByPath(normalizePath(path));
 	if (!(file instanceof TFile)) return false;
 
-	const content = await app.vault.read(file);
-	const { frontmatter, body } = splitFrontmatter(content);
-	if (!hasMarker(frontmatter)) return false;
-	if (parseOutlineTable(body).length > 0) return false;
+	let wrote = false;
+	// process() is the atomic read-modify-write Obsidian recommends over
+	// read()+modify() for editing a file in the background.
+	await app.vault.process(file, (content) => {
+		const { frontmatter, body } = splitFrontmatter(content);
+		if (!hasMarker(frontmatter)) return content;
+		if (parseOutlineTable(body).length > 0) return content;
 
-	const head = content.slice(0, content.length - body.length);
-	await app.vault.modify(file, head + replaceFirstTable(body, table));
-	return true;
+		const head = content.slice(0, content.length - body.length);
+		wrote = true;
+		return head + replaceFirstTable(body, table);
+	});
+	return wrote;
 }

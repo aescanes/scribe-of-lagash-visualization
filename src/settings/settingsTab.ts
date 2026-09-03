@@ -17,7 +17,6 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 
-		new Setting(containerEl).setName("Scribe of Lagash - Visualization").setHeading();
 		containerEl.createEl("p", {
 			text:
 				"Point the plugin at the folder that holds a book's notes. Notes are " +

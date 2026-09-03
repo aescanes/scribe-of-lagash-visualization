@@ -131,6 +131,13 @@ export class LineView extends ItemView {
 	async onClose(): Promise<void> {
 		this.unsubscribe?.();
 		this.unsubscribe = null;
+		// Drop the window listeners a drag-in-progress left on `win`.
+		if (this.drag) {
+			const win = this.contentEl.win;
+			win.removeEventListener("pointermove", this.drag.onMove);
+			win.removeEventListener("pointerup", this.drag.onUp);
+			this.drag = null;
+		}
 		this.scheduleSave.cancel();
 		await this.save();
 	}

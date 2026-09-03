@@ -186,6 +186,45 @@ Entry point: [`src/main.ts`](src/main.ts) → `ScribeVisualizationPlugin`.
 
 ## Conventions (enforced — don't violate)
 
+### Obsidian plugin guidelines — check before every code change
+
+Before adding or changing any code, verify it against the official
+[Obsidian plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines).
+Obsidian's automated review enforces these and rejects releases that break them.
+The rules that bite most often here:
+
+- **Use `this.app`**, never a global `app`.
+- **Resource cleanup:** register listeners/intervals with `registerEvent()`,
+  `registerDomEvent()`, `registerInterval()`, or `addCommand()` so they're torn
+  down automatically. **Do not** `detachLeavesOfType()` in `onunload()` — Obsidian
+  removes the plugin's views itself, and detaching also loses the leaf's position.
+- **No hardcoded inline styles.** Put styling in [`styles.css`](styles.css) with
+  Obsidian CSS variables; from code, toggle classes, or use
+  `setCssStyles()` / `el.style.setProperty()` only for values computed at runtime.
+- **DOM, not HTML strings.** Build nodes with `createEl()` / `createDiv()` /
+  `createSpan()`; never `innerHTML` / `outerHTML` / `insertAdjacentHTML`.
+- **Settings tab:** no top-level heading, no word "settings" in section names,
+  sentence case, and section headers via `new Setting(el).setName(...).setHeading()`
+  — not `<h1>`/`<h2>`.
+- **Vault access:** look notes up with `getFileByPath()` / `getAbstractFileByPath()`
+  — don't scan every file to match a path (a full scan is only OK for discovery,
+  as `vaultIndex.ts` does). `normalizePath()` every user-supplied path. Edit the
+  plugin's own files with `Vault.process()` / `FileManager.processFrontMatter()`;
+  never `Vault.modify()` a note the user is editing.
+- **Commands:** no default hotkeys; `callback` for unconditional, `checkCallback`
+  for conditional, `editorCallback` when it needs the active editor.
+- **Workspace:** don't touch `workspace.activeLeaf` or cache view instances — use
+  `getActiveViewOfType()` / `getActiveLeavesOfType()`.
+- **Async:** `async`/`await` over `.then()` chains; a floating promise gets an
+  explicit `void`. `console` output is errors only.
+- **Mobile-safe:** no Node/Electron APIs, no regex lookbehind (`isDesktopOnly`
+  is `false` in `manifest.json`).
+
+`npm run lint` runs ESLint with `@typescript-eslint`'s **type-checked** rules on
+`src/` (the same set Obsidian's review uses); keep it green.
+
+### Other conventions
+
 - **Never hardcode a frontmatter key string literal.** Reference
   `FRONTMATTER_KEYS` from [`src/types.ts`](src/types.ts).
 - **Never modify an existing chapter/scene note's body or frontmatter.** The
@@ -218,7 +257,8 @@ npm run prepare  # activate Husky hooks — needed once, since ignore-scripts=tr
 npm run dev      # esbuild watch → main.js (inline sourcemap)
 npm run build    # tsc --noEmit type-check + minified production bundle → main.js
 npm test         # esbuild-compile tests/**/*.test.ts → .test-build, run node --test
-npm run lint     # eslint src tests (flat config in eslint.config.mjs, ESLint 9)
+npm run lint     # eslint src tests — ESLint 9 flat config; src/ gets
+                 # @typescript-eslint type-checked rules (needs the TS project)
 npm run validate # typecheck + test + lint — what the pre-commit hook runs
 ```
 
