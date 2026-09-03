@@ -1,6 +1,6 @@
 {
 	"name": "scribe-of-lagash-visualization",
-	"version": "0.7.0",
+	"version": "0.7.1",
 	"description": "Visualize your novel's chapters and scenes: arrange them on lines and group them into matrices by character, place, or situation.",
 	"main": "main.js",
 	"scripts": {
