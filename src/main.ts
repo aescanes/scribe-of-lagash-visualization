@@ -28,7 +28,7 @@ export default class ScribeVisualizationPlugin extends Plugin {
 		this.registerView(VIEW_TYPE_LINE_VIEW, (leaf) => new LineView(leaf, this));
 
 		this.addRibbonIcon(LINE_ICON_ID, "(SL) Visualization: Open StoryLines", () => {
-			this.activateView(VIEW_TYPE_LINE_VIEW);
+			void this.activateView(VIEW_TYPE_LINE_VIEW);
 		}).addClass("scribe-ribbon-icon");
 
 		this.addCommand({
@@ -52,12 +52,13 @@ export default class ScribeVisualizationPlugin extends Plugin {
 	}
 
 	async loadSettings(): Promise<void> {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		const stored = (await this.loadData()) as Partial<ScribeVisualizationSettings> | null;
+		this.settings = { ...DEFAULT_SETTINGS, ...stored };
 	}
 
 	async saveSettings(): Promise<void> {
 		await this.saveData(this.settings);
-		this.vaultIndex.rebuild();
+		void this.vaultIndex.rebuild();
 		await this.ensureOutlineFiles();
 	}
 
@@ -117,6 +118,6 @@ export default class ScribeVisualizationPlugin extends Plugin {
 			await leaf.setViewState({ type: viewType, active: true });
 		}
 
-		workspace.revealLeaf(leaf);
+		await workspace.revealLeaf(leaf);
 	}
 }

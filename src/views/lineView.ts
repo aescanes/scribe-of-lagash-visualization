@@ -409,13 +409,15 @@ export class LineView extends ItemView {
 			cls: "mod-cta",
 			text: fromOutline ? "Create lines from story outline" : "Create lines",
 		});
-		button.addEventListener("click", async () => {
+		button.addEventListener("click", () => {
 			button.disabled = true;
 			const layout = fromOutline
 				? starterLayoutFromOutline(entries, this.outlineRows, this.book, this.plugin.settings.titleLanguage)
 				: starterLayout(entries, { name: "Main line", color: randomLineColor() });
-			await writeLineLayout(this.app, this.linePath(), layout);
-			await this.openBook(this.book);
+			void (async () => {
+				await writeLineLayout(this.app, this.linePath(), layout);
+				await this.openBook(this.book);
+			})();
 		});
 	}
 
@@ -705,7 +707,7 @@ export class LineView extends ItemView {
 			this.mutate((l) => applyPlannedPlacements(l, ghostModel, created));
 		}
 		// Pick the new notes up now rather than waiting for the debounced scan.
-		this.plugin.vaultIndex.rebuild();
+		void this.plugin.vaultIndex.rebuild();
 
 		if (targets.length === 1 && opened) {
 			await this.app.workspace.getLeaf(false).openFile(opened);

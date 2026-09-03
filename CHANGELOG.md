@@ -5,6 +5,9 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+- The eslint code verification was missing some rules that Obsidian notified as issues. We included those rules in our check.
+
 ## [0.7.2](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.7.2) - 2026-09-03
 
 ### Fixed

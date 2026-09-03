@@ -50,7 +50,7 @@ export async function writeLineLayout(app: App, path: string, layout: LineLayout
 	const lines = [...layout.lines].sort((a, b) => a.order - b.order);
 
 	if (existing instanceof TFile) {
-		await app.fileManager.processFrontMatter(existing, (fm) => {
+		await app.fileManager.processFrontMatter(existing, (fm: Record<string, unknown>) => {
 			fm[MARKER_KEY] = MARKER_VALUE;
 			fm.lines = lines;
 			fm.placements = layout.placements;

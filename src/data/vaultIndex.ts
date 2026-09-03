@@ -14,18 +14,23 @@ export interface VaultIndexConfig {
 	titleLanguage: string;
 }
 
+/** Frontmatter cells are `any`; only strings/numbers/booleans coerce meaningfully. */
+function scalarToString(value: unknown): string {
+	if (typeof value === "string") return value;
+	if (typeof value === "number" || typeof value === "boolean") return String(value);
+	return "";
+}
+
 function toStringArray(value: unknown): string[] {
-	if (value === null || value === undefined) return [];
-	if (Array.isArray(value)) return value.map((v) => String(v).trim()).filter(Boolean);
-	return String(value)
+	if (Array.isArray(value)) return value.map((v) => scalarToString(v).trim()).filter(Boolean);
+	return scalarToString(value)
 		.split(",")
 		.map((v) => v.trim())
 		.filter(Boolean);
 }
 
 function toStringOrNull(value: unknown): string | null {
-	if (value === null || value === undefined || value === "") return null;
-	return String(value);
+	return scalarToString(value) || null;
 }
 
 /** Normalizes a folder path for prefix matching (no leading/trailing slash). */
