@@ -5,6 +5,8 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.7.0](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.7.0) - 2026-09-03
+
 ### Added
 - Real cards now show their note's word count, bottom-right, excluding
   frontmatter.
