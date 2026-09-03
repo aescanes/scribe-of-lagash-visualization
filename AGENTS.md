@@ -267,7 +267,8 @@ A Husky pre-commit hook ([`.husky/pre-commit`](.husky/pre-commit)) runs
 `npm run prepare` and git-ignored.
 
 CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs `npm run build`,
-`npm test`, and eslint on push/PR to `main`. All must pass before a PR.
+`npm test`, and eslint on push/PR to `main`, on **Node 24** (matching
+`@types/node`). All must pass before a PR.
 
 Tests use Node's built-in `node:test` — **no test framework dependency**. They
 live under [`tests/`](tests/), which mirrors `src/`: the spec for

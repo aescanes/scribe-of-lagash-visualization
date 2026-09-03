@@ -6,7 +6,7 @@
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
-		"test": "node esbuild.test.mjs && node --test .test-build",
+		"test": "node esbuild.test.mjs && node --test \".test-build/**/*.test.js\"",
 		"typecheck": "tsc -noEmit -skipLibCheck",
 		"lint": "eslint src tests",
 		"validate": "npm run typecheck && npm test && npm run lint",
@@ -28,7 +28,7 @@
 	"license": "MIT",
 	"devDependencies": {
 		"@eslint/js": "9.39.5",
-		"@types/node": "20.19.43",
+		"@types/node": "24.13.3",
 		"@typescript-eslint/eslint-plugin": "8.68.0",
 		"@typescript-eslint/parser": "8.68.0",
 		"esbuild": "0.28.2",

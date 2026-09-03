@@ -13,6 +13,11 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   edits the file through `Vault.process`, and the StoryLines view cleans up
   a drag left in progress if the view is closed mid-drag.
 
+### Changed
+- Build and test on Node 24 (was Node 20): CI/release workflows and
+  `@types/node` bumped, and the test script now passes an explicit glob to
+  `node --test` since Node 24 no longer scans a directory argument.
+
 ## [0.7.2](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.7.2) - 2026-09-03
 
 ### Fixed

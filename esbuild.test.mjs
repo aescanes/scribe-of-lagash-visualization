@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (C) 2026 aescanes
 
-// Compiles every tests/**/*.test.ts to CommonJS in .test-build/ so plain
-// `node --test` can run them. Reuses esbuild (already a build dependency)
+// Compiles every tests/**/*.test.ts to CommonJS in .test-build/ so
+// `node --test ".test-build/**/*.test.js"` can run them. Reuses esbuild (already a build dependency)
 // rather than adding a TypeScript-aware test runner. The tests/ tree mirrors
 // src/, and each spec imports its subject from ../../src/....
 
