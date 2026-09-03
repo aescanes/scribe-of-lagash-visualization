@@ -185,6 +185,40 @@ export function canvasModel(
 	return { lines, unplaced, plannedUnplaced, columnCount: Math.max(1, maxX + 1) };
 }
 
+/**
+ * Colors handed out to newly created lines, in no particular order. Twenty
+ * hues spaced evenly around the color wheel (varying saturation/lightness
+ * slightly between neighbours) so consecutive picks read as clearly distinct,
+ * not just lighter/darker shades of the same color.
+ */
+const LINE_COLOR_PALETTE = [
+	"#c32222", // red
+	"#ce673b", // burnt orange
+	"#d08c25", // amber
+	"#b8aa2e", // olive
+	"#b8da2f", // lime
+	"#7ac431", // grass
+	"#43c322", // green
+	"#3bce4a", // emerald
+	"#25d069", // spring green
+	"#2eb88e", // teal
+	"#2fdada", // cyan
+	"#3198c4", // sky
+	"#2263c3", // blue
+	"#3b4ace", // indigo
+	"#4725d0", // violet
+	"#732eb8", // purple
+	"#b82fda", // magenta
+	"#c431b5", // fuchsia
+	"#c32283", // rose
+	"#ce3b67", // pink
+];
+
+/** A random color for a newly created line, so lines don't all start out identical. */
+export function randomLineColor(): string {
+	return LINE_COLOR_PALETTE[Math.floor(Math.random() * LINE_COLOR_PALETTE.length)];
+}
+
 export interface StarterLineOptions {
 	id?: string;
 	name: string;
@@ -209,26 +243,26 @@ export function starterLayout(entries: NovelEntry[], line: StarterLineOptions): 
 
 /**
  * A first layout for a book whose outline names lines: one line per distinct
- * outline `Line` value (in table order, all `color`), with each real entry
- * placed on the line its outline row names — or the first line when no row
- * matches or the row names no line. Falls back to `starterLayout`'s single
- * "Main line" when the outline names no lines. Ghost cards for the still-unwritten
- * rows are added afterwards by `canvasModel` from the reconciled outline.
+ * outline `Line` value (in table order, each given its own random color), with
+ * each real entry placed on the line its outline row names — or the first
+ * line when no row matches or the row names no line. Falls back to
+ * `starterLayout`'s single "Main line" when the outline names no lines. Ghost
+ * cards for the still-unwritten rows are added afterwards by `canvasModel`
+ * from the reconciled outline.
  */
 export function starterLayoutFromOutline(
 	entries: NovelEntry[],
 	rows: OutlineRow[],
 	book: string,
 	language: string,
-	color: string,
 ): LineLayout {
 	const names = outlineLineNames(rows);
-	if (names.length === 0) return starterLayout(entries, { name: "Main line", color });
+	if (names.length === 0) return starterLayout(entries, { name: "Main line", color: randomLineColor() });
 
 	let layout: LineLayout = { lines: [], placements: {} };
 	const idByRef = new Map<string, string>();
 	for (const name of names) {
-		const added = addLine(layout, name, color);
+		const added = addLine(layout, name, randomLineColor());
 		layout = added.layout;
 		idByRef.set(name.toLowerCase(), added.id);
 	}

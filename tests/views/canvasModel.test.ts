@@ -15,6 +15,7 @@ import {
 	lineOrderFromModel,
 	moveCard,
 	moveLine,
+	randomLineColor,
 	reconcilePlacements,
 	removeLine,
 	renameLine,
@@ -102,7 +103,7 @@ test("starterLayoutFromOutline makes one line per outline Line value, in table o
 		outlineRow({ rowIndex: 1, chapter: 2, line: "Flashbacks" }),
 		outlineRow({ rowIndex: 2, chapter: 3, line: "present" }),
 	];
-	const built = starterLayoutFromOutline([], rows, "Book", "en", "#abc");
+	const built = starterLayoutFromOutline([], rows, "Book", "en");
 	assert.deepEqual(
 		built.lines.map((l) => l.name),
 		["Present", "Flashbacks"],
@@ -122,7 +123,7 @@ test("starterLayoutFromOutline places each entry on the line its row names", () 
 		entry("Book/Chapter 1.md", { type: "chapter", order: 1 }),
 		entry("Book/Chapter 2.md", { type: "chapter", order: 2 }),
 	];
-	const built = starterLayoutFromOutline(entries, rows, "Book", "en", "#abc");
+	const built = starterLayoutFromOutline(entries, rows, "Book", "en");
 	const present = built.lines[0].id;
 	const flashbacks = built.lines[1].id;
 	assert.deepEqual(built.placements["Book/Chapter 1.md"], { lines: [present], x: 0 });
@@ -135,7 +136,7 @@ test("starterLayoutFromOutline drops an unmatched entry onto the first line", ()
 		entry("Book/Chapter 1.md", { type: "chapter", order: 1 }),
 		entry("Book/Chapter 9.md", { type: "chapter", order: 9 }),
 	];
-	const built = starterLayoutFromOutline(entries, rows, "Book", "en", "#abc");
+	const built = starterLayoutFromOutline(entries, rows, "Book", "en");
 	assert.deepEqual(built.placements["Book/Chapter 9.md"], { lines: [built.lines[0].id], x: 1 });
 });
 
@@ -144,7 +145,7 @@ test("a ghost lands on the line starterLayoutFromOutline created for it", () => 
 		outlineRow({ chapter: 1, line: "Flashbacks" }),
 		outlineRow({ chapter: 2, line: "Flashbacks" }),
 	];
-	const built = starterLayoutFromOutline([], rows, "Book", "en", "#abc");
+	const built = starterLayoutFromOutline([], rows, "Book", "en");
 	const flashbacks = built.lines[0].id;
 	const ghost = plannedEntry({
 		row: outlineRow({ chapter: 1 }),
@@ -160,13 +161,7 @@ test("a ghost lands on the line starterLayoutFromOutline created for it", () => 
 });
 
 test("starterLayoutFromOutline falls back to a single Main line when no row names a line", () => {
-	const built = starterLayoutFromOutline(
-		[entry("Book/Chapter 1.md")],
-		[outlineRow({ chapter: 1 })],
-		"Book",
-		"en",
-		"#abc",
-	);
+	const built = starterLayoutFromOutline([entry("Book/Chapter 1.md")], [outlineRow({ chapter: 1 })], "Book", "en");
 	assert.equal(built.lines.length, 1);
 	assert.equal(built.lines[0].name, "Main line");
 });
@@ -367,6 +362,12 @@ test("addLine appends with a unique id and the next order", () => {
 	const { layout: next, id } = addLine(threeCards(), "A", "#333");
 	assert.equal(id, "a-2");
 	assert.equal(next.lines.find((t) => t.id === "a-2")?.order, 2);
+});
+
+test("randomLineColor returns a valid hex color", () => {
+	for (let i = 0; i < 20; i++) {
+		assert.match(randomLineColor(), /^#[0-9a-f]{6}$/);
+	}
 });
 
 test("renameLine keeps the id so placements stay valid", () => {

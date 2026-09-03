@@ -17,6 +17,9 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   notice now reports how many notes it skipped.
 
 ### Changed
+- A newly created line — from "Add line", "Create lines", or the story
+  outline — now gets a random color from a small curated palette instead of
+  always starting out the same theme-accent color.
 - Renamed the "Lines" feature to **StoryLines** and the "Outline" feature to
   **Story Outline** throughout the UI and docs (settings, commands, notices,
   the view's tab title), and the outline table's **Summary** column to

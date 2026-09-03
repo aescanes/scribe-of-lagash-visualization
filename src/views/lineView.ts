@@ -20,6 +20,7 @@ import {
 	lineOrderFromModel,
 	moveCard,
 	moveLine,
+	randomLineColor,
 	recolorLine,
 	reconcilePlacements,
 	removeLine,
@@ -48,9 +49,6 @@ const COLUMN_WIDTH = 220;
 const DRAG_THRESHOLD = 5;
 const UNDO_LIMIT = 50;
 const SAVE_DEBOUNCE_MS = 700;
-
-/** Follows the theme accent until the user recolors the line. */
-const STARTER_LINE_COLOR = "var(--interactive-accent)";
 
 interface DropTarget {
 	lineId: string;
@@ -237,7 +235,7 @@ export class LineView extends ItemView {
 	private createOutlineLines(): void {
 		const missing = this.missingOutlineLines();
 		if (missing.length === 0) return;
-		this.mutate((l) => missing.reduce((acc, name) => addLine(acc, name, STARTER_LINE_COLOR).layout, l));
+		this.mutate((l) => missing.reduce((acc, name) => addLine(acc, name, randomLineColor()).layout, l));
 		new Notice(`Added ${missing.length} line${missing.length === 1 ? "" : "s"} from the story outline`);
 	}
 
@@ -371,7 +369,7 @@ export class LineView extends ItemView {
 
 		const add = toolbar.createEl("button", { cls: "mod-cta", text: "Add line" });
 		add.addEventListener("click", () => {
-			this.mutate((l) => addLine(l, `Line ${l.lines.length + 1}`, STARTER_LINE_COLOR).layout);
+			this.mutate((l) => addLine(l, `Line ${l.lines.length + 1}`, randomLineColor()).layout);
 		});
 	}
 
@@ -401,14 +399,8 @@ export class LineView extends ItemView {
 		button.addEventListener("click", async () => {
 			button.disabled = true;
 			const layout = fromOutline
-				? starterLayoutFromOutline(
-						entries,
-						this.outlineRows,
-						this.book,
-						this.plugin.settings.titleLanguage,
-						STARTER_LINE_COLOR,
-					)
-				: starterLayout(entries, { name: "Main line", color: STARTER_LINE_COLOR });
+				? starterLayoutFromOutline(entries, this.outlineRows, this.book, this.plugin.settings.titleLanguage)
+				: starterLayout(entries, { name: "Main line", color: randomLineColor() });
 			await writeLineLayout(this.app, this.linePath(), layout);
 			await this.openBook(this.book);
 		});
