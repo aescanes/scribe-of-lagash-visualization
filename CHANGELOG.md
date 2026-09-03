@@ -5,6 +5,10 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- Real cards now show their note's word count, bottom-right, excluding
+  frontmatter.
+
 ### Fixed
 - Manuscript order now compares numbered folders by their number, so a book that
   keeps each chapter's scenes in a `Chapter N` sub-folder no longer sees

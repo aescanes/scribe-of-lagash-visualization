@@ -56,6 +56,8 @@ export interface NovelEntry {
 	characters: string[];
 	places: string[];
 	status: string | null;
+	/** Word count of the note's body, excluding frontmatter. */
+	wordCount: number;
 }
 
 /** One horizontal line in the book's default view. */

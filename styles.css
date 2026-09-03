@@ -231,6 +231,7 @@
 }
 
 .scribe-canvas-card {
+	position: relative;
 	display: flex;
 	gap: var(--size-2-2);
 	background: var(--background-primary);
@@ -240,6 +241,13 @@
 	padding: var(--size-4-2) var(--size-4-3);
 	cursor: grab;
 	touch-action: none;
+}
+
+/* Real cards reserve room at the bottom for the word count, pinned to the
+   corner regardless of how much other content the card shows above it. */
+.scribe-canvas-card--chapter,
+.scribe-canvas-card--scene {
+	padding-bottom: 28px;
 }
 
 .scribe-canvas-card:hover {
@@ -386,6 +394,14 @@
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
+}
+
+.scribe-canvas-card-wordcount {
+	position: absolute;
+	right: var(--size-4-3);
+	bottom: var(--size-4-2);
+	font-size: var(--font-ui-smaller);
+	color: var(--text-faint);
 }
 
 .scribe-canvas-unplaced {

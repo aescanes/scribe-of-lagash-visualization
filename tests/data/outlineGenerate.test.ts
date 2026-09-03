@@ -20,6 +20,7 @@ function entry(path: string, over: Partial<NovelEntry> = {}): NovelEntry {
 		characters: [],
 		places: [],
 		status: null,
+		wordCount: 0,
 		...over,
 	};
 }

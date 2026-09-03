@@ -6,6 +6,7 @@ import { FRONTMATTER_KEYS, NovelEntry } from "../types";
 import { byManuscriptOrder } from "./manuscriptOrder";
 import { folderContext } from "./pathContext";
 import { DEFAULT_LANGUAGE, parseTitle } from "./titleParser";
+import { countWords } from "./wordCount";
 
 /** Settings the index needs; supplied lazily so it always reads current values. */
 export interface VaultIndexConfig {
@@ -85,19 +86,20 @@ export class VaultIndex extends Component {
 	}
 
 	/** Rebuilds the index; safe to call from anywhere (e.g. when settings change). */
-	rebuild(): void {
+	async rebuild(): Promise<void> {
 		const { bookFolders, titleLanguage } = this.getConfig();
 		// Longest first so a nested book folder wins over its parent.
 		const folders = bookFolders.map(normalizeFolder).filter(Boolean).sort((a, b) => b.length - a.length);
 		const language = titleLanguage || DEFAULT_LANGUAGE;
 
-		const entries: NovelEntry[] = [];
-		for (const file of this.app.vault.getMarkdownFiles()) {
+		const candidates = this.app.vault.getMarkdownFiles().flatMap((file) => {
 			const base = folders.find((f) => file.path === f || file.path.startsWith(`${f}/`));
-			if (folders.length > 0 && base === undefined) continue;
-			const entry = this.parseFile(file, language, base ?? "");
-			if (entry) entries.push(entry);
-		}
+			if (folders.length > 0 && base === undefined) return [];
+			return [{ file, base: base ?? "" }];
+		});
+
+		const parsed = await Promise.all(candidates.map(({ file, base }) => this.parseFile(file, language, base)));
+		const entries = parsed.filter((entry): entry is NovelEntry => entry !== null);
 
 		entries.sort((a, b) =>
 			byManuscriptOrder(
@@ -110,11 +112,12 @@ export class VaultIndex extends Component {
 		for (const listener of this.listeners) listener();
 	}
 
-	private parseFile(file: TFile, language: string, baseFolder: string): NovelEntry | null {
+	private async parseFile(file: TFile, language: string, baseFolder: string): Promise<NovelEntry | null> {
 		const parsed = parseTitle(file.basename, language);
 		if (!parsed) return null;
 
 		const frontmatter = this.app.metadataCache.getFileCache(file)?.frontmatter ?? {};
+		const content = await this.app.vault.cachedRead(file);
 
 		return {
 			file,
@@ -127,6 +130,7 @@ export class VaultIndex extends Component {
 			characters: toStringArray(frontmatter[FRONTMATTER_KEYS.characters]),
 			places: toStringArray(frontmatter[FRONTMATTER_KEYS.places]),
 			status: toStringOrNull(frontmatter[FRONTMATTER_KEYS.status]),
+			wordCount: countWords(content),
 		};
 	}
 }

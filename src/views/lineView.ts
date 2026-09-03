@@ -50,6 +50,10 @@ const DRAG_THRESHOLD = 5;
 const UNDO_LIMIT = 50;
 const SAVE_DEBOUNCE_MS = 700;
 
+function formatWordCount(count: number): string {
+	return `${count.toLocaleString()} word${count === 1 ? "" : "s"}`;
+}
+
 interface DropTarget {
 	lineId: string;
 	index: number;
@@ -569,6 +573,8 @@ export class LineView extends ItemView {
 		if (entry.characters.length > 0) meta.push(entry.characters.join(", "));
 		if (entry.places.length > 0) meta.push(entry.places.join(", "));
 		if (meta.length > 0) body.createDiv({ cls: "scribe-canvas-card-meta", text: meta.join(" · ") });
+
+		body.createDiv({ cls: "scribe-canvas-card-wordcount", text: formatWordCount(entry.wordCount) });
 
 		el.addEventListener("click", () => {
 			if (this.drag) return;
