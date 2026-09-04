@@ -5,19 +5,19 @@ import type { TFile } from "obsidian";
 
 /**
  * Frontmatter keys the plugin reads from notes. Namespaced as
- * "scribe-visualization-*" (not just "scribe-*") because other plugins in the
- * Scribe of Lagash series will add their own "scribe-" prefixed keys, and
- * generic names like "date" or "status" could mean something different to each.
+ * "scribe-note-*": one shared per-note vocabulary across the whole
+ * Scribe of Lagash series, so a note's date / characters / places / status mean
+ * the same thing to every plugin in the suite and are written once.
  *
  * Chapter/scene classification and order come from the folder structure and the
  * note title, not frontmatter; line membership comes from the Lines file. These
  * keys only add optional detail the cards can show.
  */
 export const FRONTMATTER_KEYS = {
-	date: "scribe-visualization-date",
-	characters: "scribe-visualization-characters",
-	places: "scribe-visualization-places",
-	status: "scribe-visualization-status",
+	date: "scribe-note-date",
+	characters: "scribe-note-characters",
+	places: "scribe-note-places",
+	status: "scribe-note-status",
 } as const;
 
 export type EntryType = "chapter" | "scene";

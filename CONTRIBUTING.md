@@ -60,9 +60,9 @@ test framework is pulled in.
   intent genuinely isn't obvious from names and structure.
 - Frontmatter keys the plugin reads/writes live in
   [`src/types.ts`](src/types.ts)'s `FRONTMATTER_KEYS`, namespaced as
-  `scribe-visualization-*`. Don't hardcode a frontmatter key as a string
-  literal elsewhere — reference the constant, since other plugins in the
-  series will use the same `scribe-` prefix with different meanings.
+  `scribe-note-*` — one per-note vocabulary shared across the whole
+  Scribe of Lagash series. Don't hardcode a frontmatter key as a string
+  literal elsewhere — reference the constant.
 - Note titles are classified by [`src/data/titleParser.ts`](src/data/titleParser.ts),
   a pure module with no Obsidian imports. Keep it that way — add new languages
   as extra entries in its pattern table, not as calls into the vault.

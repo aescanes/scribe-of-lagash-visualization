@@ -7,10 +7,13 @@ Guidance for AI agents working on this repository. Read this before making chang
 **Scribe of Lagash - Visualization** is an Obsidian plugin that helps novelists
 visualize their chapters and scenes. It is the first plugin in the
 **"Scribe of Lagash"** series — a set of independent, single-concern Obsidian
-plugins for planning and writing novels. Future plugins in the series reuse the
-`scribe-` frontmatter prefix with *different meanings*, which is why every key
-this plugin touches is namespaced `scribe-visualization-*` and centralized in
-[`src/types.ts`](src/types.ts).
+plugins for planning and writing novels. The series shares one per-note
+frontmatter vocabulary, `scribe-note-*` (date, characters, places,
+status, …), so a note's metadata means the same thing to every plugin and is
+written once; this plugin's key list is centralized in
+[`src/types.ts`](src/types.ts). A file the plugin owns (the Lines / Outline
+files) is tagged with a `scribe-visualization:` marker instead, since
+that one is specific to this plugin.
 
 Core principle: **the plugin does not own the user's prose.** Chapters and scenes
 are ordinary Markdown notes in the vault. The plugin discovers and reads them; it
@@ -35,7 +38,7 @@ folder-based approach before adding a new frontmatter field or setting.
   arrangement is saved in the Lines file. `LineView`, `VIEW_TYPE_LINE_VIEW`,
   ribbon icon / "Open lines" command.
 - **Chronological view** *(planned)* — orders the same chapters/scenes by their
-  `scribe-visualization-date`, and only works for notes that have that property.
+  `scribe-note-date`, and only works for notes that have that property.
   Not built yet.
 
 > The term is **line**, not "timeline". An earlier draft called these timelines
@@ -327,14 +330,15 @@ steps in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Every key is **optional** — a note becomes a chapter/scene purely by its title,
 its order by folder structure + the title number, its line membership by the
-Lines file. These keys just add detail the cards can show:
+Lines file. These keys just add detail the cards can show, and are shared across
+the Scribe of Lagash series (`scribe-note-*`):
 
 | Key | Type | Use |
 |---|---|---|
-| `scribe-visualization-date` | string (free-form) | in-story date shown on the card; the coming chronological view will order by it |
-| `scribe-visualization-characters` | string / list | card meta; future matrix axis |
-| `scribe-visualization-places` | string / list | card meta; future matrix axis |
-| `scribe-visualization-status` | string | e.g. `draft` (not yet surfaced) |
+| `scribe-note-date` | string (free-form) | in-story date shown on the card; the coming chronological view will order by it |
+| `scribe-note-characters` | string / list | card meta; future matrix axis |
+| `scribe-note-places` | string / list | card meta; future matrix axis |
+| `scribe-note-status` | string | e.g. `draft` (not yet surfaced) |
 
 There is no `-type`, `-order`, `-timelines`, or `-parent` key — deliberately.
 `VaultIndex` coerces leniently: comma-separated strings → arrays,

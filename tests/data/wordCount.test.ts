@@ -12,11 +12,11 @@ test("countWords counts whitespace-separated words", () => {
 });
 
 test("countWords ignores the frontmatter block", () => {
-	const content = ["---", "scribe-visualization-status: draft", "---", "", "Hello world"].join("\n");
+	const content = ["---", "scribe-note-status: draft", "---", "", "Hello world"].join("\n");
 	assert.equal(countWords(content), 2);
 });
 
 test("countWords is 0 for empty or frontmatter-only content", () => {
 	assert.equal(countWords(""), 0);
-	assert.equal(countWords("---\nscribe-visualization-status: draft\n---\n"), 0);
+	assert.equal(countWords("---\nscribe-note-status: draft\n---\n"), 0);
 });

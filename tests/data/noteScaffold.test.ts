@@ -59,9 +59,9 @@ test("scaffoldNoteBody writes only the frontmatter keys the row filled in", () =
 		body,
 		[
 			"---",
-			'scribe-visualization-date: "2029-03-01"',
-			'scribe-visualization-characters: ["Matthias", "Elke"]',
-			'scribe-visualization-status: "draft"',
+			'scribe-note-date: "2029-03-01"',
+			'scribe-note-characters: ["Matthias", "Elke"]',
+			'scribe-note-status: "draft"',
 			"---",
 			"",
 			"The committee applauds.",
