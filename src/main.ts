@@ -59,11 +59,17 @@ export default class ScribeVisualizationPlugin extends Plugin {
 	async saveSettings(): Promise<void> {
 		await this.saveData(this.settings);
 		void this.vaultIndex.rebuild();
-		await this.ensureOutlineFiles();
 	}
 
-	/** Creates the empty-table skeleton for each configured book once an Outline file is named. */
-	private async ensureOutlineFiles(): Promise<void> {
+	/**
+	 * Creates the empty-table skeleton for each configured book once an Outline
+	 * file is named. Deliberately *not* called from `saveSettings()`: the
+	 * settings text field saves on every keystroke, so doing it there created a
+	 * file for every partial name ("(SL) T", "(SL) Te", …). Instead it runs once
+	 * on layout-ready and again when the settings tab closes (see
+	 * `ScribeVisualizationSettingTab.hide`), by which point the name is final.
+	 */
+	async ensureOutlineFiles(): Promise<void> {
 		const { bookFolders, outlineFileName } = this.settings;
 		if (!outlineFileName) return;
 		for (const book of bookFolders) {

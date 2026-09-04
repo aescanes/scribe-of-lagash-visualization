@@ -101,4 +101,13 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 				});
 			});
 	}
+
+	/**
+	 * The text fields above save on every keystroke; creating the Outline file
+	 * is deferred to here so it happens once, for the final name, rather than
+	 * for every partial name typed into "Story Outline file name".
+	 */
+	hide(): void {
+		void this.plugin.ensureOutlineFiles();
+	}
 }
