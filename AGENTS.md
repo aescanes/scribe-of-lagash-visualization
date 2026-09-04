@@ -17,8 +17,9 @@ are ordinary Markdown notes in the vault. The plugin discovers and reads them; i
 **never rewrites an existing note's body or frontmatter.** What it does write:
 
 - the per-book **Lines file** (`Lines.md`) — its own document, rewritten freely;
-- the per-book **Outline file** — created once with an empty skeleton when the
-  user names it in settings, then never touched again (hand-edited only);
+- the per-book **Outline file** — created with an empty skeleton only when the
+  user names it in settings *and* clicks the "Create" button there, then
+  never touched again (hand-edited only);
 - **new** chapter/scene notes, only when the user clicks a placeholder card to
   materialise a planned row (create-only; an existing note is never modified).
 
@@ -67,9 +68,10 @@ folder-based approach before adding a new frontmatter field or setting.
 ### The Lines file (per book)
 
 Lines and card placements live in **one Markdown file inside the book folder**
-(default `Lines.md`, configurable). The plugin prefixes the configured name with
-`(SL) ` on disk — `StoryLines` → `(SL) StoryLines.md`, the default → `(SL)
-Lines.md` — via `withScribePrefix` in `lineLayout.ts`. Human-readable,
+(default `StoryLines.md`, configurable). The `.md` is optional in the setting
+(`withMdExtension`) and the plugin prefixes the name with `(SL) ` on disk —
+`StoryLines` and `StoryLines.md` → `(SL) StoryLines.md` — via `withScribePrefix`,
+both in `lineLayout.ts`. Human-readable,
 diff-friendly, travels with the book. Shape:
 
 ```yaml
@@ -107,12 +109,16 @@ Rules:
 
 An **optional** second file beside `Lines.md`: a hand-edited Markdown table for
 planning chapters/scenes *before* the notes exist. Off by default; a name in the
-**Outline file name** setting turns it on, and naming a not-yet-existing file
-creates it with an empty skeleton (marker `scribe-visualization: outline`, an
-empty header table, then a rendered column guide below it — the guide sits after
-the data table so `parseOutlineTable` / `replaceFirstTable`, which act on the
-first table, still target the data one). The configured name is `(SL) `-prefixed
-on disk, same as the Lines file. Columns: `Act | Chapter | Scene | Line | Summary`, plus optional
+**Outline file name** setting turns it on. The file is created only when the
+user clicks the **"Create"** button in that setting (never automatically
+from `saveSettings`, which fires per keystroke) — the skeleton is a marker
+(`scribe-visualization: outline`), an empty header table, then a rendered column
+guide below it (the guide sits after the data table so `parseOutlineTable` /
+`replaceFirstTable`, which act on the first table, still target the data one).
+The `.md` extension is optional in the setting and normalised by
+`withMdExtension()` (in `lineLayout.ts`, shared with the StoryLines file name) —
+`Outline` and `Outline.md` both resolve to `(SL) Outline.md`. The configured
+name is `(SL) `-prefixed on disk, same as the Lines file. Columns: `Act | Chapter | Scene | Line | Summary`, plus optional
 `Folder | Date | Characters | Places | Status`; `Line` is a line name/id from
 `Lines.md`.
 
@@ -157,21 +163,21 @@ Entry point: [`src/main.ts`](src/main.ts) → `ScribeVisualizationPlugin`.
 
 | Piece | File | Responsibility |
 |---|---|---|
-| Plugin shell | [`src/main.ts`](src/main.ts) | onload wiring: registers the line view, ribbon icon, the "Open lines" / "Generate outline from notes" commands, settings tab; owns the index as a child `Component`; `ensureOutlineFiles` creates the skeleton when the setting names it |
+| Plugin shell | [`src/main.ts`](src/main.ts) | onload wiring: registers the line view, ribbon icon, the "Open lines" / "Generate outline from notes" commands, settings tab; owns the index as a child `Component`; `createOutlineFiles()` writes the skeleton per book folder, called only from the settings "Create" button |
 | Types | [`src/types.ts`](src/types.ts) | `FRONTMATTER_KEYS` (**single source of truth** for key names), `NovelEntry`, `ParsedTitle`, `Line`, `Placement`, `LineLayout`, `OutlineRow`, `PlannedEntry` |
 | Title parser | [`src/data/titleParser.ts`](src/data/titleParser.ts) | Pure, no Obsidian imports: `parseTitle(basename, lang)`; `romanToInt` / `parseNumberToken`; `availableLanguages` / `languageLabel`; `actLabel` / `unitLabel` (words the Outline file builds folders/filenames from). `LANGUAGE_PATTERNS` has `en` + `es` — a new language is one entry there plus one in `LANGUAGE_LABELS` / `ACT_LABELS` |
 | Outline helpers | [`src/data/outline.ts`](src/data/outline.ts) | Pure, unit-tested: `parseOutlineTable` (first GFM table → `OutlineRow[]`), `expectedNotePath`, `outlineRowType` / `outlineRowNumber`, `outlineLineNames` (distinct `Line` cell values, first-appearance order), `reconcileOutline` (rows vs. real entries → `planned` ghost cards + `previews` + discrepancy `marks` + `fulfilledPaths` + `unknownLines`) |
-| Outline file I/O | [`src/data/outlineFile.ts`](src/data/outlineFile.ts) | `outlineFilePath`, `readOutline` (marker-checked), `ensureOutlineFile` (writes the empty skeleton once), `writeGeneratedOutline` (fills a still-empty table only) |
+| Outline file I/O | [`src/data/outlineFile.ts`](src/data/outlineFile.ts) | `outlineFilePath` (via `withMdExtension` + `withScribePrefix`), `readOutline` (marker-checked), `ensureOutlineFile` (writes the empty skeleton once, returns whether it did), `writeGeneratedOutline` (fills a still-empty table only) |
 | Outline generation | [`src/data/outlineGenerate.ts`](src/data/outlineGenerate.ts) | Pure: `generateOutlineTable(entries, layout)` → a table body from existing notes; `replaceFirstTable` swaps it in, keeping other text |
 | Note scaffold | [`src/data/noteScaffold.ts`](src/data/noteScaffold.ts) | Pure: `scaffoldNoteBody(planned)` — starter body for a note created from a ghost card: only the frontmatter keys the row filled, then the Summary as the body (no `# title` heading — the filename is the title) |
 | Vault / book index | [`src/data/vaultIndex.ts`](src/data/vaultIndex.ts) | Scans notes under configured book folders, keeps the title-parsed ones as a live `NovelEntry[]` sorted by `byManuscriptOrder` (folder, then title number), notifies via `onChange`. First scan waits for `onLayoutReady` + `metadataCache` "resolved"; also watches `vault` create/delete/rename, debounced. `rebuild()` is public. `getBookFolders()` / `getEntriesForBook()` |
-| Line-layout helpers | [`src/data/lineLayout.ts`](src/data/lineLayout.ts) | Pure: `parseLineLayout` (coerce loose YAML), `lineFilePath`, `emptyLineLayout` |
+| Line-layout helpers | [`src/data/lineLayout.ts`](src/data/lineLayout.ts) | Pure: `parseLineLayout` (coerce loose YAML), `lineFilePath`, `withScribePrefix` / `withMdExtension` (name normalisation shared by the Lines and Outline file settings), `emptyLineLayout` |
 | Path breadcrumb | [`src/data/pathContext.ts`](src/data/pathContext.ts) | Pure: `folderContext(filePath, baseFolder)` → folder segments shown under a card title |
 | Lines file I/O | [`src/data/lineFile.ts`](src/data/lineFile.ts) | `readLineLayout` / `writeLineLayout` for the per-book `Lines.md` (write preserves the note body via `processFrontMatter`, or creates the file) |
 | Line render model | [`src/views/canvasModel.ts`](src/views/canvasModel.ts) | Pure, unit-tested: `canvasModel(entries, layout, outline?)` → lines + real/ghost `cards` + `unplaced` + `plannedUnplaced`; `manuscriptColumns` (each card's default column on the shared reading-order axis); every layout edit (`moveCard` — drop at an exact column, pushing a card already there and its right neighbours over, no compaction; `alignToOutlineOrder` — snap the board back to the Story Outline: ghost cards drop any dragged placement and return to the line their `Line` cell names, real notes keep their line, every placed card's column snaps to reading order (offered only when a Story Outline exists); `reconcilePlacements`, `applyPlannedPlacements`, `addLine` / `renameLine` / `recolorLine` / `moveLine` / `removeLine`, `cloneLayout`, `starterLayout`, `starterLayoutFromOutline` — a first layout with one line per outline `Line` value, entries seeded onto the line their row names at their manuscript column). **All layout maths live here, not in the view.** |
 | Line view | [`src/views/lineView.ts`](src/views/lineView.ts) | `ItemView` (`VIEW_TYPE_LINE_VIEW`). DOM + pointer-drag only: renders from `canvasModel`, calls the pure ops via `mutate()` (push undo snapshot → apply → debounced save → re-render). Reads `Lines.md` + the outline on open / book switch / index change; a toolbar ⟳ button (shown only when `missingOutlineLines()` is non-empty) adds the lines the outline names but `Lines.md` lacks, an "Align cards to Story Outline " button (shown only while `outlineRows` is non-empty) re-spreads cards onto their reading-order columns, both as one undoable `mutate`; creates notes from ghost cards via a `confirm` modal |
 | Confirm modal | [`src/views/confirmModal.ts`](src/views/confirmModal.ts) | `confirm(app, {title, body, cta})` → `Promise<boolean>` (Obsidian ships no confirm primitive) |
-| Settings | [`src/settings/`](src/settings/) | Book folder, Line-file name, Outline-file name (empty = off), title language |
+| Settings | [`src/settings/`](src/settings/) | Book folder, Line-file name, Outline-file name (empty = off) + its "Create" button, title language |
 | Styles | [`styles.css`](styles.css) | Obsidian CSS variables only (`var(--...)`) — no hardcoded colours except user-chosen line colours from the Lines file. Canvas classes are `.scribe-canvas-*`; per-line colour is `--scribe-line-color` |
 
 ### Separation of responsibility
@@ -225,6 +231,20 @@ The rules that bite most often here:
 
 ### Other conventions
 
+- **Don't run `git` write commands.** Never run `git add`, `git commit`, or
+  `git push` — the maintainer stages, commits, and pushes by hand. Leave your
+  changes in the working tree. When asked to supply a commit message, give the
+  message text only and do **not** append a `Co-Authored-By:` trailer or any
+  other attribution line.
+- **Commit messages follow [Conventional Commits
+  1.0.0](https://www.conventionalcommits.org/en/v1.0.0-beta.2/):**
+  `<type>[optional scope]: <description>`, e.g. `feat: …`, `fix: …`,
+  `chore: …`, `docs: …`, `refactor: …`, `test: …`; a breaking change adds `!`
+  before the colon or a `BREAKING CHANGE:` footer. This is what the release
+  tooling and CHANGELOG expect.
+- **Branch names reuse the same type as a prefix:** `<type>/<short-kebab-slug>`,
+  e.g. `fix/outline-file-partial-name`, `feat/chronological-view`,
+  `docs/readme-outline-section`.
 - **Never hardcode a frontmatter key string literal.** Reference
   `FRONTMATTER_KEYS` from [`src/types.ts`](src/types.ts).
 - **Never modify an existing chapter/scene note's body or frontmatter.** The

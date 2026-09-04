@@ -3,7 +3,7 @@
 
 import { App, normalizePath, parseYaml, TFile } from "obsidian";
 import { OutlineRow } from "../types";
-import { withScribePrefix } from "./lineLayout";
+import { withMdExtension, withScribePrefix } from "./lineLayout";
 import { parseOutlineTable } from "./outline";
 import { replaceFirstTable } from "./outlineGenerate";
 
@@ -37,7 +37,7 @@ function hasMarker(frontmatter: unknown): boolean {
 
 /** Vault-relative path to a book's Outline file, or "" when unnamed (feature off). */
 export function outlineFilePath(bookFolder: string, fileName: string): string {
-	const name = withScribePrefix(fileName.trim());
+	const name = withScribePrefix(withMdExtension(fileName));
 	if (!name) return "";
 	const folder = bookFolder.replace(/^\/+/, "").replace(/\/+$/, "");
 	return folder ? `${folder}/${name}` : name;
@@ -62,12 +62,12 @@ export async function readOutline(app: App, path: string): Promise<OutlineRow[]>
 /**
  * Creates `path` with an empty table skeleton when it doesn't exist yet. Does
  * nothing if `path` is empty or the file is already there — the plugin never
- * overwrites a hand-edited outline.
+ * overwrites a hand-edited outline. Returns whether a new file was written.
  */
-export async function ensureOutlineFile(app: App, path: string): Promise<void> {
-	if (!path) return;
+export async function ensureOutlineFile(app: App, path: string): Promise<boolean> {
+	if (!path) return false;
 	const normalized = normalizePath(path);
-	if (app.vault.getAbstractFileByPath(normalized) instanceof TFile) return;
+	if (app.vault.getAbstractFileByPath(normalized) instanceof TFile) return false;
 
 	const body = [
 		"---",
@@ -114,6 +114,7 @@ export async function ensureOutlineFile(app: App, path: string): Promise<void> {
 		"",
 	].join("\n");
 	await app.vault.create(normalized, body);
+	return true;
 }
 
 /**

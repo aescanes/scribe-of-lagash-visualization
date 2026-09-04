@@ -26,6 +26,16 @@ export function withScribePrefix(fileName: string): string {
 	return `${SCRIBE_FILE_PREFIX}${name}`;
 }
 
+/**
+ * Makes the ".md" extension optional in a file name typed in settings: trims it,
+ * drops a trailing ".md" (any case), and re-appends ".md". Empty stays empty.
+ * "StoryLines" and "storylines.MD" both become "StoryLines.md".
+ */
+export function withMdExtension(fileName: string): string {
+	const base = fileName.trim().replace(/\.md$/i, "").trim();
+	return base ? `${base}.md` : "";
+}
+
 export function emptyLineLayout(): LineLayout {
 	return { lines: [], placements: {} };
 }
@@ -37,7 +47,7 @@ function trimSlashes(path: string): string {
 /** Vault-relative path to a book's Lines file. */
 export function lineFilePath(bookFolder: string, fileName: string): string {
 	const folder = trimSlashes(bookFolder);
-	const name = withScribePrefix(trimSlashes(fileName.trim()) || DEFAULT_LINE_FILE);
+	const name = withScribePrefix(withMdExtension(trimSlashes(fileName.trim())) || DEFAULT_LINE_FILE);
 	return folder ? `${folder}/${name}` : name;
 }
 

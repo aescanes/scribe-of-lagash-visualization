@@ -28,8 +28,10 @@ writes is a per-book **StoryLines file** that stores the book's default view.
   rename / recolour / reorder / delete lines from the line headers. Changes save
   to the StoryLines file (`StoryLines.md`) automatically; `Mod+Z` undoes.
 - **Story Outline file** *(optional)* — name a file under **Story Outline file
-  name** in settings and it's created as an empty Markdown table (Act /
-  Chapter / Scene / Line / Synopsis). Fill it in to plan the book before the
+  name** in settings and click **Create**; it's written as an empty
+  Markdown table (Act / Chapter / Scene / Line / Synopsis). The `.md` extension
+  is optional — `Outline` and `Outline.md` both create `(SL) Outline.md`. Fill
+  it in to plan the book before the
   notes exist: rows with no matching note appear as dashed placeholder cards
   on the StoryLines view, and clicking one creates the note (title, Synopsis,
   frontmatter) on that line. Once a note exists its Synopsis shows on the
@@ -105,6 +107,11 @@ also show as a breadcrumb under each card — a note at
 with "Act I - Chapter I" underneath.
 
 ### Planning ahead with the Story Outline file
+
+Set **Story Outline file name** in settings (the `.md` is optional — `Outline`
+and `Outline.md` both mean `(SL) Outline.md`) and click **Create**. The
+plugin writes one `(SL) <name>.md` per book folder with an empty table and a
+column guide, and never touches it again.
 
 When you plan a book in the **Story Outline file** table before writing the
 notes, fill the columns that match your layout:
