@@ -4,14 +4,28 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { emptyLineLayout, lineFilePath, parseLineLayout, withScribePrefix } from "../../src/data/lineLayout";
+import {
+	emptyLineLayout,
+	lineFilePath,
+	parseLineLayout,
+	withMdExtension,
+	withScribePrefix,
+} from "../../src/data/lineLayout";
 
 test("lineFilePath joins folder and name, tolerating slashes", () => {
 	assert.equal(lineFilePath("Book", "Lines.md"), "Book/(SL) Lines.md");
 	assert.equal(lineFilePath("/Book/The City/", "Lines.md"), "Book/The City/(SL) Lines.md");
 	assert.equal(lineFilePath("Book", "  "), "Book/(SL) StoryLines.md");
 	assert.equal(lineFilePath("", "Lines.md"), "(SL) Lines.md");
-	assert.equal(lineFilePath("Book", "StoryLines"), "Book/(SL) StoryLines");
+	assert.equal(lineFilePath("Book", "StoryLines"), "Book/(SL) StoryLines.md");
+});
+
+test("withMdExtension makes the .md extension optional and canonical", () => {
+	assert.equal(withMdExtension("StoryLines"), "StoryLines.md");
+	assert.equal(withMdExtension("StoryLines.md"), "StoryLines.md");
+	assert.equal(withMdExtension("  Story Outline.MD  "), "Story Outline.md");
+	assert.equal(withMdExtension(""), "");
+	assert.equal(withMdExtension("  "), "");
 });
 
 test("withScribePrefix adds the (SL) prefix once", () => {
