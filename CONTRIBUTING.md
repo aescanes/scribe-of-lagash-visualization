@@ -141,8 +141,9 @@ If a minimum Obsidian version bump is needed, edit `minAppVersion` in
 
 ## Reporting a security issue
 
-Please don't open a public issue for a security vulnerability — see
-[SECURITY.md](SECURITY.md) instead.
+Report vulnerabilities by opening an issue — or, for a sensitive report,
+through GitHub's private vulnerability reporting. See [SECURITY.md](SECURITY.md)
+for details.
 
 ## Code of Conduct
 

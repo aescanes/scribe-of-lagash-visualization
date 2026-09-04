@@ -7,9 +7,14 @@ version before reporting an issue.
 
 ## Reporting a Vulnerability
 
-Please **do not** open a public GitHub issue for a security vulnerability.
-Instead, email alejandroescanes@gmail.com with a description of the issue and
-steps to reproduce it. You should get a response within a few days.
+Please report vulnerabilities through GitHub by
+[opening an issue](https://github.com/aescanes/scribe-of-lagash-visualization/issues/new)
+in this repository, with a description of the issue and steps to reproduce it.
+You should get a response within a few days.
+
+If the issue is sensitive and you would rather not disclose it publicly, use
+GitHub's [private vulnerability reporting](https://github.com/aescanes/scribe-of-lagash-visualization/security/advisories/new)
+instead.
 
 ## Supply-chain posture
 
