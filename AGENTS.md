@@ -235,6 +235,15 @@ The rules that bite most often here:
   changes in the working tree. When asked to supply a commit message, give the
   message text only and do **not** append a `Co-Authored-By:` trailer or any
   other attribution line.
+- **Commit messages follow [Conventional Commits
+  1.0.0](https://www.conventionalcommits.org/en/v1.0.0-beta.2/):**
+  `<type>[optional scope]: <description>`, e.g. `feat: …`, `fix: …`,
+  `chore: …`, `docs: …`, `refactor: …`, `test: …`; a breaking change adds `!`
+  before the colon or a `BREAKING CHANGE:` footer. This is what the release
+  tooling and CHANGELOG expect.
+- **Branch names reuse the same type as a prefix:** `<type>/<short-kebab-slug>`,
+  e.g. `fix/outline-file-partial-name`, `feat/chronological-view`,
+  `docs/readme-outline-section`.
 - **Never hardcode a frontmatter key string literal.** Reference
   `FRONTMATTER_KEYS` from [`src/types.ts`](src/types.ts).
 - **Never modify an existing chapter/scene note's body or frontmatter.** The
