@@ -5,6 +5,17 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+- The **Story Outline file name** setting no longer creates a file for every
+  keystroke while you type the name (typing `Test.md` used to leave behind
+  `(SL) T`, `(SL) Te`, … in the vault).
+
+### Changed
+- The Story Outline file is now created only when you click the new **Create
+  file** button next to the setting, not automatically when the name is set.
+- The `.md` extension is optional in **Story Outline file name** — `Outline`
+  and `Outline.md` both create `(SL) Outline.md`.
+
 ## [0.7.3](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.7.3) - 2026-09-04
 
 ### Fixed

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (C) 2026 aescanes
 
-import { App, PluginSettingTab, Setting } from "obsidian";
+import { App, Notice, PluginSettingTab, Setting } from "obsidian";
 import type ScribeVisualizationPlugin from "../main";
 import { availableLanguages, languageLabel } from "../data/titleParser";
 
@@ -69,23 +69,44 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 			.setDesc(
 				createFragment((frag) => {
 					frag.appendText(
-						"Optional. Name a Markdown file (including the .md extension) to plan chapters/scenes as a table before " +
-							"the notes exist (columns: Act, Chapter, Scene, Line, Synopsis, …).",
+						"Optional. Name a file to plan chapters/scenes as a table before the notes exist " +
+							"(columns: Act, Chapter, Scene, Line, Synopsis, …). Leave empty to turn this off.",
 					);
 					frag.createEl("br");
 					frag.createEl("br");
 					frag.appendText(
-						"The plugin creates an empty file with a guide below the table " +
-							"explaining which columns to fill for each book layout. Leave empty to turn this off. The " +
-							"file is prefixed with \"(SL) \", e.g. \"Story Outline\" becomes \"(SL) Story Outline.md\".",
+						"The \".md\" extension is optional and the name is prefixed with \"(SL) \" on disk — " +
+							"\"Outline\" and \"Outline.md\" both mean \"(SL) Outline.md\".",
+					);
+					frag.createEl("br");
+					frag.createEl("br");
+					frag.appendText(
+						"Click \"Create file\" to create it (an empty table plus a guide to the columns) " +
+							"in each book folder. It is never overwritten once it exists.",
 					);
 				}),
 			)
 			.addText((text) => {
+				text.setPlaceholder("Story Outline.md");
 				text.setValue(this.plugin.settings.outlineFileName);
 				text.onChange(async (value) => {
 					this.plugin.settings.outlineFileName = value.trim();
 					await this.plugin.saveSettings();
+				});
+			})
+			.addButton((button) => {
+				button.setButtonText("Create file");
+				button.onClick(async () => {
+					if (!this.plugin.settings.outlineFileName) {
+						new Notice("Enter a Story Outline file name first.");
+						return;
+					}
+					const created = await this.plugin.createOutlineFiles();
+					new Notice(
+						created > 0
+							? `Created ${created} Story Outline file${created === 1 ? "" : "s"}.`
+							: "The Story Outline file already exists — left it untouched.",
+					);
 				});
 			});
 
@@ -100,14 +121,5 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				});
 			});
-	}
-
-	/**
-	 * The text fields above save on every keystroke; creating the Outline file
-	 * is deferred to here so it happens once, for the final name, rather than
-	 * for every partial name typed into "Story Outline file name".
-	 */
-	hide(): void {
-		void this.plugin.ensureOutlineFiles();
 	}
 }

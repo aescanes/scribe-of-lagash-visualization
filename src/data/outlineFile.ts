@@ -35,9 +35,19 @@ function hasMarker(frontmatter: unknown): boolean {
 	return (frontmatter as Record<string, unknown>)[MARKER_KEY] === MARKER_VALUE;
 }
 
+/**
+ * Normalises the name typed in settings to a single canonical form: the ".md"
+ * extension is optional there, so "Outline" and "Outline.md" (any case) both
+ * become "Outline.md". Empty stays empty (feature off).
+ */
+export function outlineFileName(typed: string): string {
+	const base = typed.trim().replace(/\.md$/i, "").trim();
+	return base ? `${base}.md` : "";
+}
+
 /** Vault-relative path to a book's Outline file, or "" when unnamed (feature off). */
 export function outlineFilePath(bookFolder: string, fileName: string): string {
-	const name = withScribePrefix(fileName.trim());
+	const name = withScribePrefix(outlineFileName(fileName));
 	if (!name) return "";
 	const folder = bookFolder.replace(/^\/+/, "").replace(/\/+$/, "");
 	return folder ? `${folder}/${name}` : name;
@@ -62,12 +72,12 @@ export async function readOutline(app: App, path: string): Promise<OutlineRow[]>
 /**
  * Creates `path` with an empty table skeleton when it doesn't exist yet. Does
  * nothing if `path` is empty or the file is already there — the plugin never
- * overwrites a hand-edited outline.
+ * overwrites a hand-edited outline. Returns whether a new file was written.
  */
-export async function ensureOutlineFile(app: App, path: string): Promise<void> {
-	if (!path) return;
+export async function ensureOutlineFile(app: App, path: string): Promise<boolean> {
+	if (!path) return false;
 	const normalized = normalizePath(path);
-	if (app.vault.getAbstractFileByPath(normalized) instanceof TFile) return;
+	if (app.vault.getAbstractFileByPath(normalized) instanceof TFile) return false;
 
 	const body = [
 		"---",
@@ -114,6 +124,7 @@ export async function ensureOutlineFile(app: App, path: string): Promise<void> {
 		"",
 	].join("\n");
 	await app.vault.create(normalized, body);
+	return true;
 }
 
 /**

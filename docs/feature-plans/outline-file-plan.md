@@ -8,8 +8,13 @@ Notes vs. plan as built: the reconciliation result also carries `fulfilledPaths`
 (for the "not in the outline" diagnostic); `canvasModel` gained
 `applyPlannedPlacements` (used for both single and batch create) instead of
 routing single-create through `moveCard`; ghost cards on a line are re-indexed
-`0..n` only when that line actually has one. The settings-created skeleton is
-the entry point — there is no toolbar "Create outline file" button.
+`0..n` only when that line actually has one. The skeleton is created by a
+**"Create file" button next to the settings field** — there is no toolbar
+"Create outline file" button, and the file is *not* created automatically when
+the name is typed (`saveSettings` fires per keystroke, so that left a file
+behind for every partial name). The `.md` extension is optional in the field;
+`outlineFileName()` normalises `Outline` and `Outline.md` to the same
+`(SL) Outline.md`.
 
 ## Goal
 
@@ -29,9 +34,9 @@ never is.
 ## The Outline file
 
 One optional Markdown file inside the book folder. A new `outlineFileName`
-setting is **empty by default** (feature off); naming a file that doesn't exist
-yet creates it with an empty table skeleton. Frontmatter marker plus a
-hand-editable table in the body:
+setting is **empty by default** (feature off); after naming it, the user clicks
+the setting's **"Create file"** button to write an empty table skeleton (one per
+book folder). Frontmatter marker plus a hand-editable table in the body:
 
 ```markdown
 ---
@@ -106,15 +111,18 @@ planned book on the canvas and can turn any ghost card into a real note.
   - `outlineFilePath(book, name)`.
   - `readOutline(app, path): Promise<OutlineRow[]>` — missing/unnamed file →
     `[]`.
-  - `ensureOutlineFile(app, path): Promise<void>` — creates the empty-table
-    skeleton when `path` is set and the file doesn't exist yet; called from
-    `saveSettings` after the name changes.
+  - `ensureOutlineFile(app, path): Promise<boolean>` — creates the empty-table
+    skeleton when `path` is set and the file doesn't exist yet (returns whether
+    it did); called from `main.createOutlineFiles()`, which the settings
+    "Create file" button triggers — never from `saveSettings`.
+  - `outlineFileName(typed): string` — trims the typed name and makes the `.md`
+    extension optional/canonical (`Outline` → `Outline.md`).
 - **`src/data/noteScaffold.ts`** (pure): `scaffoldNoteBody(planned): string` —
   frontmatter block with only the keys the row filled, then the Summary as the
   body (no `# <title>` heading — the filename already is the title).
 - **Settings** — `outlineFileName: ""` (empty = feature off) in
   [`../../src/settings/settings.ts`](../../src/settings/settings.ts); a text
-  field in
+  field plus a "Create file" button (`plugin.createOutlineFiles()`) in
   [`../../src/settings/settingsTab.ts`](../../src/settings/settingsTab.ts).
 
 ### Canvas model
@@ -203,5 +211,5 @@ line by hand. Now the `Line` column can create lines.
 - Exact wording/placement of the discrepancy tooltip and the unknown-line /
   orphan-row diagnostics relative to the existing "not recognized" list.
 - Whether `ensureOutlineFile` should also react to the file being deleted out
-  from under a configured name (currently: re-created next time the setting is
-  re-saved, not watched).
+  from under a configured name (currently: never auto-created — the user clicks
+  "Create file" in settings again; not watched).

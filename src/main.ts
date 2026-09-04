@@ -44,11 +44,6 @@ export default class ScribeVisualizationPlugin extends Plugin {
 		});
 
 		this.addSettingTab(new ScribeVisualizationSettingTab(this.app, this));
-
-		// Covers an Outline file name that was already set (synced settings, a
-		// fresh install pointed at an existing data.json) before this session
-		// ever called saveSettings().
-		this.app.workspace.onLayoutReady(() => void this.ensureOutlineFiles());
 	}
 
 	async loadSettings(): Promise<void> {
@@ -62,19 +57,21 @@ export default class ScribeVisualizationPlugin extends Plugin {
 	}
 
 	/**
-	 * Creates the empty-table skeleton for each configured book once an Outline
-	 * file is named. Deliberately *not* called from `saveSettings()`: the
-	 * settings text field saves on every keystroke, so doing it there created a
-	 * file for every partial name ("(SL) T", "(SL) Te", …). Instead it runs once
-	 * on layout-ready and again when the settings tab closes (see
-	 * `ScribeVisualizationSettingTab.hide`), by which point the name is final.
+	 * Creates the empty-table skeleton for each configured book. Only ever
+	 * triggered by the explicit "Create file" button in settings — never from
+	 * `saveSettings()`, which fires on every keystroke and would leave a file
+	 * behind for every partial name ("(SL) T", "(SL) Te", …). Returns how many
+	 * files it actually created (the rest already existed).
 	 */
-	async ensureOutlineFiles(): Promise<void> {
+	async createOutlineFiles(): Promise<number> {
 		const { bookFolders, outlineFileName } = this.settings;
-		if (!outlineFileName) return;
-		for (const book of bookFolders) {
-			await ensureOutlineFile(this.app, outlineFilePath(book, outlineFileName));
+		if (!outlineFileName) return 0;
+		const books = bookFolders.length > 0 ? bookFolders : [""];
+		let created = 0;
+		for (const book of books) {
+			if (await ensureOutlineFile(this.app, outlineFilePath(book, outlineFileName))) created++;
 		}
+		return created;
 	}
 
 	/** Fills a still-empty Outline file from the book's current chapter/scene notes. */
