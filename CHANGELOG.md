@@ -5,6 +5,15 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **BREAKING:** the note frontmatter keys are renamed from
+  `scribe-visualization-*` to `scribe-note-*`
+  (`scribe-note-date`, `-characters`, `-places`, `-status`) — one
+  per-note vocabulary shared across the Scribe of Lagash series. The plugin no
+  longer reads the old keys; run a vault-wide find-and-replace on existing
+  notes.
+
 ### Fixed
 - The **Story Outline file name** setting no longer creates a file for every
   keystroke while you type the name (typing `Test.md` used to leave behind

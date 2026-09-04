@@ -11,7 +11,7 @@ in Obsidian.
 This plugin doesn't own your prose: chapters and scenes are just regular notes
 in your vault. Point the plugin at the folder that holds a book and it
 recognises chapters and scenes from their titles ("Chapter 1", "Scene II",
-"Prologue", …); a little `scribe-visualization-*` frontmatter is optional and
+"Prologue", …); a little `scribe-note-*` frontmatter is optional and
 only needed to override the title or add detail. The only file the plugin ever
 writes is a per-book **StoryLines file** that stores the book's default view.
 
@@ -40,7 +40,7 @@ writes is a per-book **StoryLines file** that stores the book's default view.
   [docs/feature-plans/outline-file-plan.md](docs/feature-plans/outline-file-plan.md).
 
 Planned next: a **chronological view** ordering chapters/scenes by their
-`scribe-visualization-date`, and a matrix view grouping them by character,
+`scribe-note-date`, and a matrix view grouping them by character,
 place, or situation. See
 [docs/feature-plans/line-view-plan.md](docs/feature-plans/line-view-plan.md).
 
@@ -139,10 +139,10 @@ None of this is required — it only adds detail the cards can show:
 
 ```yaml
 ---
-scribe-visualization-date: 1901-03-04       # in-story date, any free-form string
-scribe-visualization-characters: [Alice, Bob]
-scribe-visualization-places: [Riverside Tavern]
-scribe-visualization-status: draft
+scribe-note-date: 1901-03-04       # in-story date, any free-form string
+scribe-note-characters: [Alice, Bob]
+scribe-note-places: [Riverside Tavern]
+scribe-note-status: draft
 ---
 ```
 
