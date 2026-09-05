@@ -8,6 +8,7 @@ import {
 	actLabel,
 	availableLanguages,
 	languageLabel,
+	parseLeadingNumber,
 	parseNumberToken,
 	parseTitle,
 	romanToInt,
@@ -80,6 +81,15 @@ test("parseNumberToken parses digits and roman numerals, rejects the rest", () =
 	assert.equal(parseNumberToken("iv"), 4);
 	assert.equal(parseNumberToken("nine"), null);
 	assert.equal(parseNumberToken(""), null);
+});
+
+test("parseLeadingNumber reads only the leading number, ignoring trailing free text", () => {
+	assert.equal(parseLeadingNumber("1"), 1);
+	assert.equal(parseLeadingNumber("1 - The beginning"), 1);
+	assert.equal(parseLeadingNumber("iv: return"), 4);
+	assert.equal(parseLeadingNumber("XII — The Fall"), 12);
+	assert.equal(parseLeadingNumber("nine"), null);
+	assert.equal(parseLeadingNumber(""), null);
 });
 
 test("actLabel / unitLabel give the Outline file its folder and filename words", () => {

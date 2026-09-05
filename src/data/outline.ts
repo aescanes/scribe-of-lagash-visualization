@@ -2,7 +2,7 @@
 // Copyright (C) 2026 aescanes
 
 import { EntryType, LineLayout, NovelEntry, OutlineRow, PlannedEntry } from "../types";
-import { DEFAULT_LANGUAGE, actLabel, parseNumberToken, unitLabel } from "./titleParser";
+import { DEFAULT_LANGUAGE, actLabel, parseLeadingNumber, unitLabel } from "./titleParser";
 
 /**
  * Pure logic for the optional per-book Outline file: parsing its Markdown
@@ -43,7 +43,7 @@ function toStringOrNull(value: string): string | null {
 }
 
 function toNumberOrNull(value: string): number | null {
-	return value === "" ? null : parseNumberToken(value);
+	return value === "" ? null : parseLeadingNumber(value);
 }
 
 function toStringArray(value: string): string[] {
@@ -87,8 +87,10 @@ export function parseOutlineTable(markdownBody: string): OutlineRow[] {
 		if (!line.includes("|")) break;
 
 		const cells = splitTableRow(line);
-		const chapter = toNumberOrNull(cellAt(cells, "chapter"));
-		const scene = toNumberOrNull(cellAt(cells, "scene"));
+		const chapterCell = cellAt(cells, "chapter");
+		const sceneCell = cellAt(cells, "scene");
+		const chapter = toNumberOrNull(chapterCell);
+		const scene = toNumberOrNull(sceneCell);
 		if (chapter === null && scene === null) continue;
 
 		rows.push({
@@ -96,7 +98,9 @@ export function parseOutlineTable(markdownBody: string): OutlineRow[] {
 			act: toStringOrNull(cellAt(cells, "act")),
 			folder: toStringOrNull(cellAt(cells, "folder")),
 			chapter,
+			chapterText: chapter === null ? null : chapterCell,
 			scene,
+			sceneText: scene === null ? null : sceneCell,
 			line: toStringOrNull(cellAt(cells, "line")),
 			summary: cellAt(cells, "synopsis"),
 			date: toStringOrNull(cellAt(cells, "date")),
@@ -138,6 +142,14 @@ export function outlineRowNumber(row: OutlineRow): number | null {
 	return row.scene !== null ? row.scene : row.chapter;
 }
 
+/**
+ * The row's unit label text, e.g. "1" or "1 - The beginning" — its Scene
+ * cell's raw text, or else its Chapter cell's, mirroring `outlineRowNumber`.
+ */
+export function outlineRowText(row: OutlineRow): string | null {
+	return row.scene !== null ? row.sceneText : row.chapterText;
+}
+
 function trimSlashes(path: string): string {
 	return path.replace(/^\/+/, "").replace(/\/+$/, "");
 }
@@ -149,10 +161,13 @@ function folderOf(path: string): string {
 
 /**
  * Vault-relative path a row's note would be created at: `<book>/<folder>/
- * <Chapter unit> <n>.md`, or, for a scene row, `.../<Chapter unit> <n>/
- * <Scene unit> <m>.md` (a scene sits inside its chapter's folder — the
- * existing folder-nesting rule). `folder` is the row's `Folder` cell, else
- * `"<Act label> <Act cell>"` when there's an `Act` cell, else omitted.
+ * <Chapter unit> <n[ - free text]>.md`, or, for a scene row, `.../<Chapter
+ * unit> <n[ - free text]>/<Scene unit> <m[ - free text]>.md` (a scene sits
+ * inside its chapter's folder — the existing folder-nesting rule). Any free
+ * text after the Chapter/Scene cell's number (e.g. "1 - The beginning")
+ * carries through into the name, the same way it would in a real note title.
+ * `folder` is the row's `Folder` cell, else `"<Act label> <Act cell>"` when
+ * there's an `Act` cell, else omitted.
  */
 export function expectedNotePath(row: OutlineRow, book: string, language: string = DEFAULT_LANGUAGE): string {
 	const parts = [trimSlashes(book)].filter(Boolean);
@@ -161,10 +176,10 @@ export function expectedNotePath(row: OutlineRow, book: string, language: string
 	if (folder) parts.push(trimSlashes(folder));
 
 	if (row.scene !== null) {
-		if (row.chapter !== null) parts.push(`${unitLabel("chapter", language)} ${row.chapter}`);
-		parts.push(`${unitLabel("scene", language)} ${row.scene}.md`);
+		if (row.chapter !== null) parts.push(`${unitLabel("chapter", language)} ${row.chapterText ?? row.chapter}`);
+		parts.push(`${unitLabel("scene", language)} ${row.sceneText ?? row.scene}.md`);
 	} else if (row.chapter !== null) {
-		parts.push(`${unitLabel("chapter", language)} ${row.chapter}.md`);
+		parts.push(`${unitLabel("chapter", language)} ${row.chapterText ?? row.chapter}.md`);
 	}
 
 	return parts.join("/");
@@ -256,6 +271,7 @@ export function reconcileOutline(
 		row,
 		type: outlineRowType(row),
 		number: outlineRowNumber(row),
+		text: outlineRowText(row),
 		expectedPath: expectedNotePath(row, book, language),
 	}));
 
@@ -307,14 +323,20 @@ export function reconcileOutline(
 	const unknownLines = new Set<string>();
 
 	for (const r of rowInfo) {
-		const { row, type, number, expectedPath } = r;
+		const { row, type, number, text, expectedPath } = r;
 		const rowLineId = row.line ? lineIdByRef.get(row.line.toLowerCase()) ?? null : null;
 		if (row.line && rowLineId === null) unknownLines.add(row.line);
 
 		const matched = matchOf.get(row) ?? null;
 
 		if (!matched) {
-			planned.push({ row, type, label: `${unitLabel(type, language)} ${number}`, expectedPath, lineId: rowLineId });
+			planned.push({
+				row,
+				type,
+				label: `${unitLabel(type, language)} ${text ?? number}`,
+				expectedPath,
+				lineId: rowLineId,
+			});
 
 			const draggedTo = placedLineOf.get(expectedPath);
 			if (!row.line) {

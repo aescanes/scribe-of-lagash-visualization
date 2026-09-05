@@ -5,6 +5,22 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- The Story Outline table's `Chapter`/`Scene` cells can now carry free text
+  after the number, e.g. `1 - The beginning`, the same way a note's own title
+  can — the plugin previously required a bare number and silently dropped any
+  row that had trailing text. The free text carries through into the planned
+  note's filename and the placeholder card's label (`Chapter 1 - The
+  beginning.md`), while matching against real notes still goes by number
+  alone.
+
+### Fixed
+- A placeholder/real card's title could get clipped at the top of the topmost
+  line — most noticeable with the free-text titles above, which routinely wrap
+  to two lines where a bare number never did, making the card taller than the
+  line row it's centred on. Card titles now clamp to two lines and the line
+  row is taller, so a card no longer overflows past its row.
+
 ## [0.8.2](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.8.2) - 2026-09-05
 
 ### Fixed

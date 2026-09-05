@@ -101,8 +101,17 @@ export interface OutlineRow {
 	/** Explicit folder override; when absent it's derived from `act`. */
 	folder: string | null;
 	chapter: number | null;
+	/**
+	 * The Chapter cell's raw text (e.g. "1 - The beginning"), starting with the
+	 * same number as `chapter`. Used to name the planned note/folder so free
+	 * text after the number survives, the same way it does in a real note
+	 * title. Null whenever `chapter` is null.
+	 */
+	chapterText: string | null;
 	/** Present only on a row that plans a scene (nested under its chapter). */
 	scene: number | null;
+	/** The Scene cell's raw text, analogous to `chapterText`. */
+	sceneText: string | null;
 	/** Line name or id, matched against `Line.name` / `Line.id` in Lines.md. */
 	line: string | null;
 	summary: string;
