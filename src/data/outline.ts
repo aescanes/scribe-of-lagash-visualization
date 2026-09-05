@@ -192,6 +192,37 @@ const emptyReconciliation: OutlineReconciliation = {
 };
 
 /**
+ * Groups real entries that share a type, unit number, and containing folder —
+ * e.g. two "Scene 1" notes under the same chapter, however they're spelled
+ * ("Scene 1" and "Escena I" both parse to the same type+number). Nothing in
+ * the folder/title structure can tell such notes apart, so each gets a mark;
+ * the same numbering repeated under a *different* chapter or act is normal
+ * and not flagged.
+ */
+function findDuplicateContextEntries(entries: NovelEntry[], book: string, language: string): Record<string, string> {
+	const groups = new Map<string, NovelEntry[]>();
+	for (const entry of entries) {
+		if (entry.order === null) continue;
+		const key = `${entry.type} ${entry.order} ${folderOf(entry.file.path)}`;
+		const list = groups.get(key);
+		if (list) list.push(entry);
+		else groups.set(key, [entry]);
+	}
+
+	const marks: Record<string, string> = {};
+	for (const group of groups.values()) {
+		if (group.length < 2) continue;
+		const folder = folderOf(group[0].file.path);
+		const label = `${unitLabel(group[0].type, language)} ${group[0].order}`;
+		const message =
+			`${group.length} notes are all "${label}" under "${folder || trimSlashes(book)}"` +
+			` — the story outline can't tell them apart`;
+		for (const entry of group) marks[entry.file.path] = message;
+	}
+	return marks;
+}
+
+/**
  * Matches outline rows against the book's real entries and line layout.
  * `entries` should already be scoped to one book (e.g. `getEntriesForBook`).
  * The folder/file structure and Lines.md are always authoritative — a
@@ -219,6 +250,55 @@ export function reconcileOutline(
 	}
 
 	const entryByPath = new Map(entries.map((e) => [e.file.path, e]));
+	const duplicateMarks = findDuplicateContextEntries(entries, book, language);
+
+	const rowInfo = rows.map((row) => ({
+		row,
+		type: outlineRowType(row),
+		number: outlineRowNumber(row),
+		expectedPath: expectedNotePath(row, book, language),
+	}));
+
+	// Pass 1: bind every row whose expected path matches a real note exactly —
+	// a vault path is unique, so this can never be ambiguous. Claiming these
+	// first means a note already spoken for by its own row is never stolen by
+	// a same-numbered sibling row's fallback lookup below.
+	const matchOf = new Map<OutlineRow, NovelEntry>();
+	const claimedPaths = new Set<string>();
+	for (const r of rowInfo) {
+		const exact = entryByPath.get(r.expectedPath);
+		if (exact) {
+			matchOf.set(r.row, exact);
+			claimedPaths.add(exact.file.path);
+		}
+	}
+
+	// Pass 2: a row with no exact match falls back to type+number, but only
+	// among notes not already claimed. When more than one such note remains
+	// (e.g. it's a genuine duplicate title elsewhere in the book), only bind
+	// it when exactly one candidate also sits in the row's expected folder —
+	// otherwise there's no way to tell which one the row means, and it's left
+	// unmatched (rendered as a ghost) rather than guessed.
+	for (const r of rowInfo) {
+		if (matchOf.has(r.row)) continue;
+		const candidates = entries.filter(
+			(e) => !claimedPaths.has(e.file.path) && e.type === r.type && e.order === r.number,
+		);
+		if (candidates.length === 0) continue;
+
+		let pick: NovelEntry | null = null;
+		if (candidates.length === 1) {
+			pick = candidates[0];
+		} else {
+			const expectedFolder = folderOf(r.expectedPath);
+			const inFolder = candidates.filter((e) => folderOf(e.file.path) === expectedFolder);
+			if (inFolder.length === 1) pick = inFolder[0];
+		}
+		if (pick) {
+			matchOf.set(r.row, pick);
+			claimedPaths.add(pick.file.path);
+		}
+	}
 
 	const planned: PlannedEntry[] = [];
 	const previews: Record<string, string> = {};
@@ -226,16 +306,12 @@ export function reconcileOutline(
 	const fulfilledPaths = new Set<string>();
 	const unknownLines = new Set<string>();
 
-	for (const row of rows) {
-		const type = outlineRowType(row);
-		const number = outlineRowNumber(row);
-		const expectedPath = expectedNotePath(row, book, language);
-
+	for (const r of rowInfo) {
+		const { row, type, number, expectedPath } = r;
 		const rowLineId = row.line ? lineIdByRef.get(row.line.toLowerCase()) ?? null : null;
 		if (row.line && rowLineId === null) unknownLines.add(row.line);
 
-		const matched =
-			entryByPath.get(expectedPath) ?? entries.find((e) => e.type === type && e.order === number) ?? null;
+		const matched = matchOf.get(row) ?? null;
 
 		if (!matched) {
 			planned.push({ row, type, label: `${unitLabel(type, language)} ${number}`, expectedPath, lineId: rowLineId });
@@ -258,6 +334,7 @@ export function reconcileOutline(
 		if (row.summary) previews[path] = row.summary;
 
 		const issues: string[] = [];
+		if (duplicateMarks[path]) issues.push(duplicateMarks[path]);
 		if (row.line) {
 			if (rowLineId === null) {
 				issues.push(`story outline's line "${row.line}" isn't in StoryLines.md`);
@@ -278,6 +355,12 @@ export function reconcileOutline(
 			issues.push(`story outline plans it as a ${type}, note is a ${matched.type}`);
 		}
 		if (issues.length > 0) marks[path] = issues.join("; ");
+	}
+
+	// A duplicate-titled note that no row ever matched (its sibling took the
+	// one row that named this number) still deserves the warning.
+	for (const [path, message] of Object.entries(duplicateMarks)) {
+		if (!marks[path] && !fulfilledPaths.has(path)) marks[path] = message;
 	}
 
 	return {
