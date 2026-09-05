@@ -55,6 +55,7 @@ const EMPTY_PLAN: OutlineReconciliation = {
 	previews: {},
 	marks: {},
 	fulfilledPaths: [],
+	fulfilledLineIds: {},
 	unknownLines: [],
 };
 
@@ -414,11 +415,14 @@ export function moveCard(
  * Snaps the board back to the Story Outline. Ghost cards (planned rows with no
  * note yet) return to the line their `Line` cell names — any placement a drag
  * wrote for them is dropped, so `canvasModel` positions them straight from the
- * outline again. Real notes keep their line (the folder/file structure and a
- * deliberate drag win over the table), but every placed card's column snaps to
- * its index in the manuscript-ordered merge of real entries and planned rows.
- * The undoable "Align cards to Story Outline " action — only offered when a Story
- * Outline exists, since without one the card order is entirely the user's.
+ * outline again. A real note whose row names a line that exists in
+ * `Lines.md` (`plan.fulfilledLineIds`) moves onto that line too, the same way
+ * a ghost does — a real note with no row, or whose row names no valid line,
+ * keeps whatever line it's already on. Every placed card's column then snaps
+ * to its index in the manuscript-ordered merge of real entries and planned
+ * rows. The undoable "Align cards to Story Outline " action — only offered
+ * when a Story Outline exists, since without one the card order and line are
+ * entirely the user's.
  */
 export function alignToOutlineOrder(
 	layout: LineLayout,
@@ -429,6 +433,8 @@ export function alignToOutlineOrder(
 	const next = cloneLayout(layout);
 	for (const p of plan.planned) delete next.placements[p.expectedPath];
 	for (const [path, placement] of Object.entries(next.placements)) {
+		const lineId = plan.fulfilledLineIds[path];
+		if (lineId) placement.lines = [lineId];
 		const col = columns.get(path);
 		if (col !== undefined) placement.x = col;
 	}

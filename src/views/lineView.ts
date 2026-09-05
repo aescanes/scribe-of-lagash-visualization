@@ -186,7 +186,7 @@ export class LineView extends ItemView {
 			this.layout = emptyLineLayout();
 			this.outlineRows = [];
 		}
-		this.render();
+		this.render(false);
 	}
 
 	/** Adds any newly discovered chapter/scene to the default line, and saves if so. */
@@ -278,8 +278,21 @@ export class LineView extends ItemView {
 
 	// ---- render ----
 
-	private render(): void {
+	/**
+	 * Rebuilds the whole view from scratch — `render()` never patches the DOM,
+	 * it tears it down and starts over, so the scrollable board's scroll
+	 * position would otherwise silently reset to the top-left on every card
+	 * move, line rename, undo, etc. `preserveScroll` (default) carries the old
+	 * `.scribe-canvas-scroll` element's scroll offsets over to its replacement;
+	 * pass `false` when the render is a genuinely fresh view (switching books)
+	 * where snapping back to the top-left is the correct behaviour.
+	 */
+	private render(preserveScroll = true): void {
 		const root = this.contentEl;
+		const prevScroll = preserveScroll ? root.querySelector<HTMLElement>(".scribe-canvas-scroll") : null;
+		const scrollLeft = prevScroll?.scrollLeft ?? 0;
+		const scrollTop = prevScroll?.scrollTop ?? 0;
+
 		root.empty();
 		root.addClass("scribe-canvas-view");
 		this.cardEls.clear();
@@ -318,6 +331,12 @@ export class LineView extends ItemView {
 		this.renderLines(root, entries, recon);
 		this.renderDiagnostics(root, entries, recon);
 		this.equalizeCardHeights();
+
+		const scroll = root.querySelector<HTMLElement>(".scribe-canvas-scroll");
+		if (scroll) {
+			scroll.scrollLeft = scrollLeft;
+			scroll.scrollTop = scrollTop;
+		}
 	}
 
 	/**
@@ -577,13 +596,14 @@ export class LineView extends ItemView {
 		el.createDiv({ cls: "scribe-canvas-card-dot" });
 		const body = el.createDiv({ cls: "scribe-canvas-card-body" });
 
-		const title = body.createDiv({
+		const titleRow = body.createDiv({ cls: "scribe-canvas-card-title-row" });
+		titleRow.createDiv({
 			cls: "scribe-canvas-card-title",
 			text: entry.title,
 			attr: { "aria-label": entry.title },
 		});
 		if (card.mark) {
-			title.createSpan({ cls: "scribe-canvas-card-mark", text: " ⚠", attr: { "aria-label": card.mark } });
+			titleRow.createSpan({ cls: "scribe-canvas-card-mark", text: "⚠", attr: { "aria-label": card.mark } });
 		}
 		if (entry.context.length > 0) {
 			body.createDiv({ cls: "scribe-canvas-card-context", text: entry.context.join(" - ") });
@@ -629,13 +649,14 @@ export class LineView extends ItemView {
 		el.createDiv({ cls: "scribe-canvas-card-dot" });
 		const body = el.createDiv({ cls: "scribe-canvas-card-body" });
 
-		const title = body.createDiv({
+		const titleRow = body.createDiv({ cls: "scribe-canvas-card-title-row" });
+		titleRow.createDiv({
 			cls: "scribe-canvas-card-title",
 			text: planned.label,
 			attr: { "aria-label": planned.label },
 		});
 		if (mark) {
-			title.createSpan({ cls: "scribe-canvas-card-mark", text: " ⚠", attr: { "aria-label": mark } });
+			titleRow.createSpan({ cls: "scribe-canvas-card-mark", text: "⚠", attr: { "aria-label": mark } });
 		}
 		const context = folderContext(planned.expectedPath, this.book);
 		if (context.length > 0) {

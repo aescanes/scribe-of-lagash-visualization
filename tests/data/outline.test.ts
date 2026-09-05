@@ -229,6 +229,18 @@ test("reconcileOutline matches a fulfilled row by expected path and adds a Summa
 	assert.deepEqual(result.planned, []);
 	assert.equal(result.previews["Book/Chapter 1.md"], "Opening scene.");
 	assert.equal(result.marks["Book/Chapter 1.md"], undefined);
+	assert.equal(result.fulfilledLineIds["Book/Chapter 1.md"], "main");
+});
+
+test("reconcileOutline's fulfilledLineIds skips a fulfilled row with no line or an unknown line", () => {
+	const entries = [
+		entry("Book/Chapter 1.md", { type: "chapter", order: 1 }),
+		entry("Book/Chapter 2.md", { type: "chapter", order: 2 }),
+	];
+	const rows = [row({ chapter: 1 }), row({ chapter: 2, line: "Nope" })];
+	const result = reconcileOutline(rows, entries, layout, "Book");
+	assert.equal(result.fulfilledLineIds["Book/Chapter 1.md"], undefined);
+	assert.equal(result.fulfilledLineIds["Book/Chapter 2.md"], undefined);
 });
 
 test("reconcileOutline matches a scene note nested under its chapter folder (Act / Chapter / Scene)", () => {
@@ -505,7 +517,14 @@ test("reconcileOutline reports which real notes matched a row (for orphan detect
 
 test("reconcileOutline is a no-op for an empty table", () => {
 	const result = reconcileOutline([], [], layout, "Book");
-	assert.deepEqual(result, { planned: [], previews: {}, marks: {}, fulfilledPaths: [], unknownLines: [] });
+	assert.deepEqual(result, {
+		planned: [],
+		previews: {},
+		marks: {},
+		fulfilledPaths: [],
+		fulfilledLineIds: {},
+		unknownLines: [],
+	});
 });
 
 test("outlineLineNames lists distinct Line values in first-appearance order", () => {

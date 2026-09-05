@@ -203,7 +203,15 @@ function plannedEntry(over: Partial<PlannedEntry> = {}): PlannedEntry {
 }
 
 function plan(over: Partial<OutlineReconciliation> = {}): OutlineReconciliation {
-	return { planned: [], previews: {}, marks: {}, fulfilledPaths: [], unknownLines: [], ...over };
+	return {
+		planned: [],
+		previews: {},
+		marks: {},
+		fulfilledPaths: [],
+		fulfilledLineIds: {},
+		unknownLines: [],
+		...over,
+	};
 }
 
 const twoLine: LineLayout = {
@@ -428,6 +436,33 @@ test("alignToOutlineOrder resets every card to its reading-order column, keeping
 	assert.deepEqual(next.placements["Book/Chapter 1.md"], { lines: ["a"], x: 0 });
 	assert.deepEqual(next.placements["Book/Chapter 2.md"], { lines: ["b"], x: 1 });
 	assert.deepEqual(next.placements["Book/Chapter 3.md"], { lines: ["a"], x: 2 });
+});
+
+test("alignToOutlineOrder moves a real note back onto the line its row names, same as a ghost", () => {
+	const layout: LineLayout = {
+		lines: [
+			{ id: "line-a", name: "Line A", color: "#1", order: 0 },
+			{ id: "main-line", name: "Main line", color: "#2", order: 1 },
+		],
+		// Chapter 1 was dragged from Line A (its row's line) onto Main line.
+		placements: { "Book/Chapter 1.md": { lines: ["main-line"], x: 0 } },
+	};
+	const next = alignToOutlineOrder(layout, [entry("Book/Chapter 1.md", { order: 1 })], plan({
+		fulfilledPaths: ["Book/Chapter 1.md"],
+		fulfilledLineIds: { "Book/Chapter 1.md": "line-a" },
+	}));
+	assert.deepEqual(next.placements["Book/Chapter 1.md"], { lines: ["line-a"], x: 0 });
+});
+
+test("alignToOutlineOrder leaves a real note's line alone when its row names no valid line", () => {
+	const layout: LineLayout = {
+		lines: [{ id: "main-line", name: "Main line", color: "#2", order: 1 }],
+		placements: { "Book/Chapter 1.md": { lines: ["main-line"], x: 0 } },
+	};
+	const next = alignToOutlineOrder(layout, [entry("Book/Chapter 1.md", { order: 1 })], plan({
+		fulfilledPaths: ["Book/Chapter 1.md"],
+	}));
+	assert.deepEqual(next.placements["Book/Chapter 1.md"], { lines: ["main-line"], x: 0 });
 });
 
 test("alignToOutlineOrder drops a dragged ghost's placement so it returns to its outline line", () => {

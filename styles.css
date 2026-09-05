@@ -347,6 +347,7 @@
 }
 
 .scribe-canvas-card-mark {
+	flex: none;
 	color: var(--text-warning);
 	cursor: help;
 }
@@ -390,7 +391,18 @@
 	min-width: 0;
 }
 
+/* Title text plus its ⚠ discrepancy mark, side by side — the mark must stay
+   outside the title's own line-clamp box below, or a title long enough to
+   fill both lines truncates the mark away with it. */
+.scribe-canvas-card-title-row {
+	display: flex;
+	align-items: flex-start;
+	gap: 4px;
+}
+
 .scribe-canvas-card-title {
+	flex: 1;
+	min-width: 0;
 	font-weight: 600;
 	overflow-wrap: anywhere;
 	/* Caps how tall a long free-text title (e.g. from an Outline "1 - The
