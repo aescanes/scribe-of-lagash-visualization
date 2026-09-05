@@ -88,7 +88,7 @@ export function parseLineLayout(raw: unknown): LineLayout {
 	}
 
 	if (obj.placements && typeof obj.placements === "object") {
-		for (const [path, value] of Object.entries(obj.placements as Record<string, unknown>)) {
+		for (const [path, value] of Object.entries(obj.placements)) {
 			if (!value || typeof value !== "object") continue;
 			const p = value as Record<string, unknown>;
 			const placement: Placement = {
