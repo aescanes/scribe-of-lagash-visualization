@@ -5,6 +5,25 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- The settings tab now also implements Obsidian's declarative settings API
+  (`getSettingDefinitions()`, added in Obsidian 1.13.0), so its settings show
+  up in Obsidian's global settings search. The existing imperative `display()`
+  method is kept as a fallback for Obsidian versions older than 1.13.0 — both
+  now share the same row definitions so they can't drift apart.
+
+### Fixed
+- `tsconfig.json`'s `lib` list was missing `ES2017`/`ES2018`/`ES2019`, so type
+  info for `Object.entries`, `.padEnd`, and `.flatMap` silently came from
+  `@types/node`'s ambient globals instead of being genuinely resolved. Obsidian's
+  plugin review (which doesn't have that fallback) flagged the calls as
+  `@typescript-eslint/no-unsafe-call` ("unsafe call of an error or any typed
+  value"); our own `npm run lint` didn't, since it has `@types/node` available.
+- Dropped a redundant `as Record<string, unknown>` assertion in
+  `parseLineLayout` (`lineLayout.ts`) flagged by the same review pass — the
+  `typeof value !== "object"` guard and the existing cast two lines below
+  already make the loop body safe without it.
+
 ## [0.8.0](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.8.0) - 2026-09-04
 
 ### Changed
