@@ -5,6 +5,8 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.8.1](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.8.1) - 2026-09-05
+
 ### Added
 - The settings tab now also implements Obsidian's declarative settings API
   (`getSettingDefinitions()`, added in Obsidian 1.13.0), so its settings show
