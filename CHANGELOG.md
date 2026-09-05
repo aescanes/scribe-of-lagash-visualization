@@ -5,6 +5,8 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.8.2](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.8.2) - 2026-09-05
+
 ### Fixed
 - `reconcileOutline` could bind a Story Outline row to the wrong note whenever
   two rows planned the same chapter/scene number under different
