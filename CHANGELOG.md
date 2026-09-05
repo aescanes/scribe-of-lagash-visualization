@@ -5,6 +5,25 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+- `reconcileOutline` could bind a Story Outline row to the wrong note whenever
+  two rows planned the same chapter/scene number under different
+  chapters/acts (e.g. "Chapter 1/Scene 1" and "Chapter 2/Scene 1") and only
+  one of them had a real note yet: the unwritten row's fallback lookup
+  matched by type + number alone, with no folder/act context, so it could
+  "steal" the other row's already-correctly-matched real note and mark it
+  with a bogus "story outline expects it under …" discrepancy. The fallback
+  now only binds a note nobody else has already claimed, and only when
+  exactly one such candidate remains (or, when several share the number,
+  exactly one of them sits in the row's expected folder) — otherwise the row
+  is left as a ghost instead of guessing.
+- Added a new warning for two or more real notes that genuinely can't be told
+  apart — same chapter/scene number *and* the same containing folder (e.g.
+  "Chapter 1" and "Ch. 1" both directly under the same act) — since the Story
+  Outline has no way to know which one a row refers to. The same number
+  repeated under a *different* chapter or act (the normal case) is not
+  flagged.
+
 ## [0.8.1](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.8.1) - 2026-09-05
 
 ### Added

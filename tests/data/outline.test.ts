@@ -230,6 +230,154 @@ test("reconcileOutline falls back to type+number matching when the path differs"
 	assert.match(result.marks["Book/Chapter 1.md"], /outline expects it under/);
 });
 
+// --- Same type+number under different chapters/acts (a normal, non-ambiguous case) ---
+
+test("reconcileOutline matches two rows with the same Scene number under different chapters, each to its own note", () => {
+	const entries = [
+		entry("Book/Act I/Chapter 1/Scene 1.md", { type: "scene", order: 1, context: ["Act I", "Chapter 1"] }),
+		entry("Book/Act I/Chapter 2/Scene 1.md", { type: "scene", order: 1, context: ["Act I", "Chapter 2"] }),
+	];
+	const rows = [row({ act: "I", chapter: 1, scene: 1 }), row({ act: "I", chapter: 2, scene: 1 })];
+	const result = reconcileOutline(rows, entries, layout, "Book");
+	assert.deepEqual(result.planned, []);
+	assert.deepEqual(
+		result.fulfilledPaths.sort(),
+		["Book/Act I/Chapter 1/Scene 1.md", "Book/Act I/Chapter 2/Scene 1.md"].sort(),
+	);
+	assert.equal(result.marks["Book/Act I/Chapter 1/Scene 1.md"], undefined);
+	assert.equal(result.marks["Book/Act I/Chapter 2/Scene 1.md"], undefined);
+});
+
+// --- The reported bug: a same-numbered ghost row must not "steal" a real note ---
+// that already exactly matches its own row, nor mark it with the ghost's folder.
+
+test("reconcileOutline does not mismatch a real note's row against a same-numbered ghost row elsewhere", () => {
+	// Chapter 1's Scene 1 is real and matches exactly. Chapter 2's Scene 1 is
+	// still unwritten (a ghost). Both rows plan a "Scene 1" so the old fallback
+	// (type+number only) could bind the ghost row to Chapter 1's real note too.
+	const entries = [entry("Book/Act I/Chapter 1/Scene 1.md", { type: "scene", order: 1 })];
+	const rows = [row({ act: "I", chapter: 1, scene: 1 }), row({ act: "I", chapter: 2, scene: 1 })];
+	const result = reconcileOutline(rows, entries, layout, "Book");
+
+	assert.deepEqual(result.fulfilledPaths, ["Book/Act I/Chapter 1/Scene 1.md"]);
+	assert.equal(result.marks["Book/Act I/Chapter 1/Scene 1.md"], undefined);
+
+	assert.equal(result.planned.length, 1);
+	assert.equal(result.planned[0].expectedPath, "Book/Act I/Chapter 2/Scene 1.md");
+});
+
+test("reconcileOutline gives the same result regardless of which row comes first in the table", () => {
+	// Same as above with the ghost row listed before the real row's row —
+	// the fix must not depend on table order.
+	const entries = [entry("Book/Act I/Chapter 1/Scene 1.md", { type: "scene", order: 1 })];
+	const rows = [row({ act: "I", chapter: 2, scene: 1 }), row({ act: "I", chapter: 1, scene: 1 })];
+	const result = reconcileOutline(rows, entries, layout, "Book");
+
+	assert.deepEqual(result.fulfilledPaths, ["Book/Act I/Chapter 1/Scene 1.md"]);
+	assert.equal(result.marks["Book/Act I/Chapter 1/Scene 1.md"], undefined);
+	assert.equal(result.planned.length, 1);
+	assert.equal(result.planned[0].expectedPath, "Book/Act I/Chapter 2/Scene 1.md");
+});
+
+// --- Fallback matching narrows same-numbered candidates by folder ---
+
+test("reconcileOutline's fallback picks the same-numbered note in the row's own folder over one elsewhere", () => {
+	// Neither note is named exactly "Scene 1.md", so neither matches its
+	// expected path exactly; both fall back to type+number matching. Only the
+	// note that's actually inside "Chapter 1" should bind to the Chapter 1 row.
+	const entries = [
+		entry("Book/Act I/Chapter 1/Escena 1.md", { type: "scene", order: 1 }),
+		entry("Book/Act I/Chapter 3/Escena 1.md", { type: "scene", order: 1 }),
+	];
+	const rows = [row({ act: "I", chapter: 1, scene: 1 })];
+	const result = reconcileOutline(rows, entries, layout, "Book");
+
+	assert.deepEqual(result.fulfilledPaths, ["Book/Act I/Chapter 1/Escena 1.md"]);
+	assert.equal(result.marks["Book/Act I/Chapter 1/Escena 1.md"], undefined);
+	assert.equal(result.marks["Book/Act I/Chapter 3/Escena 1.md"], undefined);
+});
+
+test("reconcileOutline leaves an ambiguous same-numbered row planned rather than guessing", () => {
+	// The row's folder (Chapter 5) matches neither candidate, so there's no way
+	// to tell which "Scene 1" it means — it should stay a ghost, not bind to
+	// either note or mark them.
+	const entries = [
+		entry("Book/Act I/Chapter 1/Escena 1.md", { type: "scene", order: 1 }),
+		entry("Book/Act I/Chapter 3/Escena 1.md", { type: "scene", order: 1 }),
+	];
+	const rows = [row({ act: "I", chapter: 5, scene: 1 })];
+	const result = reconcileOutline(rows, entries, layout, "Book");
+
+	assert.equal(result.planned.length, 1);
+	assert.equal(result.planned[0].expectedPath, "Book/Act I/Chapter 5/Scene 1.md");
+	assert.deepEqual(result.fulfilledPaths, []);
+	assert.equal(result.marks["Book/Act I/Chapter 1/Escena 1.md"], undefined);
+	assert.equal(result.marks["Book/Act I/Chapter 3/Escena 1.md"], undefined);
+});
+
+// --- Genuine duplicate titles: two real notes the folder/title structure truly can't tell apart ---
+
+test("reconcileOutline warns about two notes that both parse as the same chapter in the same folder", () => {
+	const entries = [
+		entry("Book/Act I/Chapter 1.md", { type: "chapter", order: 1 }),
+		entry("Book/Act I/Ch. 1.md", { type: "chapter", order: 1 }),
+	];
+	const rows = [row({ act: "I", chapter: 1 })];
+	const result = reconcileOutline(rows, entries, layout, "Book");
+
+	// The canonically-named note fulfills the row...
+	assert.deepEqual(result.fulfilledPaths, ["Book/Act I/Chapter 1.md"]);
+	// ...but both notes get the duplicate-title warning.
+	assert.match(result.marks["Book/Act I/Chapter 1.md"], /can't tell them apart/);
+	assert.match(result.marks["Book/Act I/Ch. 1.md"], /can't tell them apart/);
+});
+
+test("reconcileOutline warns about duplicate-context notes even when no row references that number", () => {
+	const entries = [
+		entry("Book/Act I/Chapter 1.md", { type: "chapter", order: 1 }),
+		entry("Book/Act I/Ch. 1.md", { type: "chapter", order: 1 }),
+	];
+	// The only row plans an unrelated chapter, so nothing in the row-matching
+	// logic ever looks at the duplicate pair.
+	const rows = [row({ act: "I", chapter: 99 })];
+	const result = reconcileOutline(rows, entries, layout, "Book");
+
+	assert.deepEqual(result.fulfilledPaths, []);
+	assert.match(result.marks["Book/Act I/Chapter 1.md"], /can't tell them apart/);
+	assert.match(result.marks["Book/Act I/Ch. 1.md"], /can't tell them apart/);
+});
+
+test("reconcileOutline does not warn about the same Scene number repeated under different chapters", () => {
+	const entries = [
+		entry("Book/Act I/Chapter 1/Scene 1.md", { type: "scene", order: 1 }),
+		entry("Book/Act I/Chapter 2/Scene 1.md", { type: "scene", order: 1 }),
+	];
+	const rows = [row({ act: "I", chapter: 1, scene: 1 }), row({ act: "I", chapter: 2, scene: 1 })];
+	const result = reconcileOutline(rows, entries, layout, "Book");
+
+	assert.equal(result.marks["Book/Act I/Chapter 1/Scene 1.md"], undefined);
+	assert.equal(result.marks["Book/Act I/Chapter 2/Scene 1.md"], undefined);
+});
+
+test("reconcileOutline can combine a duplicate-title warning with a real folder discrepancy", () => {
+	// Two notes in "Act I" both parse as Chapter 1 (a genuine duplicate pair).
+	// The first row exactly claims the canonically-named one; a second,
+	// unrelated row (Act II's Chapter 1, which has no note of its own) then
+	// falls back to the only unclaimed Chapter 1 left — the duplicate — whose
+	// real folder ("Act I") disagrees with what that second row expects.
+	const entries = [
+		entry("Book/Act I/Chapter 1.md", { type: "chapter", order: 1 }),
+		entry("Book/Act I/Ch. 1.md", { type: "chapter", order: 1 }),
+	];
+	const rows = [row({ act: "I", chapter: 1 }), row({ act: "II", chapter: 1 })];
+	const result = reconcileOutline(rows, entries, layout, "Book");
+
+	assert.deepEqual(result.fulfilledPaths.sort(), ["Book/Act I/Ch. 1.md", "Book/Act I/Chapter 1.md"].sort());
+	assert.match(result.marks["Book/Act I/Chapter 1.md"], /can't tell them apart/);
+	assert.match(result.marks["Book/Act I/Ch. 1.md"], /can't tell them apart/);
+	assert.match(result.marks["Book/Act I/Ch. 1.md"], /outline expects it under "Book\/Act II"/);
+});
+
 test("reconcileOutline returns a planned entry for an unfulfilled row", () => {
 	const rows = [row({ act: "I", chapter: 5, line: "Main line" })];
 	const result = reconcileOutline(rows, [], layout, "Book");
