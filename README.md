@@ -24,7 +24,8 @@ writes is a per-book **StoryLines file** that stores the book's default view.
   up across every line by reading order, and you can leave deliberate gaps
   between cards. Dropping a card onto an occupied column nudges the others
   right. When a Story Outline is set up, an **Align cards to Story Outline **
-  toolbar button snaps every card back to the outline's reading order. Add /
+  toolbar button snaps every card — real or planned — back to the outline's
+  reading order and onto the line its row names. Add /
   rename / recolour / reorder / delete lines from the line headers. Changes save
   to the StoryLines file (`StoryLines.md`) automatically; `Mod+Z` undoes.
 - **Story Outline file** *(optional)* — name a file under **Story Outline file

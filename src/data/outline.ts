@@ -194,6 +194,14 @@ export interface OutlineReconciliation {
 	marks: Record<string, string>;
 	/** Vault paths of real notes that matched a row — the rest are "not in the outline". */
 	fulfilledPaths: string[];
+	/**
+	 * Vault path -> the fulfilling row's resolved `Line` id, for every fulfilled
+	 * path whose row names a line that exists in `Lines.md` — the real-note
+	 * counterpart of `PlannedEntry.lineId`, so "Align cards to Story Outline"
+	 * can move a real note back onto its row's line the same way it already
+	 * does for a ghost card.
+	 */
+	fulfilledLineIds: Record<string, string>;
 	/** `Line` cell values that matched no line in Lines.md, for diagnostics. */
 	unknownLines: string[];
 }
@@ -203,6 +211,7 @@ const emptyReconciliation: OutlineReconciliation = {
 	previews: {},
 	marks: {},
 	fulfilledPaths: [],
+	fulfilledLineIds: {},
 	unknownLines: [],
 };
 
@@ -241,7 +250,11 @@ function findDuplicateContextEntries(entries: NovelEntry[], book: string, langua
  * Matches outline rows against the book's real entries and line layout.
  * `entries` should already be scoped to one book (e.g. `getEntriesForBook`).
  * The folder/file structure and Lines.md are always authoritative — a
- * disagreement never changes where a real card sits, it only adds a mark.
+ * disagreement never changes where a real card sits on its own, it only adds
+ * a mark; `fulfilledLineIds` exists so the user-triggered "Align cards to
+ * Story Outline" action (`alignToOutlineOrder` in `canvasModel.ts`) can move a
+ * real note back onto its row's line as a deliberate, explicit step, the same
+ * way it already does for a ghost card.
  */
 export function reconcileOutline(
 	rows: OutlineRow[],
@@ -320,6 +333,7 @@ export function reconcileOutline(
 	const previews: Record<string, string> = {};
 	const marks: Record<string, string> = {};
 	const fulfilledPaths = new Set<string>();
+	const fulfilledLineIds: Record<string, string> = {};
 	const unknownLines = new Set<string>();
 
 	for (const r of rowInfo) {
@@ -353,6 +367,7 @@ export function reconcileOutline(
 
 		const path = matched.file.path;
 		fulfilledPaths.add(path);
+		if (rowLineId !== null) fulfilledLineIds[path] = rowLineId;
 		if (row.summary) previews[path] = row.summary;
 
 		const issues: string[] = [];
@@ -390,6 +405,7 @@ export function reconcileOutline(
 		previews,
 		marks,
 		fulfilledPaths: Array.from(fulfilledPaths),
+		fulfilledLineIds,
 		unknownLines: Array.from(unknownLines).sort(),
 	};
 }

@@ -5,6 +5,26 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+- **Align cards to Story Outline** now moves a real note onto the line its
+  outline row names, the same way it already did for a ghost card — until now
+  it only reset the real note's column, leaving it on whatever line a past
+  drag had put it on. A real note with no row, or whose row names no line (or
+  one that isn't in `Lines.md`), is left on its current line, same as before.
+
+### Fixed
+- Moving a card (or renaming a line, or undoing) snapped the board's scroll
+  position back to the top-left. `render()` always tears down and rebuilds the
+  view's DOM from scratch, including the scrollable board, so the browser
+  reset its scroll offset along with it. The old scroll position now carries
+  over to the rebuilt view; switching books still starts back at the top-left,
+  since that's a genuinely new view.
+- A card's ⚠ discrepancy mark could be invisible on a title long enough to
+  fill its 2-line clamp (0.9.0's fix for the card-height bug above) — the mark
+  was a child of the clamped title, so the clamp truncated it away along with
+  the overflowing title text. The mark now sits in its own row next to the
+  title instead of inside it, so it's never clipped regardless of title length.
+
 ## [0.9.0](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.9.0) - 2026-09-05
 
 ### Added
