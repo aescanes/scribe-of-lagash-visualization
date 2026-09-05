@@ -577,7 +577,11 @@ export class LineView extends ItemView {
 		el.createDiv({ cls: "scribe-canvas-card-dot" });
 		const body = el.createDiv({ cls: "scribe-canvas-card-body" });
 
-		const title = body.createDiv({ cls: "scribe-canvas-card-title", text: entry.title });
+		const title = body.createDiv({
+			cls: "scribe-canvas-card-title",
+			text: entry.title,
+			attr: { "aria-label": entry.title },
+		});
 		if (card.mark) {
 			title.createSpan({ cls: "scribe-canvas-card-mark", text: " ⚠", attr: { "aria-label": card.mark } });
 		}
@@ -625,7 +629,11 @@ export class LineView extends ItemView {
 		el.createDiv({ cls: "scribe-canvas-card-dot" });
 		const body = el.createDiv({ cls: "scribe-canvas-card-body" });
 
-		const title = body.createDiv({ cls: "scribe-canvas-card-title", text: planned.label });
+		const title = body.createDiv({
+			cls: "scribe-canvas-card-title",
+			text: planned.label,
+			attr: { "aria-label": planned.label },
+		});
 		if (mark) {
 			title.createSpan({ cls: "scribe-canvas-card-mark", text: " ⚠", attr: { "aria-label": mark } });
 		}

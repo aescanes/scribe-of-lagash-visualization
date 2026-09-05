@@ -8,6 +8,7 @@ import {
 	expectedNotePath,
 	outlineLineNames,
 	outlineRowNumber,
+	outlineRowText,
 	outlineRowType,
 	parseOutlineTable,
 	reconcileOutline,
@@ -37,7 +38,9 @@ function row(over: Partial<OutlineRow> = {}): OutlineRow {
 		act: null,
 		folder: null,
 		chapter: null,
+		chapterText: null,
 		scene: null,
+		sceneText: null,
 		line: null,
 		summary: "",
 		date: null,
@@ -64,7 +67,9 @@ test("parseOutlineTable finds the table, maps columns by name, and strips bracke
 		act: "I",
 		folder: null,
 		chapter: 1,
+		chapterText: "1",
 		scene: null,
+		sceneText: null,
 		line: "M",
 		summary: "Berlín 2029.",
 		date: null,
@@ -121,11 +126,36 @@ test("parseOutlineTable parses a Scene row and roman numerals", () => {
 	assert.deepEqual(rows[0].scene, 2);
 });
 
-test("outlineRowType / outlineRowNumber", () => {
+test("parseOutlineTable parses a Chapter/Scene cell with free text after the number", () => {
+	const body = [
+		"| Chapter                | Scene           |",
+		"| ----------------------- | --------------- |",
+		"| 1 - The beginning       | 2: The reveal   |",
+	].join("\n");
+	const rows = parseOutlineTable(body);
+	assert.equal(rows[0].chapter, 1);
+	assert.equal(rows[0].chapterText, "1 - The beginning");
+	assert.equal(rows[0].scene, 2);
+	assert.equal(rows[0].sceneText, "2: The reveal");
+});
+
+test("parseOutlineTable accepts a roman-numeral Chapter cell with free text", () => {
+	const body = ["| Chapter |", "| ------- |", "| IV - Return |"].join("\n");
+	const rows = parseOutlineTable(body);
+	assert.equal(rows[0].chapter, 4);
+	assert.equal(rows[0].chapterText, "IV - Return");
+});
+
+test("outlineRowType / outlineRowNumber / outlineRowText", () => {
 	assert.equal(outlineRowType(row({ chapter: 1 })), "chapter");
 	assert.equal(outlineRowType(row({ chapter: 1, scene: 2 })), "scene");
 	assert.equal(outlineRowNumber(row({ chapter: 1, scene: 2 })), 2);
 	assert.equal(outlineRowNumber(row({ chapter: 1 })), 1);
+	assert.equal(outlineRowText(row({ chapter: 1, chapterText: "1 - The beginning" })), "1 - The beginning");
+	assert.equal(
+		outlineRowText(row({ chapter: 1, chapterText: "1", scene: 2, sceneText: "2 - The reveal" })),
+		"2 - The reveal",
+	);
 });
 
 test("expectedNotePath derives a chapter path from Act, in English and Spanish", () => {
@@ -159,6 +189,20 @@ test("expectedNotePath: a scene row with no Chapter sits directly in its folder"
 test("expectedNotePath works with no book folder (whole-vault scan)", () => {
 	assert.equal(expectedNotePath(row({ chapter: 1 }), ""), "Chapter 1.md");
 	assert.equal(expectedNotePath(row({ act: "I", chapter: 1 }), ""), "Act I/Chapter 1.md");
+});
+
+test("expectedNotePath carries a Chapter cell's free text into the filename", () => {
+	assert.equal(
+		expectedNotePath(row({ chapter: 1, chapterText: "1 - The beginning" }), "Book"),
+		"Book/Chapter 1 - The beginning.md",
+	);
+});
+
+test("expectedNotePath carries a Scene cell's free text, nesting under its chapter's bare-number folder", () => {
+	assert.equal(
+		expectedNotePath(row({ chapter: 1, chapterText: "1", scene: 2, sceneText: "2 - The reveal" }), "Book"),
+		"Book/Chapter 1/Scene 2 - The reveal.md",
+	);
 });
 
 test("expectedNotePath keeps a multi-segment Folder cell", () => {
@@ -376,6 +420,14 @@ test("reconcileOutline can combine a duplicate-title warning with a real folder 
 	assert.match(result.marks["Book/Act I/Chapter 1.md"], /can't tell them apart/);
 	assert.match(result.marks["Book/Act I/Ch. 1.md"], /can't tell them apart/);
 	assert.match(result.marks["Book/Act I/Ch. 1.md"], /outline expects it under "Book\/Act II"/);
+});
+
+test("reconcileOutline carries a Chapter cell's free text into the ghost card's label and path", () => {
+	const rows = [row({ chapter: 5, chapterText: "5 - The reveal", line: "Main line" })];
+	const result = reconcileOutline(rows, [], layout, "Book");
+	assert.equal(result.planned.length, 1);
+	assert.equal(result.planned[0].expectedPath, "Book/Chapter 5 - The reveal.md");
+	assert.equal(result.planned[0].label, "Chapter 5 - The reveal");
 });
 
 test("reconcileOutline returns a planned entry for an unfulfilled row", () => {

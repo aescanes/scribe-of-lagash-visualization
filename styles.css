@@ -84,7 +84,11 @@
 .scribe-canvas-line {
 	display: flex;
 	align-items: stretch;
-	min-height: 150px;
+	/* Sized for a title up to its 2-line clamp plus context/summary/footer — a
+	   free-text title (e.g. an Outline "1 - The beginning" cell) routinely wraps
+	   to 2 lines where a bare number never did, so this needs more room than a
+	   single-line title alone would. */
+	min-height: 190px;
 }
 
 .scribe-canvas-line-header {
@@ -389,6 +393,12 @@
 .scribe-canvas-card-title {
 	font-weight: 600;
 	overflow-wrap: anywhere;
+	/* Caps how tall a long free-text title (e.g. from an Outline "1 - The
+	   beginning" cell) can make the card — same treatment as the Summary below. */
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
 }
 
 .scribe-canvas-card-context {

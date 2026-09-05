@@ -131,6 +131,20 @@ export function parseNumberToken(token: string): number | null {
 	return romanToInt(token);
 }
 
+const LEADING_NUMBER = new RegExp(`^\\s*${NUMBER_TOKEN}\\b`, "i");
+
+/**
+ * Parses the number a string *starts* with — digits or a roman numeral —
+ * ignoring anything after it. Same "number first, free text after" rule the
+ * note-title patterns above use (e.g. "Chapter 1 - The beginning"), applied
+ * to a bare value such as an Outline table's Chapter/Scene cell.
+ */
+export function parseLeadingNumber(value: string): number | null {
+	const match = LEADING_NUMBER.exec(value);
+	if (!match) return null;
+	return parseNumberToken(match[1]);
+}
+
 function titleCase(word: string): string {
 	return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
 }

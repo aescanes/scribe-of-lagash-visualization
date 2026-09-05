@@ -125,13 +125,15 @@ notes, fill the columns that match your layout:
 | Scenes with no chapter | `Scene` (+ optional `Act`) | `Scene 2.md` |
 | Custom folder | `Folder` (overrides `Act`) | `<Folder>/Chapter 1.md` |
 
-Numbers may be digits or roman numerals; the `Act` / `Chapter` / `Scene` words
-and folder names follow the **Title language** setting. `Line` is a line name or
-id from the StoryLines file; `Synopsis` shows on the card and becomes the note
-body when you create it. A row with neither a `Chapter` nor a `Scene` value is
-ignored, and un-numbered units (`Prologue`, …) can't be planned here — create
-those notes directly. The Story Outline file created for you repeats this guide
-below the table.
+Numbers may be digits or roman numerals, optionally followed by free text —
+e.g. a `Chapter` cell of `1 - The beginning` plans `Chapter 1 - The beginning.md`,
+the same as if you'd typed that title directly. The `Act` / `Chapter` / `Scene`
+words and folder names follow the **Title language** setting. `Line` is a line
+name or id from the StoryLines file; `Synopsis` shows on the card and becomes
+the note body when you create it. A row with neither a `Chapter` nor a `Scene`
+value is ignored, and un-numbered units (`Prologue`, …) can't be planned here —
+create those notes directly. The Story Outline file created for you repeats
+this guide below the table.
 
 ### Optional frontmatter
 

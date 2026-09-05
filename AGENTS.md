@@ -127,8 +127,12 @@ name is `(SL) `-prefixed on disk, same as the Lines file. Columns: `Act | Chapte
 
 - Each row's expected note path is `<book>/<folder>/<Chapter n>.md` (a scene row
   nests under `<Chapter n>/`); `folder` is the `Folder` cell, else
-  `"<Act label> <Act cell>"`, else nothing. A row is *fulfilled* when a real
-  note matches by that path or by same type + number.
+  `"<Act label> <Act cell>"`, else nothing. A `Chapter`/`Scene` cell may carry
+  free text after its number (e.g. `1 - The beginning`), same as a note title —
+  `parseLeadingNumber` (`titleParser.ts`) reads only the leading number for
+  matching/ordering, while the cell's full text carries through into the
+  expected path and ghost-card label. A row is *fulfilled* when a real note
+  matches by that path or by same type + number.
 - Unfulfilled rows render as dashed **placeholder ("ghost") cards** on the line
   their `Line` cell names, spliced into the manuscript order the real cards
   imply. Clicking one (or the toolbar's "Create N planned notes") creates the
@@ -168,8 +172,8 @@ Entry point: [`src/main.ts`](src/main.ts) → `ScribeVisualizationPlugin`.
 |---|---|---|
 | Plugin shell | [`src/main.ts`](src/main.ts) | onload wiring: registers the line view, ribbon icon, the "Open lines" / "Generate outline from notes" commands, settings tab; owns the index as a child `Component`; `createOutlineFiles()` writes the skeleton per book folder, called only from the settings "Create" button |
 | Types | [`src/types.ts`](src/types.ts) | `FRONTMATTER_KEYS` (**single source of truth** for key names), `NovelEntry`, `ParsedTitle`, `Line`, `Placement`, `LineLayout`, `OutlineRow`, `PlannedEntry` |
-| Title parser | [`src/data/titleParser.ts`](src/data/titleParser.ts) | Pure, no Obsidian imports: `parseTitle(basename, lang)`; `romanToInt` / `parseNumberToken`; `availableLanguages` / `languageLabel`; `actLabel` / `unitLabel` (words the Outline file builds folders/filenames from). `LANGUAGE_PATTERNS` has `en` + `es` — a new language is one entry there plus one in `LANGUAGE_LABELS` / `ACT_LABELS` |
-| Outline helpers | [`src/data/outline.ts`](src/data/outline.ts) | Pure, unit-tested: `parseOutlineTable` (first GFM table → `OutlineRow[]`), `expectedNotePath`, `outlineRowType` / `outlineRowNumber`, `outlineLineNames` (distinct `Line` cell values, first-appearance order), `reconcileOutline` (rows vs. real entries → `planned` ghost cards + `previews` + discrepancy `marks` + `fulfilledPaths` + `unknownLines`) |
+| Title parser | [`src/data/titleParser.ts`](src/data/titleParser.ts) | Pure, no Obsidian imports: `parseTitle(basename, lang)`; `romanToInt` / `parseNumberToken` (whole string must be the number) / `parseLeadingNumber` (number then anything, used for Outline table cells); `availableLanguages` / `languageLabel`; `actLabel` / `unitLabel` (words the Outline file builds folders/filenames from). `LANGUAGE_PATTERNS` has `en` + `es` — a new language is one entry there plus one in `LANGUAGE_LABELS` / `ACT_LABELS` |
+| Outline helpers | [`src/data/outline.ts`](src/data/outline.ts) | Pure, unit-tested: `parseOutlineTable` (first GFM table → `OutlineRow[]`), `expectedNotePath`, `outlineRowType` / `outlineRowNumber` / `outlineRowText` (scene cell's raw text, else chapter's), `outlineLineNames` (distinct `Line` cell values, first-appearance order), `reconcileOutline` (rows vs. real entries → `planned` ghost cards + `previews` + discrepancy `marks` + `fulfilledPaths` + `unknownLines`) |
 | Outline file I/O | [`src/data/outlineFile.ts`](src/data/outlineFile.ts) | `outlineFilePath` (via `withMdExtension` + `withScribePrefix`), `readOutline` (marker-checked), `ensureOutlineFile` (writes the empty skeleton once, returns whether it did), `writeGeneratedOutline` (fills a still-empty table only) |
 | Outline generation | [`src/data/outlineGenerate.ts`](src/data/outlineGenerate.ts) | Pure: `generateOutlineTable(entries, layout)` → a table body from existing notes; `replaceFirstTable` swaps it in, keeping other text |
 | Note scaffold | [`src/data/noteScaffold.ts`](src/data/noteScaffold.ts) | Pure: `scaffoldNoteBody(planned)` — starter body for a note created from a ghost card: only the frontmatter keys the row filled, then the Summary as the body (no `# title` heading — the filename is the title) |
