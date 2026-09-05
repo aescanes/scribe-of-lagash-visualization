@@ -5,6 +5,8 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.9.1](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.9.1) - 2026-09-05
+
 ### Changed
 - **Align cards to Story Outline** now moves a real note onto the line its
   outline row names, the same way it already did for a ghost card — until now
