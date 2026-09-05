@@ -175,10 +175,15 @@ then enable it from Obsidian's Community Plugins settings.
 
 ## Contributing
 
-Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for dev
-setup, code conventions, and the PR process. This project follows a
-[Code of Conduct](CODE_OF_CONDUCT.md). Found a security issue? See
-[SECURITY.md](SECURITY.md) instead of opening a public issue.
+Found a bug, or have a feature request? Open one on the
+[GitHub Issues page](https://github.com/aescanes/scribe-of-lagash-visualization/issues) —
+there's a template for each. 
+
+Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for dev setup, code conventions, and the PR
+process. This project follows a [Code of Conduct](CODE_OF_CONDUCT.md). 
+
+Found a security issue? See [SECURITY.md](SECURITY.md) instead of opening a public
+issue.
 
 See [CHANGELOG.md](CHANGELOG.md) for release history.
 
