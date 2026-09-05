@@ -5,6 +5,8 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.9.0](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.9.0) - 2026-09-05
+
 ### Added
 - The Story Outline table's `Chapter`/`Scene` cells can now carry free text
   after the number, e.g. `1 - The beginning`, the same way a note's own title
