@@ -2,19 +2,30 @@
 
 /* The line-view icon uses currentColor, so the ribbon button and the
    StoryLines tab header both pick up the brand colour here, lighter on dark
-   themes for legibility. `!important` because the active tab's own rule
-   (`.workspace-tab-header.is-active .workspace-tab-header-inner-icon`) has
-   the same specificity and would otherwise win back the default color while
-   the tab is focused. */
+   themes for legibility. Adding `.is-active` to out-specify Obsidian's own
+   active-tab icon rule (same approach as the base selector below) wasn't
+   enough — the active tab still falls back to the default colour, so
+   Obsidian's rule for that state must chain more ancestor classes than this
+   selector does. Short of duplicating an internal Obsidian selector we don't
+   control, `!important` on just the active-tab rule is the only reliable
+   fix; the non-active rule doesn't need it. */
 .scribe-ribbon-icon,
 .scribe-ribbon-icon:hover,
 .workspace-tab-header[data-type="scribe-line-view"] .workspace-tab-header-inner-icon {
+	color: #81096b;
+}
+
+.workspace-tab-header.is-active[data-type="scribe-line-view"] .workspace-tab-header-inner-icon {
 	color: #81096b !important;
 }
 
 .theme-dark .scribe-ribbon-icon,
 .theme-dark .scribe-ribbon-icon:hover,
 .theme-dark .workspace-tab-header[data-type="scribe-line-view"] .workspace-tab-header-inner-icon {
+	color: #b851a5;
+}
+
+.theme-dark .workspace-tab-header.is-active[data-type="scribe-line-view"] .workspace-tab-header-inner-icon {
 	color: #b851a5 !important;
 }
 

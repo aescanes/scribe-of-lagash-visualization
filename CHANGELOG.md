@@ -5,6 +5,15 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+- Narrowed the StoryLines tab icon's `!important` (flagged by Obsidian's
+  plugin review) to only the active-tab rule — the unfocused-tab rule doesn't
+  need it. A same-specificity `.is-active` selector was tried first but the
+  active tab still lost the brand colour, so Obsidian's own rule for that
+  state must chain more ancestor classes than can be matched without
+  duplicating an internal selector; `!important` on just that one rule is
+  the reliable fix.
+
 ## [0.9.2](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.9.2) - 2026-09-14
 
 ### Changed
