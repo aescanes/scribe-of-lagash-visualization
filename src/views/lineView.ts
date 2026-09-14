@@ -38,8 +38,10 @@ export const LINE_ICON_ID = "scribe-lines";
 /**
  * Lucide "chart-no-axes-gantt" paths, scaled from a 24-unit to a 100-unit box —
  * the content only, NOT a full `<svg>` (Obsidian wraps it in its own
- * `<svg viewBox="0 0 100 100">`). `currentColor` so the tab icon follows the
- * theme; the ribbon is tinted via the `scribe-ribbon-icon` class.
+ * `<svg viewBox="0 0 100 100">`). `currentColor` so both the ribbon icon
+ * (`.scribe-ribbon-icon`) and the tab header icon
+ * (`.workspace-tab-header[data-type="scribe-line-view"]`) can be tinted with
+ * the brand colour in `styles.css`.
  */
 export const LINE_ICON_SVG =
 	`<g fill="none" stroke="currentColor" stroke-width="12" stroke-linecap="round" stroke-linejoin="round">` +
@@ -106,7 +108,7 @@ export class LineView extends ItemView {
 	}
 
 	getDisplayText(): string {
-		return "StoryLines";
+		return "(SL) StoryLines";
 	}
 
 	getIcon(): string {
@@ -309,7 +311,7 @@ export class LineView extends ItemView {
 		if (books.length === 0) {
 			this.renderNotice(
 				root,
-				"Add a book folder in the plugin settings (Settings → Scribe of Lagash - Visualization) to build its lines.",
+				"Add a story folder in the plugin settings (Settings → Scribe of Lagash - Visualization) to build its lines.",
 			);
 			return;
 		}

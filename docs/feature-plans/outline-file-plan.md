@@ -18,7 +18,7 @@ normalises `Outline` and `Outline.md` to the same `(SL) Outline.md`.
 
 ## Goal
 
-Let a novelist plan a book's chapters/scenes as a Markdown table **before** the
+Let a writer plan a book's chapters/scenes as a Markdown table **before** the
 prose notes exist, and see that plan on the line view as placeholder ("ghost")
 cards that turn into real notes on click. The table is an **optional** layer —
 with none configured the plugin behaves exactly as it does today, driven only

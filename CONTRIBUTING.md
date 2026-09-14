@@ -2,7 +2,7 @@
 
 Thanks for your interest in contributing to Scribe of Lagash - Visualization.
 This project is part of the **Scribe of Lagash** series — independent
-Obsidian plugins that help novelists plan and write, each focused on one
+Obsidian plugins that help writers plan and write, each focused on one
 concern. This particular plugin covers chapter/scene visualization
 (lines and, soon, matrices).
 
@@ -67,7 +67,7 @@ test framework is pulled in.
   a pure module with no Obsidian imports. Keep it that way — add new languages
   as extra entries in its pattern table, not as calls into the vault.
 - Never add code that modifies an existing chapter/scene note. The plugin
-  writes its own documents — the per-book Lines file
+  writes its own documents — the per-story Lines file
   ([`src/data/lineFile.ts`](src/data/lineFile.ts)) and the initial skeleton of
   the optional Outline file ([`src/data/outlineFile.ts`](src/data/outlineFile.ts))
   — and may *create* a new note from a planned outline row, but it does not

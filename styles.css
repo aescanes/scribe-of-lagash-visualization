@@ -1,15 +1,21 @@
-/* ---- Ribbon icon ---- */
+/* ---- Ribbon icon & tab header icon ---- */
 
-/* The line-view icon follows the theme everywhere (currentColor); only the
-   ribbon button gets the brand colour, lighter on dark themes for legibility. */
+/* The line-view icon uses currentColor, so the ribbon button and the
+   StoryLines tab header both pick up the brand colour here, lighter on dark
+   themes for legibility. `!important` because the active tab's own rule
+   (`.workspace-tab-header.is-active .workspace-tab-header-inner-icon`) has
+   the same specificity and would otherwise win back the default color while
+   the tab is focused. */
 .scribe-ribbon-icon,
-.scribe-ribbon-icon:hover {
-	color: #81096b;
+.scribe-ribbon-icon:hover,
+.workspace-tab-header[data-type="scribe-line-view"] .workspace-tab-header-inner-icon {
+	color: #81096b !important;
 }
 
 .theme-dark .scribe-ribbon-icon,
-.theme-dark .scribe-ribbon-icon:hover {
-	color: #b851a5;
+.theme-dark .scribe-ribbon-icon:hover,
+.theme-dark .workspace-tab-header[data-type="scribe-line-view"] .workspace-tab-header-inner-icon {
+	color: #b851a5 !important;
 }
 
 /* ---- Line view ---- */

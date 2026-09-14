@@ -3,22 +3,22 @@
 ![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Minimum Obsidian version](https://img.shields.io/badge/obsidian-%E2%89%A51.10.0-8b6cef)
 
-An [Obsidian](https://obsidian.md) plugin that helps novelists visualize their
+An [Obsidian](https://obsidian.md) plugin that helps writers visualize their
 chapters and scenes. It is the first plugin in the **Scribe of Lagash**
-series, a set of independent, focused tools for planning and writing novels
+series, a set of independent, focused tools for planning and writing stories
 in Obsidian.
 
 This plugin doesn't own your prose: chapters and scenes are just regular notes
-in your vault. Point the plugin at the folder that holds a book and it
+in your vault. Point the plugin at the folder that holds a story and it
 recognises chapters and scenes from their titles ("Chapter 1", "Scene II",
 "Prologue", …); a little `scribe-note-*` frontmatter is optional and
 only needed to override the title or add detail. The only file the plugin ever
-writes is a per-book **StoryLines file** that stores the book's default view.
+writes is a per-story **StoryLines file** that stores the story's default view.
 
 ## Current features
 
-- **StoryLines view** — the book's default view (ribbon icon / "Open StoryLines" command).
-  Horizontal, colored **lines** for a book, with each chapter/scene as a card
+- **StoryLines view** — the story's default view (ribbon icon / "Open StoryLines" command).
+  Horizontal, colored **lines** for a story, with each chapter/scene as a card
   sitting on a line. Pick "Create lines" the first time to seed a "Main line",
   then drag cards between lines or along the shared column grid — columns line
   up across every line by reading order, and you can leave deliberate gaps
@@ -32,7 +32,7 @@ writes is a per-book **StoryLines file** that stores the book's default view.
   name** in settings and click **Create**; it's written as an empty
   Markdown table (Act / Chapter / Scene / Line / Synopsis). The `.md` extension
   is optional — `Outline` and `Outline.md` both create `(SL) Outline.md`. Fill
-  it in to plan the book before the
+  it in to plan the story before the
   notes exist: rows with no matching note appear as dashed placeholder cards
   on the StoryLines view, and clicking one creates the note (title, Synopsis,
   frontmatter) on that line. Once a note exists its Synopsis shows on the
@@ -45,10 +45,10 @@ Planned next: a **chronological view** ordering chapters/scenes by their
 place, or situation. See
 [docs/feature-plans/line-view-plan.md](docs/feature-plans/line-view-plan.md).
 
-## Setting up a book
+## Setting up a story
 
-In the plugin settings, add the vault-relative folder that holds your book's
-notes under **Book folder**. The
+In the plugin settings, add the vault-relative folder that holds your story's
+notes under **Story folder**. The
 plugin scans that folder and classifies each note by its **title**:
 
 | Title looks like | Recognised as |
@@ -58,7 +58,7 @@ plugin scans that folder and classifies each note by its **title**:
 | `Prologue`, `Epilogue`, `Interlude` | chapter (no number) |
 | anything else | ignored |
 
-Leave **Book folder** empty to scan the whole vault instead.
+Leave **Story folder** empty to scan the whole vault instead.
 
 ### Recognised title words
 
@@ -78,12 +78,12 @@ So with **Title language** set to Español, `Cap. 3 — La caída` is chapter 3 
 `Escena II` is scene 2. Adding a language is one more pattern table in
 [`src/data/titleParser.ts`](src/data/titleParser.ts) — nothing else changes.
 
-### Book structure
+### Story structure
 
 A note's place in the manuscript comes from **where it sits in folders**, not
-from frontmatter. Any of these layouts works — but pick **one per book**:
+from frontmatter. Any of these layouts works — but pick **one per story**:
 
-| Layout | On disk (under the book folder) |
+| Layout | On disk (under the story folder) |
 |---|---|
 | Chapters as files | `Chapter 1.md`, `Chapter 2.md`, … |
 | …grouped in acts | `Act I/Chapter 1.md`, `Act II/Chapter 5.md`, … |
@@ -96,25 +96,25 @@ A scene's chapter is simply its containing folder — there is no `parent` key.
 `Prologue.md` / `Epilogue.md` / `Interlude.md` can go anywhere; having no number,
 they sort after the numbered notes in the same folder.
 
-> **Don't mix "chapter as a file" and "chapter as a folder" in the same book.**
+> **Don't mix "chapter as a file" and "chapter as a folder" in the same story.**
 > If you do, every file-chapter sorts before any folder-chapter's scenes. Pick
-> one style and convert the whole book to it.
+> one style and convert the whole story to it.
 
 Manuscript order is then: folder path first (all of `Act I/…` before `Act II/…`;
 a numbered folder sorts by its number, so `Chapter 2/` comes before
 `Chapter 10/`), then the number in the title, then the title text. Sub-folders
 also show as a breadcrumb under each card — a note at
-`My Novel/Act I/Chapter I/Scene 1.md` (book folder `My Novel`) shows "Scene 1"
+`My Story/Act I/Chapter I/Scene 1.md` (story folder `My Story`) shows "Scene 1"
 with "Act I - Chapter I" underneath.
 
 ### Planning ahead with the Story Outline file
 
 Set **Story Outline file name** in settings (the `.md` is optional — `Outline`
 and `Outline.md` both mean `(SL) Outline.md`) and click **Create**. The
-plugin writes one `(SL) <name>.md` per book folder with an empty table and a
+plugin writes one `(SL) <name>.md` per story folder with an empty table and a
 column guide, and never touches it again.
 
-When you plan a book in the **Story Outline file** table before writing the
+When you plan a story in the **Story Outline file** table before writing the
 notes, fill the columns that match your layout:
 
 | Layout | Columns to fill | The row's note |

@@ -22,14 +22,14 @@ const INTRO_NAME = "How this plugin works";
 function introDesc(): DocumentFragment {
 	return createFragment((frag) => {
 		frag.appendText(
-			"Point the plugin at the folder that holds a book's notes. Notes are " +
+			"Point the plugin at the folder that holds a story's notes. Notes are " +
 				'classified as acts, chapters or scenes by their title (e.g. "Act 1", "Chapter 1", "Scene II"); ' +
 				"their manuscript order comes from the folder structure.",
 		);
 		frag.createEl("br");
 		frag.createEl("br");
 		frag.appendText(
-			"A chapter/scene can be a single note or a folder — pick one style per book, don't mix them. " +
+			"A chapter/scene can be a single note or a folder — pick one style per story, don't mix them. " +
 				"See the plugin's README for the supported layouts.",
 		);
 	});
@@ -46,11 +46,11 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 	private settingRows(): SettingRow[] {
 		return [
 			{
-				name: "Book folder",
-				desc: "The folder containing the book's act/chapter/scene notes. Leave empty to scan the whole vault.",
+				name: "Story folder",
+				desc: "The folder containing the story's act/chapter/scene notes. Leave empty to scan the whole vault.",
 				render: (setting) => {
 					setting.addText((text) => {
-						text.setPlaceholder("Novels/The Silent City");
+						text.setPlaceholder("Stories/The Silent City");
 						text.setValue(this.plugin.settings.bookFolders.join("\n"));
 						text.onChange(async (value) => {
 							this.plugin.settings.bookFolders = value
@@ -65,10 +65,10 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 			{
 				name: "StoryLines file name",
 				desc:
-					"Name of the file created inside the book folder to store its default view. " +
+					"Name of the file created inside the story folder to store its default view. " +
 					'The ".md" extension is optional and the plugin prefixes the name with "(SL) " so it ' +
 					'stands out — "StoryLines" and "StoryLines.md" both become "(SL) StoryLines.md". ' +
-					"The file is created automatically when you first open the StoryLines view for a book.",
+					"The file is created automatically when you first open the StoryLines view for a story.",
 				render: (setting) => {
 					setting.addText((text) => {
 						text.setPlaceholder("StoryLines");

@@ -5,6 +5,20 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+- The StoryLines view's tab icon now uses the same brand colour as the ribbon
+  icon, in both the unfocused and focused (active) tab states — it previously
+  followed the theme's default icon colour instead. The tab title also now
+  reads "(SL) StoryLines" instead of "StoryLines".
+- "Book" is now "story" throughout the UI and documentation (e.g. **Book
+  folder** is now **Story folder**, "Setting up a book" is now "Setting up a
+  story", the empty-state prompt, and the Lines/Outline file template text) —
+  wording only, the underlying `bookFolders` setting and code are unchanged so
+  existing configurations aren't affected.
+- Documentation and plugin metadata (README, AGENTS.md, CONTRIBUTING.md, the
+  outline-file plan doc, `package.json`, `manifest.json`) now say "writers"
+  instead of "novelists" and "story" instead of "novel" or "book" throughout.
+
 ## [0.9.1](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.9.1) - 2026-09-05
 
 ### Changed

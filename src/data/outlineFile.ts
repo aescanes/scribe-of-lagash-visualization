@@ -90,7 +90,7 @@ export async function ensureOutlineFile(app: App, path: string): Promise<boolean
 		"## Filling in the outline",
 		"",
 		"Each row plans one chapter or scene. Fill the columns that match how this",
-		"book is (or will be) organised on disk — pick **one** layout per book:",
+		"story is (or will be) organised on disk — pick **one** layout per story:",
 		"",
 		"| Layout | Columns to fill | The row's note |",
 		"| --- | --- | --- |",
@@ -112,7 +112,7 @@ export async function ensureOutlineFile(app: App, path: string): Promise<boolean
 		"- A row with neither a Chapter nor a Scene value is ignored. Prologue /",
 		"  Epilogue / Interlude have no number and can't be planned here — create",
 		"  those notes directly.",
-		'- Do **not** mix "chapter as a file" and "chapter as a folder" in one book.',
+		'- Do **not** mix "chapter as a file" and "chapter as a folder" in one story.',
 		"",
 	].join("\n");
 	await app.vault.create(normalized, body);
