@@ -5,6 +5,8 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.9.3](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.9.3) - 2026-09-14
+
 ### Changed
 - Narrowed the StoryLines tab icon's `!important` (flagged by Obsidian's
   plugin review) to only the active-tab rule — the unfocused-tab rule doesn't
