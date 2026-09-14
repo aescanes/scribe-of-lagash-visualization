@@ -5,6 +5,8 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.9.2](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.9.2) - 2026-09-14
+
 ### Changed
 - The StoryLines view's tab icon now uses the same brand colour as the ribbon
   icon, in both the unfocused and focused (active) tab states — it previously
