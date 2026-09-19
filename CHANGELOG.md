@@ -5,6 +5,25 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+- `npm run lint` now runs
+  [`eslint-plugin-obsidianmd`](https://github.com/obsidianmd/eslint-plugin)'s
+  recommended config — the same checks Obsidian's plugin review runs — in
+  place of a hand-rolled `@typescript-eslint` setup, and lints the whole repo
+  (`eslint .`) instead of just `src`/`tests`. `tsconfig.json` now enables
+  `strict` mode (plus `noImplicitReturns`, `noFallthroughCasesInSwitch`,
+  `skipLibCheck`, `forceConsistentCasingInFileNames`) instead of the two
+  individual flags it had before.
+- CI and release workflows use `actions/checkout`/`actions/setup-node` v6
+  (was v4) with npm dependency caching.
+- Tooling config (devDependencies, `eslint.config.mjs`, build scripts) now
+  matches the sibling `scribe-of-lagash-goals-stats` plugin, so the two
+  repos stay easy to cross-maintain.
+
+### Fixed
+- A few Notice/command strings said lowercase "story outline" instead of the
+  "Story Outline" feature name used everywhere else in the UI.
+
 ## [0.9.3](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.9.3) - 2026-09-14
 
 ### Changed

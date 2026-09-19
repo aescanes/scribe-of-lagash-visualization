@@ -7,7 +7,13 @@
 // src/, and each spec imports its subject from ../../src/....
 
 import esbuild from "esbuild";
+import { rmSync } from "node:fs";
 import { builtinModules as builtins } from "node:module";
+
+// esbuild only ever adds to an outdir, so a renamed/deleted spec (e.g.
+// tests/data/foo.test.ts -> bar.test.ts) leaves its old compiled .js behind,
+// and node --test would keep running it. Start clean every time.
+rmSync(".test-build", { recursive: true, force: true });
 
 await esbuild.build({
 	entryPoints: ["tests/**/*.test.ts"],

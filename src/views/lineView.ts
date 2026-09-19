@@ -736,7 +736,7 @@ export class LineView extends ItemView {
 				opened = await this.app.vault.create(path, scaffoldNoteBody(p));
 				created.add(p.expectedPath);
 			} catch (e) {
-				new Notice(`Couldn't create "${path}": ${e instanceof Error ? e.message : e}`);
+				new Notice(`Couldn't create "${path}": ${e instanceof Error ? e.message : String(e)}`);
 			}
 		}
 		if (created.size === 0) return;

@@ -11,8 +11,11 @@ import { ScribeVisualizationSettingTab } from "./settings/settingsTab";
 import { LINE_ICON_ID, LINE_ICON_SVG, LineView, VIEW_TYPE_LINE_VIEW } from "./views/lineView";
 
 export default class ScribeVisualizationPlugin extends Plugin {
-	settings: ScribeVisualizationSettings;
-	vaultIndex: VaultIndex;
+	// Both are assigned in onload(), not the constructor — Obsidian
+	// constructs the plugin before calling onload(), which is the real
+	// entry point.
+	settings!: ScribeVisualizationSettings;
+	vaultIndex!: VaultIndex;
 
 	async onload(): Promise<void> {
 		await this.loadSettings();
@@ -27,7 +30,7 @@ export default class ScribeVisualizationPlugin extends Plugin {
 
 		this.registerView(VIEW_TYPE_LINE_VIEW, (leaf) => new LineView(leaf, this));
 
-		this.addRibbonIcon(LINE_ICON_ID, "(SL) Visualization: Open StoryLines", () => {
+		this.addRibbonIcon(LINE_ICON_ID, "(SL) visualization: Open StoryLines", () => {
 			void this.activateView(VIEW_TYPE_LINE_VIEW);
 		}).addClass("scribe-ribbon-icon");
 
@@ -39,7 +42,7 @@ export default class ScribeVisualizationPlugin extends Plugin {
 
 		this.addCommand({
 			id: "generate-outline-from-notes",
-			name: "Generate story outline from notes",
+			name: "Generate Story Outline from notes",
 			callback: () => void this.generateOutline(),
 		});
 
@@ -86,14 +89,14 @@ export default class ScribeVisualizationPlugin extends Plugin {
 		await ensureOutlineFile(this.app, path);
 		const entries = this.vaultIndex.getEntriesForBook(book);
 		if (entries.length === 0) {
-			new Notice("No chapter or scene notes to build a story outline from.");
+			new Notice("No chapter or scene notes to build a Story Outline from.");
 			return;
 		}
 
 		const rowable = entries.filter(isOutlineRowable).length;
 		const skipped = entries.length - rowable;
 		if (rowable === 0) {
-			new Notice("Only unnumbered notes (e.g. Prologue) found — the story outline table can't represent those.");
+			new Notice("Only unnumbered notes (e.g. Prologue) found — the Story Outline table can't represent those.");
 			return;
 		}
 

@@ -236,8 +236,10 @@ The rules that bite most often here:
 - **Mobile-safe:** no Node/Electron APIs, no regex lookbehind (`isDesktopOnly`
   is `false` in `manifest.json`).
 
-`npm run lint` runs ESLint with `@typescript-eslint`'s **type-checked** rules on
-`src/` (the same set Obsidian's review uses); keep it green.
+`npm run lint` runs ESLint with
+[`eslint-plugin-obsidianmd`](https://github.com/obsidianmd/eslint-plugin)'s
+recommended config — the same rules Obsidian's plugin review runs, plus
+`typescript-eslint`'s type-checked rules on `src/`; keep it green.
 
 ### Other conventions
 
@@ -262,7 +264,7 @@ The rules that bite most often here:
   skeleton) and may *create* a new note from a planned outline row, but editing
   prose the user wrote is off-limits unless a task explicitly calls for it and
   the user has agreed.
-- **TypeScript with `strictNullChecks`.** Avoid `any` where a real type exists.
+- **TypeScript with `strict` mode.** Avoid `any` where a real type exists.
 - **Comments explain *why*, not *what*.** Match the existing sparse style.
 - **Keep diffs focused** — no drive-by formatting or refactoring mixed into a
   feature/fix.
@@ -287,8 +289,9 @@ npm run prepare  # activate Husky hooks — needed once, since ignore-scripts=tr
 npm run dev      # esbuild watch → main.js (inline sourcemap)
 npm run build    # tsc --noEmit type-check + minified production bundle → main.js
 npm test         # esbuild-compile tests/**/*.test.ts → .test-build, run node --test
-npm run lint     # eslint src tests — ESLint 9 flat config; src/ gets
-                 # @typescript-eslint type-checked rules (needs the TS project)
+npm run lint     # eslint . — ESLint flat config using eslint-plugin-obsidianmd's
+                 # recommended rules; src/ and tests/ also get typescript-eslint's
+                 # type-checked rules (needs the TS project)
 npm run validate # typecheck + test + lint — what the pre-commit hook runs
 ```
 
