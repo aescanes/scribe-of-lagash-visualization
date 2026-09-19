@@ -1,0 +1,11 @@
+{
+	"extends": "stylelint-config-obsidianmd",
+	"rules": {
+		"selector-class-pattern": [
+			"^[a-z0-9]+(-{1,2}[a-z0-9]+)*$",
+			{
+				"message": "Expected class selector to be kebab-case, optionally with a BEM \"--modifier\" (this codebase's convention, e.g. \"scribe-canvas-card--planned\")"
+			}
+		]
+	}
+}

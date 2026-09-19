@@ -240,6 +240,14 @@ The rules that bite most often here:
 [`eslint-plugin-obsidianmd`](https://github.com/obsidianmd/eslint-plugin)'s
 recommended config — the same rules Obsidian's plugin review runs, plus
 `typescript-eslint`'s type-checked rules on `src/`; keep it green.
+`npm run lint:css` runs Stylelint with
+[`stylelint-config-obsidianmd`](https://github.com/obsidianmd/stylelint-config)
+on `styles.css` — the same CSS rules Obsidian's review runs (`!important`,
+external `url()`s, etc.). `.stylelintrc.json` widens `selector-class-pattern`
+to allow this codebase's BEM `--modifier` classes (e.g.
+`scribe-canvas-card--planned`); a few other findings are suppressed inline
+with a `stylelint-disable-next-line` and a reason where the flagged style is
+deliberate (documented at each spot).
 
 ### Other conventions
 
@@ -292,7 +300,8 @@ npm test         # esbuild-compile tests/**/*.test.ts → .test-build, run node 
 npm run lint     # eslint . — ESLint flat config using eslint-plugin-obsidianmd's
                  # recommended rules; src/ and tests/ also get typescript-eslint's
                  # type-checked rules (needs the TS project)
-npm run validate # typecheck + test + lint — what the pre-commit hook runs
+npm run lint:css # stylelint styles.css — stylelint-config-obsidianmd's rules
+npm run validate # typecheck + test + lint + lint:css — what the pre-commit hook runs
 ```
 
 A Husky pre-commit hook ([`.husky/pre-commit`](.husky/pre-commit)) runs
@@ -300,7 +309,7 @@ A Husky pre-commit hook ([`.husky/pre-commit`](.husky/pre-commit)) runs
 `npm run prepare` and git-ignored.
 
 CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs `npm run build`,
-`npm test`, and eslint on push/PR to `main`, on **Node 24** (matching
+`npm test`, eslint, and stylelint on push/PR to `main`, on **Node 24** (matching
 `@types/node`). All must pass before a PR.
 
 Tests use Node's built-in `node:test` — **no test framework dependency**. They

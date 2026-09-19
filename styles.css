@@ -2,21 +2,20 @@
 
 /* The line-view icon uses currentColor, so the ribbon button and the
    StoryLines tab header both pick up the brand colour here, lighter on dark
-   themes for legibility. Adding `.is-active` to out-specify Obsidian's own
-   active-tab icon rule (same approach as the base selector below) wasn't
-   enough — the active tab still falls back to the default colour, so
-   Obsidian's rule for that state must chain more ancestor classes than this
-   selector does. Short of duplicating an internal Obsidian selector we don't
-   control, `!important` on just the active-tab rule is the only reliable
-   fix; the non-active rule doesn't need it. */
+   themes for legibility. The active-tab icon needs `!important`: Obsidian's
+   own active-tab icon rule (`.is-focused .mod-active .workspace-tab-header
+   .is-active .workspace-tab-header-inner-icon`, confirmed by extracting
+   Obsidian's shipped app.css) is 5 selectors specific. Chaining the same
+   `.is-focused .mod-active` ancestors onto our own selector reaches 6 —
+   higher specificity on paper — but verified live in the app (full restart,
+   not just a tab switch) it still loses to Obsidian's rule, so something
+   about its actual cascade position isn't accounted for here.
+   `!important` on just the active-tab rule is the reliable fix; the
+   non-active rule doesn't need it. */
 .scribe-ribbon-icon,
 .scribe-ribbon-icon:hover,
 .workspace-tab-header[data-type="scribe-line-view"] .workspace-tab-header-inner-icon {
 	color: #81096b;
-}
-
-.workspace-tab-header.is-active[data-type="scribe-line-view"] .workspace-tab-header-inner-icon {
-	color: #81096b !important;
 }
 
 .theme-dark .scribe-ribbon-icon,
@@ -25,7 +24,14 @@
 	color: #b851a5;
 }
 
+.workspace-tab-header.is-active[data-type="scribe-line-view"] .workspace-tab-header-inner-icon {
+	/* stylelint-disable-next-line declaration-no-important -- see comment
+	   above; increasing selector specificity to match doesn't win in practice. */
+	color: #81096b !important;
+}
+
 .theme-dark .workspace-tab-header.is-active[data-type="scribe-line-view"] .workspace-tab-header-inner-icon {
+	/* stylelint-disable-next-line declaration-no-important -- see comment above. */
 	color: #b851a5 !important;
 }
 
@@ -101,6 +107,7 @@
 .scribe-canvas-line {
 	display: flex;
 	align-items: stretch;
+
 	/* Sized for a title up to its 2-line clamp plus context/summary/footer — a
 	   free-text title (e.g. an Outline "1 - The beginning" cell) routinely wraps
 	   to 2 lines where a bare number never did, so this needs more room than a
@@ -112,6 +119,7 @@
 	position: sticky;
 	left: 0;
 	z-index: 3;
+
 	/* fixed width — flex-basis + no grow/shrink + min-width:0 so content can't
 	   push it wider than 180px */
 	flex: 0 0 180px;
@@ -206,6 +214,10 @@
 	background: none;
 	cursor: pointer;
 	appearance: none;
+	/* stylelint-disable-next-line property-no-vendor-prefix -- appearance
+	   alone doesn't reset this control on older WebKit (e.g. iOS Safari's
+	   webview), which this plugin still needs to support (isDesktopOnly is
+	   false). */
 	-webkit-appearance: none;
 }
 
@@ -241,6 +253,7 @@
 	position: relative;
 	flex: 1 0 auto;
 	min-width: calc(var(--scribe-col-count) * var(--scribe-col-width));
+
 	/* Faint guide at every column boundary, so the gaps a user leaves between
 	   cards read as deliberate slots rather than empty space. */
 	background-image: repeating-linear-gradient(
@@ -289,6 +302,7 @@
 	/* keep the card opaque (background stays var(--background-primary)); just lift it */
 	border-color: var(--background-modifier-border-hover);
 	box-shadow: var(--shadow-l);
+
 	/* above cards from neighbouring lines it may overlap */
 	z-index: 5;
 }
@@ -387,6 +401,10 @@
 	pointer-events: none;
 }
 
+/* stylelint-disable-next-line no-descending-specificity -- grouped with its
+   own base/variant rules (below) rather than with the ghost-card (--planned)
+   override above; specificity still resolves correctly regardless of source
+   order. */
 .scribe-canvas-card-dot {
 	flex: none;
 	width: 8px;
@@ -422,6 +440,7 @@
 	min-width: 0;
 	font-weight: 600;
 	overflow-wrap: anywhere;
+
 	/* Caps how tall a long free-text title (e.g. from an Outline "1 - The
 	   beginning" cell) can make the card — same treatment as the Summary below. */
 	display: -webkit-box;
@@ -477,6 +496,10 @@
 	gap: var(--size-4-2);
 }
 
+/* stylelint-disable-next-line no-descending-specificity -- grouped with the
+   rest of the "unplaced rail" section above rather than with the line-rail
+   card rules earlier in the file; specificity still resolves correctly
+   regardless of source order. */
 .scribe-canvas-unplaced-rail .scribe-canvas-card {
 	width: calc(var(--scribe-col-width, 220px) - 24px);
 }

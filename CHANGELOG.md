@@ -19,6 +19,15 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Tooling config (devDependencies, `eslint.config.mjs`, build scripts) now
   matches the sibling `scribe-of-lagash-goals-stats` plugin, so the two
   repos stay easy to cross-maintain.
+- Added a new `npm run lint:css` check using
+  [`stylelint-config-obsidianmd`](https://github.com/obsidianmd/stylelint-config)
+  — the same CSS rules Obsidian's plugin review runs (no `!important`, no
+  external `url()`s, …) — wired into `npm run validate` and CI. The two
+  `!important` uses from 0.9.3 (active-tab icon colour) are still needed —
+  confirmed by trying to out-specify Obsidian's own rule instead, which
+  didn't win in practice — so they're kept, now with an inline
+  `stylelint-disable-next-line` and the reasoning documented in
+  `styles.css`.
 
 ### Fixed
 - A few Notice/command strings said lowercase "story outline" instead of the
