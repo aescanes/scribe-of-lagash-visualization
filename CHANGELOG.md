@@ -5,6 +5,11 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- Screenshots for the StoryLine tab and Story Outline file in the README's "Current features" section.
+Changed
+- "Scribe of Lagash Plugins" section links in the README with plain markdown links.
+
 ### Changed
 - `npm run lint` now runs
   [`eslint-plugin-obsidianmd`](https://github.com/obsidianmd/eslint-plugin)'s
@@ -28,6 +33,7 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   didn't win in practice — so they're kept, now with an inline
   `stylelint-disable-next-line` and the reasoning documented in
   `styles.css`.
+- stroke-width in the icon now in 11.
 
 ### Fixed
 - A few Notice/command strings said lowercase "story outline" instead of the

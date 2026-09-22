@@ -44,7 +44,7 @@ export const LINE_ICON_ID = "scribe-lines";
  * the brand colour in `styles.css`.
  */
 export const LINE_ICON_SVG =
-	`<g fill="none" stroke="currentColor" stroke-width="12" stroke-linecap="round" stroke-linejoin="round">` +
+	`<g fill="none" stroke="currentColor" stroke-width="11" stroke-linecap="round" stroke-linejoin="round">` +
 	`<path d="M25 21h50"/><path d="M17 50h42"/><path d="M50 79h33"/></g>`;
 
 const COLUMN_WIDTH = 220;

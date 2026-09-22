@@ -15,9 +15,20 @@ recognises chapters and scenes from their titles ("Chapter 1", "Scene II",
 only needed to override the title or add detail. The only file the plugin ever
 writes is a per-story **StoryLines file** that stores the story's default view.
 
+## Scribe of Lagash Plugins
+
+**Scribe of Lagash** is a series of independent, single-concern Obsidian
+plugins for planning and writing stories:
+
+- **[Scribe of Lagash - Visualization](https://community.obsidian.md/plugins/scribe-of-lagash-visualization)** ([github repository](https://github.com/aescanes/scribe-of-lagash-visualization)) —
+  helps writers visualize their chapters and scenes.
+- **[Scribe of Lagash - Goals and Stats](https://community.obsidian.md/plugins/scribe-of-lagash-goals-stats)** ([github repository](https://github.com/aescanes/scribe-of-lagash-goals-stats)) —
+  helps writers set goals and see detailed statistics for their story.
+
+
 ## Current features
 
-- **StoryLines view** — the story's default view (ribbon icon / "Open StoryLines" command).
+- **StoryLines view** ![StoryLines icon](docs/images/storylines-icon.png) — the story's default view (ribbon icon / "Open StoryLines" command).
   Horizontal, colored **lines** for a story, with each chapter/scene as a card
   sitting on a line. Pick "Create lines" the first time to seed a "Main line",
   then drag cards between lines or along the shared column grid — columns line
@@ -28,6 +39,8 @@ writes is a per-story **StoryLines file** that stores the story's default view.
   reading order and onto the line its row names. Add /
   rename / recolour / reorder / delete lines from the line headers. Changes save
   to the StoryLines file (`StoryLines.md`) automatically; `Mod+Z` undoes.
+
+  <img src="docs/images/storylines-tab.png" alt="StoryLines view" width="600">
 - **Story Outline file** *(optional)* — name a file under **Story Outline file
   name** in settings and click **Create**; it's written as an empty
   Markdown table (Act / Chapter / Scene / Line / Synopsis). The `.md` extension
@@ -39,6 +52,8 @@ writes is a per-story **StoryLines file** that stores the story's default view.
   card; a row that disagrees with the real note/folder gets a ⚠ marker — the
   files always win. See
   [docs/feature-plans/outline-file-plan.md](docs/feature-plans/outline-file-plan.md).
+
+  <img src="docs/images/story-outline.png" alt="Story Outline file" width="500">
 
 Planned next: a **chronological view** ordering chapters/scenes by their
 `scribe-note-date`, and a matrix view grouping them by character,
