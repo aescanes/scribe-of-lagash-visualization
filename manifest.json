@@ -1,7 +1,7 @@
 {
 	"id": "scribe-of-lagash-visualization",
 	"name": "Scribe of Lagash - Visualization",
-	"version": "0.9.4",
+	"version": "0.9.5",
 	"minAppVersion": "1.10.0",
 	"description": "Visualize your story: arrange chapters and scenes as cards on colored StoryLines, and plan ahead with an outline whose rows become real notes.",
 	"author": "aescanes",

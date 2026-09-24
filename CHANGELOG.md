@@ -5,6 +5,8 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.9.5](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.9.5) - 2026-09-24
+
 ### Added
 - README **Installation** section: the minimum Obsidian version requirement,
   a link to the community plugins
