@@ -15,6 +15,11 @@ recognises chapters and scenes from their titles ("Chapter 1", "Scene II",
 only needed to override the title or add detail. The only file the plugin ever
 writes is a per-story **StoryLines file** that stores the story's default view.
 
+## Installation
+
+Install directly from within Obsidian using this link:
+[obsidian://show-plugin?id=scribe-of-lagash-visualization](obsidian://show-plugin?id=scribe-of-lagash-visualization)
+
 ## Scribe of Lagash Plugins
 
 **Scribe of Lagash** is a series of independent, single-concern Obsidian
@@ -24,6 +29,11 @@ plugins for planning and writing stories:
   helps writers visualize their chapters and scenes.
 - **[Scribe of Lagash - Goals and Stats](https://community.obsidian.md/plugins/scribe-of-lagash-goals-stats)** ([github repository](https://github.com/aescanes/scribe-of-lagash-goals-stats)) —
   helps writers set goals and see detailed statistics for their story.
+
+### About the name
+
+"Scribe" is the writer at the center of every plugin in the series, and
+"Lagash" nods to *Nippur de Lagash*, the classic Argentine comic.
 
 
 ## Current features
