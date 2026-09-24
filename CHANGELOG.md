@@ -5,6 +5,21 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- README **Installation** section: the minimum Obsidian version requirement,
+  a link to the community plugins
+  page, and a link to the latest release for manually copying `main.js`,
+  `manifest.json`, and `styles.css` into the vault's plugins folder.
+- README **About the name** section explaining "Scribe of Lagash" — "Scribe"
+  for the writer at the center of every plugin in the series, "Lagash" for
+  *Nippur de Lagash*, the classic Argentine comic.
+
+### Changed
+- README images now reference `raw.githubusercontent.com` absolute URLs
+  instead of relative `docs/images/...` paths, so they render correctly
+  wherever the README is displayed off of GitHub (e.g. the Obsidian community
+  plugins page).
+
 ## [0.9.4](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.9.4) - 2026-09-22
 
 ### Added

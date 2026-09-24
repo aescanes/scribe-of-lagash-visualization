@@ -17,8 +17,13 @@ writes is a per-story **StoryLines file** that stores the story's default view.
 
 ## Installation
 
-Install directly from within Obsidian using this link:
-[obsidian://show-plugin?id=scribe-of-lagash-visualization](obsidian://show-plugin?id=scribe-of-lagash-visualization)
+Requires Obsidian ≥1.10.0.
+
+You can install it from the
+[community plugins page](https://obsidian.md/plugins?id=scribe-of-lagash-visualization),
+or download `main.js`, `manifest.json`, and `styles.css` from the
+[latest release](https://github.com/aescanes/scribe-of-lagash-visualization/releases/latest)
+and copy them into `<vault>/.obsidian/plugins/scribe-of-lagash-visualization/`.
 
 ## Scribe of Lagash Plugins
 
@@ -38,7 +43,7 @@ plugins for planning and writing stories:
 
 ## Current features
 
-- **StoryLines view** ![StoryLines icon](docs/images/storylines-icon.png) — the story's default view (ribbon icon / "Open StoryLines" command).
+- **StoryLines view** ![StoryLines icon](https://raw.githubusercontent.com/aescanes/scribe-of-lagash-visualization/main/docs/images/storylines-icon.png) — the story's default view (ribbon icon / "Open StoryLines" command).
   Horizontal, colored **lines** for a story, with each chapter/scene as a card
   sitting on a line. Pick "Create lines" the first time to seed a "Main line",
   then drag cards between lines or along the shared column grid — columns line
@@ -50,7 +55,7 @@ plugins for planning and writing stories:
   rename / recolour / reorder / delete lines from the line headers. Changes save
   to the StoryLines file (`StoryLines.md`) automatically; `Mod+Z` undoes.
 
-  <img src="docs/images/storylines-tab.png" alt="StoryLines view" width="600">
+  <img src="https://raw.githubusercontent.com/aescanes/scribe-of-lagash-visualization/main/docs/images/storylines-tab.png" alt="StoryLines view" width="600">
 - **Story Outline file** *(optional)* — name a file under **Story Outline file
   name** in settings and click **Create**; it's written as an empty
   Markdown table (Act / Chapter / Scene / Line / Synopsis). The `.md` extension
@@ -63,7 +68,7 @@ plugins for planning and writing stories:
   files always win. See
   [docs/feature-plans/outline-file-plan.md](docs/feature-plans/outline-file-plan.md).
 
-  <img src="docs/images/story-outline.png" alt="Story Outline file" width="500">
+  <img src="https://raw.githubusercontent.com/aescanes/scribe-of-lagash-visualization/main/docs/images/story-outline.png" alt="Story Outline file" width="500">
 
 Planned next: a **chronological view** ordering chapters/scenes by their
 `scribe-note-date`, and a matrix view grouping them by character,
