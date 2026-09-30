@@ -5,6 +5,14 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+- Removed the two `!important` overrides on the StoryLines tab-header icon's
+  active-tab colour (added in 0.9.3). The active-tab rule now targets the tab
+  header's `svg` directly instead of `.workspace-tab-header-inner-icon` — the
+  same element Obsidian's own active-tab rule sets `color` on — so the colour
+  is applied directly to the icon rather than inherited from that parent, and
+  wins over the inherited value without needing to out-specify Obsidian's rule.
+
 ## [0.9.5](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.9.5) - 2026-09-24
 
 ### Added

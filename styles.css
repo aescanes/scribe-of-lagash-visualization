@@ -2,37 +2,23 @@
 
 /* The line-view icon uses currentColor, so the ribbon button and the
    StoryLines tab header both pick up the brand colour here, lighter on dark
-   themes for legibility. The active-tab icon needs `!important`: Obsidian's
-   own active-tab icon rule (`.is-focused .mod-active .workspace-tab-header
-   .is-active .workspace-tab-header-inner-icon`, confirmed by extracting
-   Obsidian's shipped app.css) is 5 selectors specific. Chaining the same
-   `.is-focused .mod-active` ancestors onto our own selector reaches 6 —
-   higher specificity on paper — but verified live in the app (full restart,
-   not just a tab switch) it still loses to Obsidian's rule, so something
-   about its actual cascade position isn't accounted for here.
-   `!important` on just the active-tab rule is the reliable fix; the
-   non-active rule doesn't need it. */
+   themes for legibility. Targeted at the tab header's `svg` itself rather
+   than `.workspace-tab-header-inner-icon` — the element Obsidian's own
+   active-tab rule sets `color` on — so this sets the colour directly on the
+   icon instead of relying on it being inherited from that parent. A directly
+   set value always wins over an inherited one regardless of the two rules'
+   relative specificity, so this covers the active tab too without
+   `!important`. */
 .scribe-ribbon-icon,
 .scribe-ribbon-icon:hover,
-.workspace-tab-header[data-type="scribe-line-view"] .workspace-tab-header-inner-icon {
+.workspace-tab-header[data-type="scribe-line-view"] svg {
 	color: #81096b;
 }
 
 .theme-dark .scribe-ribbon-icon,
 .theme-dark .scribe-ribbon-icon:hover,
-.theme-dark .workspace-tab-header[data-type="scribe-line-view"] .workspace-tab-header-inner-icon {
+.theme-dark .workspace-tab-header[data-type="scribe-line-view"] svg {
 	color: #b851a5;
-}
-
-.workspace-tab-header.is-active[data-type="scribe-line-view"] .workspace-tab-header-inner-icon {
-	/* stylelint-disable-next-line declaration-no-important -- see comment
-	   above; increasing selector specificity to match doesn't win in practice. */
-	color: #81096b !important;
-}
-
-.theme-dark .workspace-tab-header.is-active[data-type="scribe-line-view"] .workspace-tab-header-inner-icon {
-	/* stylelint-disable-next-line declaration-no-important -- see comment above. */
-	color: #b851a5 !important;
 }
 
 /* ---- Line view ---- */
