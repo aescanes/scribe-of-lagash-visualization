@@ -90,6 +90,15 @@ view can reuse the existing renderer:
   survives reloads and each open StoryLines tab remembers its own mode
   (open question 2).
 
+### 2b. Mode registry — `src/views/viewModes.ts` (added during the build)
+
+So future modes (places, dates, …) don't each add `if (mode === …)` checks to
+the view, the modes are described once in `VIEW_MODES`: `editable`, `emptyNotice`,
+`unplacedLabel`, `buildModel(ctx)`. `LineView` reads the descriptor
+(`isEditable()`, one `renderBoard(root, def.buildModel(...), recon, def)` path)
+and the selector is built from the registry. `parseViewMode` validates the saved
+view state. Tests: `tests/views/viewModes.test.ts`.
+
 ### 3. Styles — `styles.css`
 
 Only a few additions, Obsidian CSS variables only:

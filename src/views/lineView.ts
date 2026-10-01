@@ -29,8 +29,8 @@ import {
 	starterLayout,
 	starterLayoutFromOutline,
 } from "./canvasModel";
-import { charactersModel } from "./charactersModel";
 import { confirm } from "./confirmModal";
+import { DEFAULT_VIEW_MODE, LineViewMode, parseViewMode, ViewModeDef, VIEW_MODES, viewModeIds } from "./viewModes";
 
 export const VIEW_TYPE_LINE_VIEW = "scribe-line-view";
 
@@ -48,17 +48,6 @@ export const LINE_ICON_ID = "scribe-lines";
 export const LINE_ICON_SVG =
 	`<g fill="none" stroke="currentColor" stroke-width="11" stroke-linecap="round" stroke-linejoin="round">` +
 	`<path d="M25 21h50"/><path d="M17 50h42"/><path d="M50 79h33"/></g>`;
-
-/**
- * "storylines" is the editable Lines.md view; "characters" is a read-only
- * derived view with one line per character. Kept per leaf in the view state.
- */
-export type LineViewMode = "storylines" | "characters";
-
-const MODE_LABELS: Record<LineViewMode, string> = {
-	storylines: "StoryLines",
-	characters: "Characters",
-};
 
 const COLUMN_WIDTH = 220;
 const DRAG_THRESHOLD = 5;
@@ -107,7 +96,7 @@ export class LineView extends ItemView {
 	private undoStack: LineLayout[] = [];
 	private cardEls = new Map<string, HTMLElement[]>();
 	private drag: DragState | null = null;
-	private mode: LineViewMode = "storylines";
+	private mode: LineViewMode = DEFAULT_VIEW_MODE;
 	private opened = false;
 	/** True once the layout changed and hasn't been written yet. */
 	private dirty = false;
@@ -138,7 +127,7 @@ export class LineView extends ItemView {
 
 	async setState(state: unknown, result: ViewStateResult): Promise<void> {
 		const mode = typeof state === "object" && state !== null && "mode" in state ? state.mode : null;
-		this.mode = mode === "characters" ? "characters" : "storylines";
+		this.mode = parseViewMode(mode);
 		await super.setState(state, result);
 		if (this.opened) this.render();
 	}
@@ -222,8 +211,8 @@ export class LineView extends ItemView {
 
 	/** Adds any newly discovered chapter/scene to the default line, and saves if so. */
 	private autoPlace(): void {
-		// The Characters mode writes nothing; the next switch back catches up.
-		if (this.mode === "characters" || !this.fileExists || isLayoutEmpty(this.layout)) return;
+		// A non-editable mode writes nothing; the next switch back catches up.
+		if (!this.isEditable() || !this.fileExists || isLayoutEmpty(this.layout)) return;
 		const { layout, changed } = reconcilePlacements(
 			this.layout,
 			this.currentEntries().map((e) => e.file.path),
@@ -287,6 +276,10 @@ export class LineView extends ItemView {
 		return active instanceof HTMLInputElement && this.contentEl.contains(active);
 	}
 
+	private isEditable(): boolean {
+		return VIEW_MODES[this.mode].editable;
+	}
+
 	private scheduleSave(): void {
 		this.dirty = true;
 		this.saveDebounced();
@@ -307,7 +300,7 @@ export class LineView extends ItemView {
 	}
 
 	private undo(): void {
-		if (this.mode === "characters") return;
+		if (!this.isEditable()) return;
 		const previous = this.undoStack.pop();
 		if (!previous) return;
 		this.layout = previous;
@@ -341,12 +334,14 @@ export class LineView extends ItemView {
 		const hasContent = entries.length > 0 || this.outlineRows.length > 0;
 		const viewReady = folder !== "" && hasContent && this.fileExists && !isLayoutEmpty(this.layout);
 
-		const characters = this.mode === "characters";
-		root.toggleClass("is-readonly", characters);
+		const def = VIEW_MODES[this.mode];
+		root.toggleClass("is-readonly", !def.editable);
 
-		const recon = viewReady && !characters ? this.reconcile(entries) : null;
+		// An editable mode needs a Lines.md; a derived one only needs content.
+		const needsRecon = def.editable ? viewReady : folder !== "" && hasContent;
+		const recon = needsRecon ? this.reconcile(entries) : null;
 
-		this.renderToolbar(root, folder, recon);
+		this.renderToolbar(root, folder, def.editable ? recon : null);
 
 		if (folder === "") {
 			this.renderNotice(
@@ -365,16 +360,14 @@ export class LineView extends ItemView {
 			return;
 		}
 
-		if (characters) {
-			this.renderCharacters(root, entries);
-		} else {
-			if (!viewReady || !recon) {
-				this.renderCreatePrompt(root, entries);
-				return;
-			}
-			this.renderLines(root, entries, recon);
-			this.renderDiagnostics(root, entries, recon);
+		if (def.editable && !viewReady) {
+			this.renderCreatePrompt(root, entries);
+			return;
 		}
+		if (!recon) return;
+
+		this.renderBoard(root, def.buildModel({ entries, layout: this.layout, recon }), recon, def);
+		if (def.editable) this.renderDiagnostics(root, entries, recon);
 		this.equalizeCardHeights();
 
 		const scroll = root.querySelector<HTMLElement>(".scribe-canvas-scroll");
@@ -419,24 +412,22 @@ export class LineView extends ItemView {
 			cls: "dropdown scribe-canvas-mode-select",
 			attr: { "aria-label": "View mode" },
 		});
-		for (const mode of Object.keys(MODE_LABELS) as LineViewMode[]) {
-			select.createEl("option", { value: mode, text: MODE_LABELS[mode] });
+		for (const mode of viewModeIds()) {
+			select.createEl("option", { value: mode, text: VIEW_MODES[mode].label });
 		}
 		select.value = this.mode;
-		select.addEventListener("change", () => void this.setMode(select.value === "characters" ? "characters" : "storylines"));
+		select.addEventListener("change", () => void this.setMode(parseViewMode(select.value)));
 	}
 
 	private async setMode(mode: LineViewMode): Promise<void> {
 		if (mode === this.mode) return;
-		if (mode === "characters") {
-			// Flush StoryLines edits before going read-only; the mode itself writes nothing.
+		if (this.isEditable()) {
+			// Flush pending edits before leaving; a derived mode writes nothing.
 			this.saveDebounced.cancel();
 			await this.save();
-			this.mode = mode;
-		} else {
-			this.mode = mode;
-			this.autoPlace();
 		}
+		this.mode = mode;
+		this.autoPlace();
 		this.app.workspace.requestSaveLayout();
 		this.render(false);
 	}
@@ -516,25 +507,9 @@ export class LineView extends ItemView {
 		});
 	}
 
-	private renderLines(root: HTMLElement, entries: NovelEntry[], recon: OutlineReconciliation): void {
-		this.renderBoard(root, canvasModel(entries, this.layout, recon), recon, false);
-	}
-
-	/** Read-only Characters mode: derived lines, no drag, no edit controls. */
-	private renderCharacters(root: HTMLElement, entries: NovelEntry[]): void {
-		const recon = this.reconcile(entries);
-		const model = charactersModel(entries, recon);
-		if (model.lines.length === 0) {
-			this.renderNotice(
-				root,
-				"No characters found. List them in a note's scribe-note-characters frontmatter " +
-					"or in the Characters column of the story outline.",
-			);
-		}
-		this.renderBoard(root, model, recon, true);
-	}
-
-	private renderBoard(root: HTMLElement, model: CanvasModel, recon: OutlineReconciliation, readOnly: boolean): void {
+	private renderBoard(root: HTMLElement, model: CanvasModel, recon: OutlineReconciliation, def: ViewModeDef): void {
+		const readOnly = !def.editable;
+		if (def.emptyNotice && model.lines.length === 0) this.renderNotice(root, def.emptyNotice);
 		if (readOnly && model.lines.length === 0 && model.unplaced.length === 0 && model.plannedUnplaced.length === 0) {
 			return;
 		}
@@ -565,9 +540,8 @@ export class LineView extends ItemView {
 			const strip = root.createDiv({ cls: "scribe-canvas-unplaced" });
 			strip.createDiv({
 				cls: "scribe-canvas-unplaced-label",
-				text: readOnly
-					? "No characters listed"
-					: `Not on any line — drag a card onto a line${
+				text: def.unplacedLabel
+					?? `Not on any line — drag a card onto a line${
 							model.plannedUnplaced.length > 0 ? " (story outline rows without a valid line included)" : ""
 						}`,
 			});
