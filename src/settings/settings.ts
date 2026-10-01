@@ -3,11 +3,13 @@
 
 export interface ScribeVisualizationSettings {
 	/**
-	 * Vault-relative folders that each hold one book's chapter/scene notes.
-	 * Notes inside are classified by title (see titleParser). When empty, the
-	 * plugin falls back to scanning the whole vault for frontmatter-tagged notes.
+	 * Vault-relative folder holding the story's chapter/scene notes. Notes
+	 * inside are classified by title (see titleParser). Empty means scan the
+	 * whole vault. One story per vault — see the "Open questions" section of
+	 * `docs/feature-plans/line-view-plan.md` for why this is a single path
+	 * rather than a list.
 	 */
-	bookFolders: string[];
+	storyFolder: string;
 
 	/**
 	 * Name of the per-book Lines file that stores the default view. The plugin
@@ -30,7 +32,7 @@ export interface ScribeVisualizationSettings {
 }
 
 export const DEFAULT_SETTINGS: ScribeVisualizationSettings = {
-	bookFolders: [],
+	storyFolder: "",
 	lineFileName: "StoryLines.md",
 	outlineFileName: "",
 	titleLanguage: "en",

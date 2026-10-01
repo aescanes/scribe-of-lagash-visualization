@@ -5,6 +5,17 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- The **Story folder** setting now offers type-ahead folder suggestions as you
+  type, and only applies the typed path when you click **Set** (or press
+  Enter), validating first that the folder actually exists.
+
+### Changed
+- **Story folder** is now a single folder (one story per vault) instead of a
+  list — the story-switcher dropdown in the StoryLines toolbar is gone.
+  Existing configurations are migrated automatically: the first folder you
+  had listed becomes the new single Story folder.
+
 ## [0.9.5](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.9.5) - 2026-09-24
 
 ### Added

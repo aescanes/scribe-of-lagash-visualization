@@ -10,7 +10,7 @@ import { countWords } from "./wordCount";
 
 /** Settings the index needs; supplied lazily so it always reads current values. */
 export interface VaultIndexConfig {
-	bookFolders: string[];
+	storyFolder: string;
 	titleLanguage: string;
 }
 
@@ -39,8 +39,8 @@ export function normalizeFolder(folder: string): string {
 }
 
 /**
- * Scans configured book folders for notes whose title parses as a chapter or
- * scene (see titleParser) and keeps a live, in-memory index of them. Views
+ * Scans the configured story folder for notes whose title parses as a chapter
+ * or scene (see titleParser) and keeps a live, in-memory index of them. Views
  * subscribe via `onChange` and re-render whenever the index is rebuilt.
  */
 export class VaultIndex extends Component {
@@ -79,9 +79,9 @@ export class VaultIndex extends Component {
 		return this.entries;
 	}
 
-	/** Configured book folders, normalized, in the order the user listed them. */
-	getBookFolders(): string[] {
-		return this.getConfig().bookFolders.map(normalizeFolder).filter(Boolean);
+	/** The configured story folder, normalized; "" means none configured (whole-vault scan). */
+	getStoryFolder(): string {
+		return normalizeFolder(this.getConfig().storyFolder);
 	}
 
 	/** Entries under one book folder (pass "" for the no-book-folder whole-vault case). */
@@ -92,15 +92,13 @@ export class VaultIndex extends Component {
 
 	/** Rebuilds the index; safe to call from anywhere (e.g. when settings change). */
 	async rebuild(): Promise<void> {
-		const { bookFolders, titleLanguage } = this.getConfig();
-		// Longest first so a nested book folder wins over its parent.
-		const folders = bookFolders.map(normalizeFolder).filter(Boolean).sort((a, b) => b.length - a.length);
+		const { storyFolder, titleLanguage } = this.getConfig();
+		const folder = normalizeFolder(storyFolder);
 		const language = titleLanguage || DEFAULT_LANGUAGE;
 
 		const candidates = this.app.vault.getMarkdownFiles().flatMap((file) => {
-			const base = folders.find((f) => file.path === f || file.path.startsWith(`${f}/`));
-			if (folders.length > 0 && base === undefined) return [];
-			return [{ file, base: base ?? "" }];
+			if (folder && file.path !== folder && !file.path.startsWith(`${folder}/`)) return [];
+			return [{ file, base: folder }];
 		});
 
 		const parsed = await Promise.all(candidates.map(({ file, base }) => this.parseFile(file, language, base)));

@@ -100,7 +100,7 @@ export class LineView extends ItemView {
 	constructor(leaf: WorkspaceLeaf, plugin: ScribeVisualizationPlugin) {
 		super(leaf);
 		this.plugin = plugin;
-		this.book = plugin.vaultIndex.getBookFolders()[0] ?? "";
+		this.book = plugin.vaultIndex.getStoryFolder();
 	}
 
 	getViewType(): string {
@@ -127,7 +127,7 @@ export class LineView extends ItemView {
 			return false;
 		});
 		this.unsubscribe = this.plugin.vaultIndex.onChange(() => this.onIndexChange());
-		await this.openBook(this.plugin.vaultIndex.getBookFolders()[0] ?? "");
+		await this.openBook(this.plugin.vaultIndex.getStoryFolder());
 	}
 
 	async onClose(): Promise<void> {
@@ -212,9 +212,9 @@ export class LineView extends ItemView {
 			return;
 		}
 
-		const books = this.plugin.vaultIndex.getBookFolders();
-		if (this.book && !books.includes(this.book)) {
-			void this.openBook(books[0] ?? "");
+		const folder = this.plugin.vaultIndex.getStoryFolder();
+		if (this.book !== folder) {
+			void this.openBook(folder);
 			return;
 		}
 		// Re-read the outline too — editing its table fires a metadata change.
@@ -299,16 +299,16 @@ export class LineView extends ItemView {
 		root.addClass("scribe-canvas-view");
 		this.cardEls.clear();
 
-		const books = this.plugin.vaultIndex.getBookFolders();
+		const folder = this.plugin.vaultIndex.getStoryFolder();
 		const entries = this.book ? this.currentEntries() : [];
 		const hasContent = entries.length > 0 || this.outlineRows.length > 0;
-		const viewReady = books.length > 0 && hasContent && this.fileExists && !isLayoutEmpty(this.layout);
+		const viewReady = folder !== "" && hasContent && this.fileExists && !isLayoutEmpty(this.layout);
 
 		const recon = viewReady ? this.reconcile(entries) : null;
 
-		this.renderToolbar(root, books, recon);
+		this.renderToolbar(root, folder, recon);
 
-		if (books.length === 0) {
+		if (folder === "") {
 			this.renderNotice(
 				root,
 				"Add a story folder in the plugin settings (Settings → Scribe of Lagash - Visualization) to build its lines.",
@@ -359,17 +359,10 @@ export class LineView extends ItemView {
 		});
 	}
 
-	private renderToolbar(root: HTMLElement, books: string[], recon: OutlineReconciliation | null): void {
+	private renderToolbar(root: HTMLElement, folder: string, recon: OutlineReconciliation | null): void {
 		const toolbar = root.createDiv({ cls: "scribe-canvas-toolbar" });
 
-		if (books.length > 1) {
-			const select = toolbar.createEl("select", { cls: "dropdown" });
-			for (const b of books) select.createEl("option", { text: b, value: b });
-			select.value = this.book;
-			select.addEventListener("change", () => void this.openBook(select.value));
-		} else if (books.length === 1) {
-			toolbar.createSpan({ cls: "scribe-canvas-book-name", text: books[0] });
-		}
+		if (folder) toolbar.createSpan({ cls: "scribe-canvas-book-name", text: folder });
 
 		if (!recon) return;
 

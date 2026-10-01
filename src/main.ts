@@ -21,7 +21,7 @@ export default class ScribeVisualizationPlugin extends Plugin {
 		await this.loadSettings();
 
 		this.vaultIndex = new VaultIndex(this.app, () => ({
-			bookFolders: this.settings.bookFolders,
+			storyFolder: this.settings.storyFolder,
 			titleLanguage: this.settings.titleLanguage,
 		}));
 		this.addChild(this.vaultIndex);
@@ -50,8 +50,16 @@ export default class ScribeVisualizationPlugin extends Plugin {
 	}
 
 	async loadSettings(): Promise<void> {
-		const stored = (await this.loadData()) as Partial<ScribeVisualizationSettings> | null;
+		const stored = (await this.loadData()) as
+			| (Partial<ScribeVisualizationSettings> & { bookFolders?: string[] })
+			| null;
 		this.settings = { ...DEFAULT_SETTINGS, ...stored };
+		// Migrate the pre-0.10 multi-folder setting: carry the first configured
+		// folder forward so switching to a single story folder doesn't silently
+		// drop an existing configuration.
+		if (stored && !("storyFolder" in stored) && Array.isArray(stored.bookFolders) && stored.bookFolders.length > 0) {
+			this.settings.storyFolder = stored.bookFolders[0];
+		}
 	}
 
 	async saveSettings(): Promise<void> {
@@ -60,26 +68,22 @@ export default class ScribeVisualizationPlugin extends Plugin {
 	}
 
 	/**
-	 * Creates the empty-table skeleton for each configured book. Only ever
+	 * Creates the empty-table skeleton for the configured story. Only ever
 	 * triggered by the explicit "Create" button in settings — never from
 	 * `saveSettings()`, which fires on every keystroke and would leave a file
 	 * behind for every partial name ("(SL) T", "(SL) Te", …). Returns how many
-	 * files it actually created (the rest already existed).
+	 * files it actually created (0 when one already existed).
 	 */
 	async createOutlineFiles(): Promise<number> {
-		const { bookFolders, outlineFileName } = this.settings;
+		const { storyFolder, outlineFileName } = this.settings;
 		if (!outlineFileName) return 0;
-		const books = bookFolders.length > 0 ? bookFolders : [""];
-		let created = 0;
-		for (const book of books) {
-			if (await ensureOutlineFile(this.app, outlineFilePath(book, outlineFileName))) created++;
-		}
-		return created;
+		const created = await ensureOutlineFile(this.app, outlineFilePath(storyFolder, outlineFileName));
+		return created ? 1 : 0;
 	}
 
 	/** Fills a still-empty Outline file from the book's current chapter/scene notes. */
 	private async generateOutline(): Promise<void> {
-		const book = this.vaultIndex.getBookFolders()[0] ?? "";
+		const book = this.vaultIndex.getStoryFolder();
 		const path = outlineFilePath(book, this.settings.outlineFileName);
 		if (!path) {
 			new Notice("Set a Story Outline file name in the plugin settings first.");
