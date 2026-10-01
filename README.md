@@ -82,8 +82,7 @@ plugins for planning and writing stories:
   <img src="https://raw.githubusercontent.com/aescanes/scribe-of-lagash-visualization/main/docs/images/story-outline.png" alt="Story Outline file" width="500">
 
 Planned next: a **chronological view** ordering chapters/scenes by their
-`scribe-note-date`, and lines view grouping them by,
-location. See
+`scribe-note-date`, and lines view grouping them by places. See
 [docs/feature-plans/line-view-plan.md](docs/feature-plans/line-view-plan.md).
 
 ## Setting up a story
