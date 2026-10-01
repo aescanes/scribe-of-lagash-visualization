@@ -5,6 +5,8 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.10.0](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.10.0) - 2026-10-01
+
 ### Added
 - The **Story folder** setting now offers type-ahead folder suggestions as you
   type, and only applies the typed path when you click **Set** (or press
