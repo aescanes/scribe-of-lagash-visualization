@@ -169,7 +169,7 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 	private behaviourRows(): SettingRow[] {
 		return [
 			{
-				name: "Title / Folder language",
+				name: "Note title / folder name language",
 				desc: "Which language's patterns to use when reading act/chapter/scene numbers from note titles and folders.",
 				render: (setting) => {
 					setting.addDropdown((dropdown) => {
