@@ -5,6 +5,8 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.10.0](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.10.0) - 2026-10-01
+
 ### Added
 - **Characters mode** for the StoryLines tab: a combo box at the top right
   switches between **StoryLines** (unchanged) and a read-only **Characters**
