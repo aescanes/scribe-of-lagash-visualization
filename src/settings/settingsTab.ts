@@ -100,7 +100,8 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 		);
 	}
 
-	private settingRows(): SettingRow[] {
+	/** Rows grouped under the "Scope" heading: which notes the plugin looks at and where it writes its own files. */
+	private scopeRows(): SettingRow[] {
 		return [
 			{
 				name: "Story folder",
@@ -161,6 +162,12 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 						});
 				},
 			},
+		];
+	}
+
+	/** Rows grouped under the "Behaviour" heading: how the plugin interprets the notes it finds. */
+	private behaviourRows(): SettingRow[] {
+		return [
 			{
 				name: "Title / Folder language",
 				desc: "Which language's patterns to use when reading act/chapter/scene numbers from note titles and folders.",
@@ -183,13 +190,22 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 	 * Obsidian's global settings search. When this returns a non-empty array,
 	 * Obsidian renders from it directly and never calls `display()`; on older
 	 * Obsidian versions this method doesn't exist yet, so `display()` below
-	 * still drives rendering unchanged. Both paths share `settingRows()` so a
-	 * row's behavior can't drift between the two.
+	 * still drives rendering unchanged. Both paths share `scopeRows()` /
+	 * `behaviourRows()` so a row's behavior can't drift between the two.
 	 */
 	getSettingDefinitions(): SettingDefinitionItem[] {
 		return [
 			{ name: INTRO_NAME, desc: introDesc() },
-			...this.settingRows().map(({ name, desc, render }) => ({ name, desc, render })),
+			{
+				type: "group",
+				heading: "Scope",
+				items: this.scopeRows().map(({ name, desc, render }) => ({ name, desc, render })),
+			},
+			{
+				type: "group",
+				heading: "Behaviour",
+				items: this.behaviourRows().map(({ name, desc, render }) => ({ name, desc, render })),
+			},
 		];
 	}
 
@@ -200,7 +216,13 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 
 		containerEl.appendChild(introDesc());
 
-		for (const { name, desc, render } of this.settingRows()) {
+		new Setting(containerEl).setName("Scope").setHeading();
+		for (const { name, desc, render } of this.scopeRows()) {
+			render(new Setting(containerEl).setName(name).setDesc(desc));
+		}
+
+		new Setting(containerEl).setName("Behaviour").setHeading();
+		for (const { name, desc, render } of this.behaviourRows()) {
 			render(new Setting(containerEl).setName(name).setDesc(desc));
 		}
 	}

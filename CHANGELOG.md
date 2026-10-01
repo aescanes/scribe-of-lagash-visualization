@@ -11,6 +11,9 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Enter), validating first that the folder actually exists.
 
 ### Changed
+- The settings tab now groups its rows under **Scope** (Story folder,
+  StoryLines file name, Story Outline file name) and **Behaviour** (Title /
+  Folder language) headings, instead of one flat list.
 - **Story folder** is now a single folder (one story per vault) instead of a
   list — the story-switcher dropdown in the StoryLines toolbar is gone.
   Existing configurations are migrated automatically: the first folder you
