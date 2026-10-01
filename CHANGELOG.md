@@ -5,7 +5,19 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- The **Story folder** setting now offers type-ahead folder suggestions as you
+  type, and only applies the typed path when you click **Set** (or press
+  Enter), validating first that the folder actually exists.
+
 ### Changed
+- The settings tab now groups its rows under **Scope** (Story folder,
+  StoryLines file name, Story Outline file name) and **Behaviour** (Title /
+  Folder language) headings, instead of one flat list.
+- **Story folder** is now a single folder (one story per vault) instead of a
+  list — the story-switcher dropdown in the StoryLines toolbar is gone.
+  Existing configurations are migrated automatically: the first folder you
+  had listed becomes the new single Story folder.
 - Removed the two `!important` overrides on the StoryLines tab-header icon's
   active-tab colour (added in 0.9.3). The active-tab rule now targets the tab
   header's `svg` directly instead of `.workspace-tab-header-inner-icon` — the

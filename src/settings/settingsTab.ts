@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 // Copyright (C) 2026 aescanes
 
-import { App, Notice, PluginSettingTab, Setting, SettingDefinitionItem } from "obsidian";
+import { App, Notice, normalizePath, PluginSettingTab, Setting, SettingDefinitionItem, TFolder } from "obsidian";
 import type ScribeVisualizationPlugin from "../main";
 import { availableLanguages, languageLabel } from "../data/titleParser";
+import { FolderSuggest } from "./folderSuggest";
 
 /** One settings row: shared between the declarative (Obsidian 1.13+) and imperative (fallback) render paths. */
 interface SettingRow {
@@ -43,24 +44,69 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 		this.plugin = plugin;
 	}
 
-	private settingRows(): SettingRow[] {
+	/**
+	 * Applies a new story folder: empty is always valid (it means "scan the
+	 * whole vault"); anything else must be a folder that's actually there, or
+	 * chapters/scenes under it would silently stop showing up until the typo
+	 * is noticed.
+	 */
+	private async applyStoryFolder(value: string): Promise<void> {
+		if (value === this.plugin.settings.storyFolder) return;
+
+		if (value !== "" && !(this.app.vault.getAbstractFileByPath(normalizePath(value)) instanceof TFolder)) {
+			new Notice(`Folder "${value}" doesn't exist.`);
+			return;
+		}
+
+		this.plugin.settings.storyFolder = value;
+		await this.plugin.saveSettings();
+	}
+
+	/** The fragment shared by both `display()`'s imperative row and the declarative definition. */
+	private storyFolderDesc(): DocumentFragment {
+		return createFragment((frag) => {
+			frag.appendText(
+				"The folder containing the story's act/chapter/scene notes. Leave empty to scan the whole vault.",
+			);
+			frag.createEl("br");
+			frag.appendText('Click "Set" (or press Enter in the field) to apply it.');
+		});
+	}
+
+	/**
+	 * Text field plus a "Set" button — shared by both `display()`'s imperative
+	 * row and the declarative definition. Nothing is applied while typing;
+	 * only the button (or Enter in the field) commits the typed path, via
+	 * `applyStoryFolder`.
+	 */
+	private renderStoryFolderField(setting: Setting): void {
+		let typed = this.plugin.settings.storyFolder;
+		setting.addText((text) => {
+			text.setPlaceholder("Stories/The Silent City");
+			text.setValue(this.plugin.settings.storyFolder);
+			text.onChange((value) => (typed = value));
+			text.inputEl.addEventListener("keydown", (evt) => {
+				if (evt.key === "Enter") void this.applyStoryFolder(typed.trim());
+			});
+			// Picking a suggestion doesn't itself redraw the input — set both
+			// the tracked value and the field's displayed text explicitly.
+			new FolderSuggest(this.app, text.inputEl).onSelect((folder) => {
+				typed = folder.path;
+				text.setValue(folder.path);
+			});
+		});
+		setting.addButton((button) =>
+			button.setButtonText("Set").onClick(() => void this.applyStoryFolder(typed.trim())),
+		);
+	}
+
+	/** Rows grouped under the "Scope" heading: which notes the plugin looks at and where it writes its own files. */
+	private scopeRows(): SettingRow[] {
 		return [
 			{
 				name: "Story folder",
-				desc: "The folder containing the story's act/chapter/scene notes. Leave empty to scan the whole vault.",
-				render: (setting) => {
-					setting.addText((text) => {
-						text.setPlaceholder("Stories/The Silent City");
-						text.setValue(this.plugin.settings.bookFolders.join("\n"));
-						text.onChange(async (value) => {
-							this.plugin.settings.bookFolders = value
-								.split("\n")
-								.map((line) => line.trim())
-								.filter(Boolean);
-							await this.plugin.saveSettings();
-						});
-					});
-				},
+				desc: this.storyFolderDesc(),
+				render: (setting) => this.renderStoryFolderField(setting),
 			},
 			{
 				name: "StoryLines file name",
@@ -116,6 +162,12 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 						});
 				},
 			},
+		];
+	}
+
+	/** Rows grouped under the "Behaviour" heading: how the plugin interprets the notes it finds. */
+	private behaviourRows(): SettingRow[] {
+		return [
 			{
 				name: "Title / Folder language",
 				desc: "Which language's patterns to use when reading act/chapter/scene numbers from note titles and folders.",
@@ -138,13 +190,22 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 	 * Obsidian's global settings search. When this returns a non-empty array,
 	 * Obsidian renders from it directly and never calls `display()`; on older
 	 * Obsidian versions this method doesn't exist yet, so `display()` below
-	 * still drives rendering unchanged. Both paths share `settingRows()` so a
-	 * row's behavior can't drift between the two.
+	 * still drives rendering unchanged. Both paths share `scopeRows()` /
+	 * `behaviourRows()` so a row's behavior can't drift between the two.
 	 */
 	getSettingDefinitions(): SettingDefinitionItem[] {
 		return [
 			{ name: INTRO_NAME, desc: introDesc() },
-			...this.settingRows().map(({ name, desc, render }) => ({ name, desc, render })),
+			{
+				type: "group",
+				heading: "Scope",
+				items: this.scopeRows().map(({ name, desc, render }) => ({ name, desc, render })),
+			},
+			{
+				type: "group",
+				heading: "Behaviour",
+				items: this.behaviourRows().map(({ name, desc, render }) => ({ name, desc, render })),
+			},
 		];
 	}
 
@@ -155,7 +216,13 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 
 		containerEl.appendChild(introDesc());
 
-		for (const { name, desc, render } of this.settingRows()) {
+		new Setting(containerEl).setName("Scope").setHeading();
+		for (const { name, desc, render } of this.scopeRows()) {
+			render(new Setting(containerEl).setName(name).setDesc(desc));
+		}
+
+		new Setting(containerEl).setName("Behaviour").setHeading();
+		for (const { name, desc, render } of this.behaviourRows()) {
 			render(new Setting(containerEl).setName(name).setDesc(desc));
 		}
 	}
