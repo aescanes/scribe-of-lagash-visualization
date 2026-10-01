@@ -107,9 +107,9 @@ test("parseOutlineTable: the created skeleton (help comment + empty row) has no 
 		"     Scenes in chapter folders . . . . . Chapter + Scene        -> Chapter 1/Scene 2.md",
 		"     Also recognised: Folder, Date, Characters, Places, Status. -->",
 		"",
-		"| Act | Chapter | Scene | Line | Synopsis |",
-		"| --- | ------- | ----- | ---- | -------- |",
-		"|     |         |       |      |          |",
+		"| Act | Chapter | Scene | Line | Synopsis | Characters |",
+		"| --- | ------- | ----- | ---- | -------- | ---------- |",
+		"|     |         |       |      |          |            |",
 		"",
 	].join("\n");
 	assert.deepEqual(parseOutlineTable(skeleton), []);
@@ -523,6 +523,7 @@ test("reconcileOutline is a no-op for an empty table", () => {
 		marks: {},
 		fulfilledPaths: [],
 		fulfilledLineIds: {},
+		fulfilledCharacters: {},
 		unknownLines: [],
 	});
 });

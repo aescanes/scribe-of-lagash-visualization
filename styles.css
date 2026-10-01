@@ -504,3 +504,32 @@
 	margin: var(--size-4-2) 0 0;
 	padding-left: var(--size-4-4);
 }
+
+/* Read-only Characters mode: cards open their note on click but can't be dragged. */
+.scribe-canvas-view.is-readonly .scribe-canvas-card {
+	cursor: pointer;
+}
+
+.scribe-canvas-view.is-readonly .scribe-canvas-card--planned {
+	cursor: default;
+}
+
+.scribe-canvas-view.is-readonly .scribe-canvas-line-name {
+	cursor: default;
+}
+
+/* Characters mode: the "No characters listed" strip stays one scrollable row so
+   it never takes space from the lines above it. */
+.scribe-canvas-view.is-readonly .scribe-canvas-unplaced {
+	flex: none;
+}
+
+.scribe-canvas-view.is-readonly .scribe-canvas-unplaced-rail {
+	flex-wrap: nowrap;
+	overflow-x: auto;
+	padding-bottom: var(--size-4-2);
+}
+
+.scribe-canvas-view.is-readonly .scribe-canvas-unplaced-rail .scribe-canvas-card {
+	flex: none;
+}

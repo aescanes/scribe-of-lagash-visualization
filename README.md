@@ -56,6 +56,17 @@ plugins for planning and writing stories:
   to the StoryLines file (`StoryLines.md`) automatically; `Mod+Z` undoes.
 
   <img src="https://raw.githubusercontent.com/aescanes/scribe-of-lagash-visualization/main/docs/images/storylines-tab.png" alt="StoryLines view" width="600">
+- **Characters mode** — the combo box at the top right of the StoryLines tab
+  switches between **StoryLines** and **Characters**. Characters keeps the same
+  look but is read-only: one line per character (alphabetical), each showing
+  the chapters/scenes that name them in reading order, so a scene with two
+  characters appears on both lines. Names come from the notes'
+  `scribe-note-characters` frontmatter and the Story Outline's `Characters`
+  column, merged; if a note and its outline row list different characters a ⚠
+  explains the difference. Planned (not yet written) rows show as dashed,
+  non-clickable cards, and notes with no characters sit in a "No characters
+  listed" strip. Nothing is moved, created or saved in this mode, and each tab
+  remembers its own mode.
 - **Story Outline file** *(optional)* — name a file under **Story Outline file
   name** in settings and click **Create**; it's written as an empty
   Markdown table (Act / Chapter / Scene / Line / Synopsis). The `.md` extension
@@ -71,8 +82,8 @@ plugins for planning and writing stories:
   <img src="https://raw.githubusercontent.com/aescanes/scribe-of-lagash-visualization/main/docs/images/story-outline.png" alt="Story Outline file" width="500">
 
 Planned next: a **chronological view** ordering chapters/scenes by their
-`scribe-note-date`, and a matrix view grouping them by character,
-place, or situation. See
+`scribe-note-date`, and lines view grouping them by,
+location. See
 [docs/feature-plans/line-view-plan.md](docs/feature-plans/line-view-plan.md).
 
 ## Setting up a story

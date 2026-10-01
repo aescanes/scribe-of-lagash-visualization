@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (C) 2026 aescanes
 
-import { debounce, ItemView, Notice, normalizePath, Scope, setIcon, TFile, WorkspaceLeaf } from "obsidian";
+import { debounce, ItemView, Notice, normalizePath, Scope, setIcon, TFile, ViewStateResult, WorkspaceLeaf } from "obsidian";
 import type ScribeVisualizationPlugin from "../main";
 import { emptyLineLayout, lineFilePath, readLineLayout, writeLineLayout } from "../data/lineFile";
 import { outlineLineNames, OutlineReconciliation, reconcileOutline } from "../data/outline";
@@ -15,6 +15,7 @@ import {
 	applyPlannedPlacements,
 	canvasModel,
 	CanvasCard,
+	CanvasModel,
 	cloneLayout,
 	defaultLineId,
 	isLayoutEmpty,
@@ -28,6 +29,7 @@ import {
 	starterLayout,
 	starterLayoutFromOutline,
 } from "./canvasModel";
+import { charactersModel } from "./charactersModel";
 import { confirm } from "./confirmModal";
 
 export const VIEW_TYPE_LINE_VIEW = "scribe-line-view";
@@ -46,6 +48,17 @@ export const LINE_ICON_ID = "scribe-lines";
 export const LINE_ICON_SVG =
 	`<g fill="none" stroke="currentColor" stroke-width="11" stroke-linecap="round" stroke-linejoin="round">` +
 	`<path d="M25 21h50"/><path d="M17 50h42"/><path d="M50 79h33"/></g>`;
+
+/**
+ * "storylines" is the editable Lines.md view; "characters" is a read-only
+ * derived view with one line per character. Kept per leaf in the view state.
+ */
+export type LineViewMode = "storylines" | "characters";
+
+const MODE_LABELS: Record<LineViewMode, string> = {
+	storylines: "StoryLines",
+	characters: "Characters",
+};
 
 const COLUMN_WIDTH = 220;
 const DRAG_THRESHOLD = 5;
@@ -94,8 +107,12 @@ export class LineView extends ItemView {
 	private undoStack: LineLayout[] = [];
 	private cardEls = new Map<string, HTMLElement[]>();
 	private drag: DragState | null = null;
+	private mode: LineViewMode = "storylines";
+	private opened = false;
+	/** True once the layout changed and hasn't been written yet. */
+	private dirty = false;
 
-	private scheduleSave = debounce(() => void this.save(), SAVE_DEBOUNCE_MS, true);
+	private saveDebounced = debounce(() => void this.save(), SAVE_DEBOUNCE_MS, true);
 
 	constructor(leaf: WorkspaceLeaf, plugin: ScribeVisualizationPlugin) {
 		super(leaf);
@@ -115,6 +132,17 @@ export class LineView extends ItemView {
 		return LINE_ICON_ID;
 	}
 
+	getState(): Record<string, unknown> {
+		return { ...super.getState(), mode: this.mode };
+	}
+
+	async setState(state: unknown, result: ViewStateResult): Promise<void> {
+		const mode = typeof state === "object" && state !== null && "mode" in state ? state.mode : null;
+		this.mode = mode === "characters" ? "characters" : "storylines";
+		await super.setState(state, result);
+		if (this.opened) this.render();
+	}
+
 	onResize(): void {
 		// Card text re-wraps at the new width — re-measure so they stay uniform.
 		this.equalizeCardHeights();
@@ -128,6 +156,7 @@ export class LineView extends ItemView {
 		});
 		this.unsubscribe = this.plugin.vaultIndex.onChange(() => this.onIndexChange());
 		await this.openBook(this.plugin.vaultIndex.getStoryFolder());
+		this.opened = true;
 	}
 
 	async onClose(): Promise<void> {
@@ -140,7 +169,7 @@ export class LineView extends ItemView {
 			win.removeEventListener("pointerup", this.drag.onUp);
 			this.drag = null;
 		}
-		this.scheduleSave.cancel();
+		this.saveDebounced.cancel();
 		await this.save();
 	}
 
@@ -193,7 +222,8 @@ export class LineView extends ItemView {
 
 	/** Adds any newly discovered chapter/scene to the default line, and saves if so. */
 	private autoPlace(): void {
-		if (!this.fileExists || isLayoutEmpty(this.layout)) return;
+		// The Characters mode writes nothing; the next switch back catches up.
+		if (this.mode === "characters" || !this.fileExists || isLayoutEmpty(this.layout)) return;
 		const { layout, changed } = reconcilePlacements(
 			this.layout,
 			this.currentEntries().map((e) => e.file.path),
@@ -257,8 +287,14 @@ export class LineView extends ItemView {
 		return active instanceof HTMLInputElement && this.contentEl.contains(active);
 	}
 
+	private scheduleSave(): void {
+		this.dirty = true;
+		this.saveDebounced();
+	}
+
 	private async save(): Promise<void> {
-		if (!this.book || isLayoutEmpty(this.layout)) return;
+		if (!this.dirty || !this.book || isLayoutEmpty(this.layout)) return;
+		this.dirty = false;
 		await writeLineLayout(this.app, this.linePath(), this.layout);
 	}
 
@@ -271,6 +307,7 @@ export class LineView extends ItemView {
 	}
 
 	private undo(): void {
+		if (this.mode === "characters") return;
 		const previous = this.undoStack.pop();
 		if (!previous) return;
 		this.layout = previous;
@@ -304,7 +341,10 @@ export class LineView extends ItemView {
 		const hasContent = entries.length > 0 || this.outlineRows.length > 0;
 		const viewReady = folder !== "" && hasContent && this.fileExists && !isLayoutEmpty(this.layout);
 
-		const recon = viewReady ? this.reconcile(entries) : null;
+		const characters = this.mode === "characters";
+		root.toggleClass("is-readonly", characters);
+
+		const recon = viewReady && !characters ? this.reconcile(entries) : null;
 
 		this.renderToolbar(root, folder, recon);
 
@@ -325,13 +365,16 @@ export class LineView extends ItemView {
 			return;
 		}
 
-		if (!viewReady || !recon) {
-			this.renderCreatePrompt(root, entries);
-			return;
+		if (characters) {
+			this.renderCharacters(root, entries);
+		} else {
+			if (!viewReady || !recon) {
+				this.renderCreatePrompt(root, entries);
+				return;
+			}
+			this.renderLines(root, entries, recon);
+			this.renderDiagnostics(root, entries, recon);
 		}
-
-		this.renderLines(root, entries, recon);
-		this.renderDiagnostics(root, entries, recon);
 		this.equalizeCardHeights();
 
 		const scroll = root.querySelector<HTMLElement>(".scribe-canvas-scroll");
@@ -364,10 +407,41 @@ export class LineView extends ItemView {
 
 		if (folder) toolbar.createSpan({ cls: "scribe-canvas-book-name", text: folder });
 
-		if (!recon) return;
-
 		toolbar.createDiv({ cls: "scribe-canvas-toolbar-spacer" });
 
+		if (recon) this.renderEditButtons(toolbar, recon);
+
+		if (folder) this.renderModeSelect(toolbar);
+	}
+
+	private renderModeSelect(toolbar: HTMLElement): void {
+		const select = toolbar.createEl("select", {
+			cls: "dropdown scribe-canvas-mode-select",
+			attr: { "aria-label": "View mode" },
+		});
+		for (const mode of Object.keys(MODE_LABELS) as LineViewMode[]) {
+			select.createEl("option", { value: mode, text: MODE_LABELS[mode] });
+		}
+		select.value = this.mode;
+		select.addEventListener("change", () => void this.setMode(select.value === "characters" ? "characters" : "storylines"));
+	}
+
+	private async setMode(mode: LineViewMode): Promise<void> {
+		if (mode === this.mode) return;
+		if (mode === "characters") {
+			// Flush StoryLines edits before going read-only; the mode itself writes nothing.
+			this.saveDebounced.cancel();
+			await this.save();
+			this.mode = mode;
+		} else {
+			this.mode = mode;
+			this.autoPlace();
+		}
+		this.app.workspace.requestSaveLayout();
+		this.render(false);
+	}
+
+	private renderEditButtons(toolbar: HTMLElement, recon: OutlineReconciliation): void {
 		const missingLines = this.missingOutlineLines();
 		if (missingLines.length > 0) {
 			const label = `Add ${missingLines.length} line${missingLines.length === 1 ? "" : "s"} named in the story outline`;
@@ -443,7 +517,27 @@ export class LineView extends ItemView {
 	}
 
 	private renderLines(root: HTMLElement, entries: NovelEntry[], recon: OutlineReconciliation): void {
-		const model = canvasModel(entries, this.layout, recon);
+		this.renderBoard(root, canvasModel(entries, this.layout, recon), recon, false);
+	}
+
+	/** Read-only Characters mode: derived lines, no drag, no edit controls. */
+	private renderCharacters(root: HTMLElement, entries: NovelEntry[]): void {
+		const recon = this.reconcile(entries);
+		const model = charactersModel(entries, recon);
+		if (model.lines.length === 0) {
+			this.renderNotice(
+				root,
+				"No characters found. List them in a note's scribe-note-characters frontmatter " +
+					"or in the Characters column of the story outline.",
+			);
+		}
+		this.renderBoard(root, model, recon, true);
+	}
+
+	private renderBoard(root: HTMLElement, model: CanvasModel, recon: OutlineReconciliation, readOnly: boolean): void {
+		if (readOnly && model.lines.length === 0 && model.unplaced.length === 0 && model.plannedUnplaced.length === 0) {
+			return;
+		}
 
 		const scroll = root.createDiv({ cls: "scribe-canvas-scroll" });
 		const board = scroll.createDiv({ cls: "scribe-canvas-board" });
@@ -454,26 +548,32 @@ export class LineView extends ItemView {
 			const lineEl = board.createDiv({ cls: "scribe-canvas-line" });
 			lineEl.dataset.lineId = line.def.id;
 			lineEl.style.setProperty("--scribe-line-color", line.def.color);
-			this.renderLineHeader(lineEl, line.def.id, line.def.name, line.def.color, line.cards.length, {
-				first: i === 0,
-				last: i === model.lines.length - 1,
-				only: model.lines.length === 1,
-			});
+			this.renderLineHeader(
+				lineEl,
+				line.def.id,
+				line.def.name,
+				line.def.color,
+				line.cards.length,
+				{ first: i === 0, last: i === model.lines.length - 1, only: model.lines.length === 1 },
+				readOnly,
+			);
 			const rail = lineEl.createDiv({ cls: "scribe-canvas-line-rail" });
-			for (const card of line.cards) this.renderCard(rail, card, false);
+			for (const card of line.cards) this.renderCard(rail, card, false, readOnly);
 		});
 
 		if (model.unplaced.length > 0 || model.plannedUnplaced.length > 0) {
 			const strip = root.createDiv({ cls: "scribe-canvas-unplaced" });
 			strip.createDiv({
 				cls: "scribe-canvas-unplaced-label",
-				text: `Not on any line — drag a card onto a line${
-					model.plannedUnplaced.length > 0 ? " (story outline rows without a valid line included)" : ""
-				}`,
+				text: readOnly
+					? "No characters listed"
+					: `Not on any line — drag a card onto a line${
+							model.plannedUnplaced.length > 0 ? " (story outline rows without a valid line included)" : ""
+						}`,
 			});
 			const rail = strip.createDiv({ cls: "scribe-canvas-unplaced-rail" });
 			for (const entry of model.unplaced) {
-				this.renderCard(rail, { kind: "real", entry, planned: null, x: 0, summary: null, mark: null }, true);
+				this.renderCard(rail, { kind: "real", entry, planned: null, x: 0, summary: null, mark: null }, true, readOnly);
 			}
 			for (const p of model.plannedUnplaced) {
 				this.renderCard(
@@ -484,9 +584,10 @@ export class LineView extends ItemView {
 						planned: p,
 						x: 0,
 						summary: p.row.summary || null,
-						mark: recon.marks[p.expectedPath] ?? null,
+						mark: readOnly ? null : (recon.marks[p.expectedPath] ?? null),
 					},
 					true,
+					readOnly,
 				);
 			}
 		}
@@ -499,27 +600,32 @@ export class LineView extends ItemView {
 		color: string,
 		count: number,
 		pos: { first: boolean; last: boolean; only: boolean },
+		readOnly: boolean,
 	): void {
 		const header = lineEl.createDiv({ cls: "scribe-canvas-line-header" });
 
 		const nameRow = header.createDiv({ cls: "scribe-canvas-line-name-row" });
 		const nameEl = nameRow.createDiv({ cls: "scribe-canvas-line-name", text: name });
-		nameEl.tabIndex = 0;
-		nameEl.setAttr("role", "button");
-		nameEl.setAttr("aria-label", "Rename line");
-		nameEl.addEventListener("click", () => this.editLineName(nameRow, id, name));
-		nameEl.addEventListener("keydown", (e) => {
-			if (e.key === "Enter" || e.key === " ") {
-				e.preventDefault();
-				this.editLineName(nameRow, id, name);
-			}
-		});
+		if (!readOnly) {
+			nameEl.tabIndex = 0;
+			nameEl.setAttr("role", "button");
+			nameEl.setAttr("aria-label", "Rename line");
+			nameEl.addEventListener("click", () => this.editLineName(nameRow, id, name));
+			nameEl.addEventListener("keydown", (e) => {
+				if (e.key === "Enter" || e.key === " ") {
+					e.preventDefault();
+					this.editLineName(nameRow, id, name);
+				}
+			});
+		}
 		const countEl = nameRow.createSpan({
 			cls: "scribe-canvas-line-count",
 			attr: { "aria-label": `${count} card${count === 1 ? "" : "s"}` },
 		});
 		setIcon(countEl.createSpan({ cls: "scribe-canvas-line-count-icon" }), "layers");
 		countEl.createSpan({ text: String(count) });
+
+		if (readOnly) return;
 
 		const controls = header.createDiv({ cls: "scribe-canvas-line-controls" });
 
@@ -572,15 +678,15 @@ export class LineView extends ItemView {
 		});
 	}
 
-	private renderCard(parent: HTMLElement, card: CanvasCard, flow: boolean): void {
+	private renderCard(parent: HTMLElement, card: CanvasCard, flow: boolean, readOnly: boolean): void {
 		if (card.kind === "planned" && card.planned) {
-			this.renderPlannedCard(parent, card.planned, card.x, card.summary, card.mark, flow);
+			this.renderPlannedCard(parent, card.planned, card.x, card.summary, card.mark, flow, readOnly);
 			return;
 		}
-		if (card.entry) this.renderRealCard(parent, card, flow);
+		if (card.entry) this.renderRealCard(parent, card, flow, readOnly);
 	}
 
-	private renderRealCard(parent: HTMLElement, card: CanvasCard, flow: boolean): void {
+	private renderRealCard(parent: HTMLElement, card: CanvasCard, flow: boolean, readOnly: boolean): void {
 		const entry = card.entry as NovelEntry;
 		const el = parent.createDiv({
 			cls: `scribe-canvas-card scribe-canvas-card--${entry.type}${flow ? " is-flow" : ""}`,
@@ -617,7 +723,7 @@ export class LineView extends ItemView {
 			if (this.drag) return;
 			void this.app.workspace.getLeaf(false).openFile(entry.file);
 		});
-		el.addEventListener("pointerdown", (e) => this.onCardPointerDown(e, entry.file.path, el, flow));
+		if (!readOnly) el.addEventListener("pointerdown", (e) => this.onCardPointerDown(e, entry.file.path, el, flow));
 
 		const siblings = this.cardEls.get(entry.file.path) ?? [];
 		siblings.push(el);
@@ -634,6 +740,7 @@ export class LineView extends ItemView {
 		summary: string | null,
 		mark: string | null,
 		flow: boolean,
+		readOnly: boolean,
 	): void {
 		const el = parent.createDiv({
 			cls: `scribe-canvas-card scribe-canvas-card--planned${flow ? " is-flow" : ""}`,
@@ -658,6 +765,7 @@ export class LineView extends ItemView {
 			body.createDiv({ cls: "scribe-canvas-card-context", text: context.join(" - ") });
 		}
 		if (summary) body.createDiv({ cls: "scribe-canvas-card-summary", text: summary });
+		if (readOnly) return;
 		body.createDiv({ cls: "scribe-canvas-card-create", text: "＋ Create note" });
 
 		el.setAttr("aria-label", `Create note "${planned.expectedPath}"`);

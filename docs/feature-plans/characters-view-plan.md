@@ -1,11 +1,11 @@
 # Implementation plan — the Characters mode of StoryLines
 
-Status: **Draft — awaiting maintainer confirmation. No code written yet.**
+Status: **Built (phases 1–3).** Decisions below were confirmed by the maintainer. One refinement: a note/outline conflict is only flagged when *both* sides list characters and they differ — the outline column is optional, so an empty side is not a conflict.
 Branch: `feat/characters-storylines-view`.
 
 ## Goal
 
-Add a **mode selector** (combo box) to the StoryLines toolbar with two options:
+Add a **mode selector** (combo box on the right top section) to the StoryLines toolbar with two options:
 
 1. **StoryLines** — today's view, unchanged: lines come from `Lines.md`, cards
    are discovered from the folder/note structure (and the Story Outline), and
@@ -57,8 +57,8 @@ view can reuse the existing renderer:
 - Normalise names for matching: trim, strip `[[wikilink]]` brackets / `|alias`,
   compare case-insensitively; display the first spelling seen.
 - One synthetic line per character: `{ id: "character:<normalised>", name,
-  color, order }`. Order = **first appearance in manuscript order** (the
-  protagonist who opens the book is on top), ties alphabetical.
+  color, order }`. Order = **alphabetical** (maintainer decision); the first spelling seen in
+  manuscript order is the display name.
 - Card column = `manuscriptColumns(entries, planned)`, the same shared axis as
   StoryLines, so cards line up across lines and a character that skips a
   chapter leaves a visible gap.
@@ -123,18 +123,17 @@ story" section + architecture table + the one-card-one-line note), this plan.
 ## Open questions — need your confirmation before I start
 
 1. **Frontmatter vs. outline when both name characters for the same note:**
-   union of both (recommended), or frontmatter wins when present?
-2. **Where is the selected mode remembered?** Per-tab view state (recommended,
-   no setting added, in line with "favour fewer settings"), or a plugin setting?
-3. **Ghost cards (planned, no note yet) in Characters mode:** show them dashed
-   and non-clickable (recommended — the mode is read-only), or keep
-   click-to-create?
-4. **Line order for characters:** first appearance in the manuscript
-   (recommended), or alphabetical?
-5. **Notes with no characters:** shown in a "No characters listed" strip
-   (recommended), or hidden?
-6. **Default mode when opening the view:** StoryLines (recommended, current
-   behaviour).
+  Decision: Union of both and use the same warning icon with a small message with this "conflict"
+2. **Where is the selected mode remembered?** 
+  Decision: Per-tab view state (recommended, no setting added, in line with "favour fewer settings")
+3. **Ghost cards (planned, no note yet) in Characters mode:** 
+  Decision: Show them dashed and non-clickable (recommended — the mode is read-only)
+4. **Line order for characters:** 
+  Decision: Alphabetical
+5. **Notes with no characters:** 
+  Decision: Shown in a "No characters listed" strip (recommended)
+6. **Default mode when opening the view:** 
+  Decision: StoryLines (recommended, current behaviour)
 
 ## Out of scope (for now)
 

@@ -56,6 +56,7 @@ const EMPTY_PLAN: OutlineReconciliation = {
 	marks: {},
 	fulfilledPaths: [],
 	fulfilledLineIds: {},
+	fulfilledCharacters: {},
 	unknownLines: [],
 };
 
@@ -249,7 +250,7 @@ export function canvasModel(
  * slightly between neighbours) so consecutive picks read as clearly distinct,
  * not just lighter/darker shades of the same color.
  */
-const LINE_COLOR_PALETTE = [
+export const LINE_COLOR_PALETTE = [
 	"#c32222", // red
 	"#ce673b", // burnt orange
 	"#d08c25", // amber
