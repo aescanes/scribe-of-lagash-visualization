@@ -7,8 +7,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [0.11.0](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.11.0) - 2026-10-02
 
-## [0.10.0](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.10.0) - 2026-10-01
-
 ### Added
 - **Characters mode view** for the StoryLines tab: a combo box at the top right
   switches between **StoryLines** (unchanged) and a read-only **Characters**
@@ -16,6 +14,10 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `scribe-note-characters` frontmatter and the Story Outline's `Characters`
   column (merged; a ⚠ flags notes and rows that disagree). Nothing is saved in
   this mode, and each tab remembers its mode.
+
+## [0.10.0](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.10.0) - 2026-10-01
+
+### Added
 - The **Story folder** setting now offers type-ahead folder suggestions as you
   type, and only applies the typed path when you click **Set** (or press
   Enter), validating first that the folder actually exists.
