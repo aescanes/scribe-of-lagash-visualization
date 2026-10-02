@@ -5,6 +5,8 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.11.0](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.11.0) - 2026-10-02
+
 ## [0.10.0](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.10.0) - 2026-10-01
 
 ### Added
