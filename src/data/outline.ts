@@ -202,6 +202,12 @@ export interface OutlineReconciliation {
 	 * does for a ghost card.
 	 */
 	fulfilledLineIds: Record<string, string>;
+	/**
+	 * Vault path -> the fulfilling row's `Characters` cell, for every fulfilled
+	 * path whose row lists any — lets the Characters mode view merge them with the
+	 * note's own `scribe-note-characters`.
+	 */
+	fulfilledCharacters: Record<string, string[]>;
 	/** `Line` cell values that matched no line in Lines.md, for diagnostics. */
 	unknownLines: string[];
 }
@@ -212,6 +218,7 @@ const emptyReconciliation: OutlineReconciliation = {
 	marks: {},
 	fulfilledPaths: [],
 	fulfilledLineIds: {},
+	fulfilledCharacters: {},
 	unknownLines: [],
 };
 
@@ -334,6 +341,7 @@ export function reconcileOutline(
 	const marks: Record<string, string> = {};
 	const fulfilledPaths = new Set<string>();
 	const fulfilledLineIds: Record<string, string> = {};
+	const fulfilledCharacters: Record<string, string[]> = {};
 	const unknownLines = new Set<string>();
 
 	for (const r of rowInfo) {
@@ -368,6 +376,7 @@ export function reconcileOutline(
 		const path = matched.file.path;
 		fulfilledPaths.add(path);
 		if (rowLineId !== null) fulfilledLineIds[path] = rowLineId;
+		if (row.characters.length > 0) fulfilledCharacters[path] = row.characters;
 		if (row.summary) previews[path] = row.summary;
 
 		const issues: string[] = [];
@@ -406,6 +415,7 @@ export function reconcileOutline(
 		marks,
 		fulfilledPaths: Array.from(fulfilledPaths),
 		fulfilledLineIds,
+		fulfilledCharacters,
 		unknownLines: Array.from(unknownLines).sort(),
 	};
 }

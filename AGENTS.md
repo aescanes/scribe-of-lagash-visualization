@@ -40,6 +40,17 @@ folder-based approach before adding a new frontmatter field or setting.
   **lines** (horizontal coloured tracks) and drags each card onto a line. The
   arrangement is saved in the Lines file. `LineView`, `VIEW_TYPE_LINE_VIEW`,
   ribbon icon / "Open lines" command.
+- **Characters mode view** — a read-only alternative to the Line view, chosen with
+  the combo box at the top right of the same tab (mode kept in the leaf's view
+  state, default Line view). One derived line per character, alphabetical,
+  built by `charactersModel` in `views/charactersModel.ts` from
+  `scribe-note-characters` and the Outline's `Characters` column (union; a ⚠
+  mark when both list names and differ). Cards sit on the same
+  manuscript-order columns; a scene naming two characters appears on both
+  lines (derived, never saved — the one-card-one-line rule is for Lines.md).
+  No drag, no edit controls, ghost cards non-clickable, and it writes nothing
+  (not even `Lines.md`). Plan:
+  [`docs/feature-plans/characters-view-plan.md`](docs/feature-plans/characters-view-plan.md).
 - **Chronological view** *(planned)* — orders the same chapters/scenes by their
   `scribe-note-date`, and only works for notes that have that property.
   Not built yet.
@@ -185,6 +196,8 @@ Entry point: [`src/main.ts`](src/main.ts) → `ScribeVisualizationPlugin`.
 | Path breadcrumb | [`src/data/pathContext.ts`](src/data/pathContext.ts) | Pure: `folderContext(filePath, baseFolder)` → folder segments shown under a card title |
 | Lines file I/O | [`src/data/lineFile.ts`](src/data/lineFile.ts) | `readLineLayout` / `writeLineLayout` for the per-story `Lines.md` (write preserves the note body via `processFrontMatter`, or creates the file) |
 | Line render model | [`src/views/canvasModel.ts`](src/views/canvasModel.ts) | Pure, unit-tested: `canvasModel(entries, layout, outline?)` → lines + real/ghost `cards` + `unplaced` + `plannedUnplaced`; `manuscriptColumns` (each card's default column on the shared reading-order axis); every layout edit (`moveCard` — drop at an exact column, pushing a card already there and its right neighbours over, no compaction; `alignToOutlineOrder` — snap the board back to the Story Outline: ghost cards drop any dragged placement and return to the line their `Line` cell names; a real note whose row names a line that exists in `Lines.md` (`OutlineReconciliation.fulfilledLineIds`) moves onto that line too, the same way — a real note with no row, or whose row names no valid line, keeps its current line; every placed card's column snaps to reading order (offered only when a Story Outline exists); `reconcilePlacements`, `applyPlannedPlacements`, `addLine` / `renameLine` / `recolorLine` / `moveLine` / `removeLine`, `cloneLayout`, `starterLayout`, `starterLayoutFromOutline` — a first layout with one line per outline `Line` value, entries seeded onto the line their row names at their manuscript column). **All layout maths live here, not in the view.** |
+| Characters mode viewl | [`src/views/charactersModel.ts`](src/views/charactersModel.ts) | Pure, unit-tested: `charactersModel(entries, reconciliation)` → a `CanvasModel` with one derived line per character for the read-only Characters mode view (needs `OutlineReconciliation.fulfilledCharacters`) |
+| View modes | [`src/views/viewModes.ts`](src/views/viewModes.ts) | Pure, unit-tested registry of the StoryLines tab's modes (`VIEW_MODES`): each `ViewModeDef` says whether it is `editable`, its empty/unplaced-strip wording, and its `buildModel`. **The view never checks which mode it is in** — it reads the descriptor (`isEditable()`, `def.buildModel`). A new mode (places, dates, …) is one entry here plus its model function; `parseViewMode` coerces saved view state |
 | Line view | [`src/views/lineView.ts`](src/views/lineView.ts) | `ItemView` (`VIEW_TYPE_LINE_VIEW`). DOM + pointer-drag only: renders from `canvasModel`, calls the pure ops via `mutate()` (push undo snapshot → apply → debounced save → re-render). Reads `Lines.md` + the outline on open / story-folder setting change / index change; a toolbar ⟳ button (shown only when `missingOutlineLines()` is non-empty) adds the lines the outline names but `Lines.md` lacks, an "Align cards to Story Outline " button (shown only while `outlineRows` is non-empty) re-spreads cards onto their reading-order columns, both as one undoable `mutate`; creates notes from ghost cards via a `confirm` modal |
 | Confirm modal | [`src/views/confirmModal.ts`](src/views/confirmModal.ts) | `confirm(app, {title, body, cta})` → `Promise<boolean>` (Obsidian ships no confirm primitive) |
 | Settings | [`src/settings/`](src/settings/) | Story folder, Line-file name, Outline-file name (empty = off) + its "Create" button, title language. `settingsTab.ts`'s rows are defined once (`settingRows()`) and rendered by both `getSettingDefinitions()` (declarative, Obsidian 1.13+, makes settings show up in Obsidian's search) and `display()` (imperative fallback for older Obsidian) |

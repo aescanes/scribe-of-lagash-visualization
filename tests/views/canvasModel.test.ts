@@ -209,6 +209,7 @@ function plan(over: Partial<OutlineReconciliation> = {}): OutlineReconciliation 
 		marks: {},
 		fulfilledPaths: [],
 		fulfilledLineIds: {},
+		fulfilledCharacters: {},
 		unknownLines: [],
 		...over,
 	};
