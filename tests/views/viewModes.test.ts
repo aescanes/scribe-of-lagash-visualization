@@ -66,7 +66,7 @@ test("the StoryLines mode builds exactly the canvas model", () => {
 	);
 });
 
-test("the Characters mode ignores the layout and groups by character", () => {
+test("the Characters mode view ignores the layout and groups by character", () => {
 	const empty: LineLayout = { lines: [], placements: {} };
 	const model = VIEW_MODES.characters.buildModel({ entries: [entry(["Alice"])], layout: empty, recon });
 	assert.deepEqual(model.lines.map((l) => l.def.name), ["Alice"]);

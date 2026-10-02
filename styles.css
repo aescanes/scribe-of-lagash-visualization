@@ -505,7 +505,7 @@
 	padding-left: var(--size-4-4);
 }
 
-/* Read-only Characters mode: cards open their note on click but can't be dragged. */
+/* Read-only Characters mode view: cards open their note on click but can't be dragged. */
 .scribe-canvas-view.is-readonly .scribe-canvas-card {
 	cursor: pointer;
 }
@@ -518,7 +518,7 @@
 	cursor: default;
 }
 
-/* Characters mode: the "No characters listed" strip stays one scrollable row so
+/* Characters mode view: the "No characters listed" strip stays one scrollable row so
    it never takes space from the lines above it. */
 .scribe-canvas-view.is-readonly .scribe-canvas-unplaced {
 	flex: none;

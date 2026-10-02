@@ -1,4 +1,4 @@
-# Implementation plan — the Characters mode of StoryLines
+# Implementation plan — the Characters mode view of StoryLines
 
 Status: **Built (phases 1–3).** Decisions below were confirmed by the maintainer. One refinement: a note/outline conflict is only flagged when *both* sides list characters and they differ — the outline column is optional, so an empty side is not a conflict.
 Branch: `feat/characters-storylines-view`.
@@ -23,7 +23,7 @@ The source of truth for "who appears where":
   `OutlineRow.characters`), which also covers planned notes that have no file yet.
 
 This follows the plugin's core principle: the plugin never edits notes, and the
-Characters mode **writes nothing at all** — not even `Lines.md`.
+Characters mode view **writes nothing at all** — not even `Lines.md`.
 
 ## What already exists and gets reused
 
@@ -37,7 +37,7 @@ Characters mode **writes nothing at all** — not even `Lines.md`.
 | Line colours | `LINE_COLOR_PALETTE` in `canvasModel.ts` |
 
 > Note: "one card belongs to exactly one line" is a rule of the StoryLines mode
-> (`AGENTS.md`). In Characters mode a scene with two characters **must** appear
+> (`AGENTS.md`). In Characters mode view a scene with two characters **must** appear
 > on two lines — that is the point of the view. It is derived data, never saved,
 > so it doesn't conflict with the Lines-file rule.
 
@@ -81,9 +81,9 @@ view can reuse the existing renderer:
   "Create N planned notes" buttons; ghost cards are shown dashed but a click does
   **not** create a note (see open question 3). Real cards still open their note
   on click. `Mod+Z` is a no-op in this mode.
-- Characters mode does **not** require `Lines.md`: it works with only notes, only
+- Characters mode view does **not** require `Lines.md`: it works with only notes, only
   an outline, or both. The "Create lines" prompt is skipped.
-- `autoPlace()` / `save()` are skipped while in Characters mode (nothing to
+- `autoPlace()` / `save()` are skipped while in Characters mode view (nothing to
   write); the in-memory StoryLines `layout` and its undo stack are kept so
   switching back loses nothing.
 - Persist the chosen mode in the leaf's view state (`getState` / `setState`) so it
@@ -135,7 +135,7 @@ story" section + architecture table + the one-card-one-line note), this plan.
   Decision: Union of both and use the same warning icon with a small message with this "conflict"
 2. **Where is the selected mode remembered?** 
   Decision: Per-tab view state (recommended, no setting added, in line with "favour fewer settings")
-3. **Ghost cards (planned, no note yet) in Characters mode:** 
+3. **Ghost cards (planned, no note yet) in Characters mode view:** 
   Decision: Show them dashed and non-clickable (recommended — the mode is read-only)
 4. **Line order for characters:** 
   Decision: Alphabetical

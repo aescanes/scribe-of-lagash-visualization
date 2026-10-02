@@ -6,7 +6,7 @@ import { OutlineReconciliation } from "../data/outline";
 import { CanvasCard, CanvasLine, CanvasModel, LINE_COLOR_PALETTE, manuscriptColumns } from "./canvasModel";
 
 /**
- * Pure model for the read-only Characters mode: one derived line per
+ * Pure model for the read-only Characters mode view: one derived line per
  * character, each holding the chapters/scenes that name them, on the same
  * manuscript-order columns the StoryLines mode starts from. Nothing here is
  * ever saved — the lines and the card-on-several-lines duplication exist only

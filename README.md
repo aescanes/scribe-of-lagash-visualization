@@ -56,7 +56,7 @@ plugins for planning and writing stories:
   to the StoryLines file (`StoryLines.md`) automatically; `Mod+Z` undoes.
 
   <img src="https://raw.githubusercontent.com/aescanes/scribe-of-lagash-visualization/main/docs/images/storylines-tab.png" alt="StoryLines view" width="600">
-- **Characters mode** — the combo box at the top right of the StoryLines tab
+- **Characters mode view** — the combo box at the top right of the StoryLines tab
   switches between **StoryLines** and **Characters**. Characters keeps the same
   look but is read-only: one line per character (alphabetical), each showing
   the chapters/scenes that name them in reading order, so a scene with two
@@ -67,6 +67,8 @@ plugins for planning and writing stories:
   non-clickable cards, and notes with no characters sit in a "No characters
   listed" strip. Nothing is moved, created or saved in this mode, and each tab
   remembers its own mode.
+
+  <img src="https://raw.githubusercontent.com/aescanes/scribe-of-lagash-visualization/main/docs/images/character-lines-tab.png" alt="StoryLines view" width="600">
 - **Story Outline file** *(optional)* — name a file under **Story Outline file
   name** in settings and click **Create**; it's written as an empty
   Markdown table (Act / Chapter / Scene / Line / Synopsis). The `.md` extension
@@ -76,7 +78,10 @@ plugins for planning and writing stories:
   on the StoryLines view, and clicking one creates the note (title, Synopsis,
   frontmatter) on that line. Once a note exists its Synopsis shows on the
   card; a row that disagrees with the real note/folder gets a ⚠ marker — the
-  files always win. See
+  files always win.
+  
+  The optional `Characters` column (comma-separated names)
+  feeds the **Characters mode view** view, including for notes not written yet. See
   [docs/feature-plans/outline-file-plan.md](docs/feature-plans/outline-file-plan.md).
 
   <img src="https://raw.githubusercontent.com/aescanes/scribe-of-lagash-visualization/main/docs/images/story-outline.png" alt="Story Outline file" width="500">
@@ -171,7 +176,9 @@ e.g. a `Chapter` cell of `1 - The beginning` plans `Chapter 1 - The beginning.md
 the same as if you'd typed that title directly. The `Act` / `Chapter` / `Scene`
 words and folder names follow the **Title language** setting. `Line` is a line
 name or id from the StoryLines file; `Synopsis` shows on the card and becomes
-the note body when you create it. A row with neither a `Chapter` nor a `Scene`
+the note body when you create it. List the people in a scene under `Characters`
+(comma-separated, e.g. `Harry, Ron, Hermione`) to enable the **Characters mode view**
+view: each name becomes a line showing the chapters/scenes it appears in. A row with neither a `Chapter` nor a `Scene`
 value is ignored, and un-numbered units (`Prologue`, …) can't be planned here —
 create those notes directly. The Story Outline file created for you repeats
 this guide below the table.

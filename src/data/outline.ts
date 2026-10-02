@@ -204,7 +204,7 @@ export interface OutlineReconciliation {
 	fulfilledLineIds: Record<string, string>;
 	/**
 	 * Vault path -> the fulfilling row's `Characters` cell, for every fulfilled
-	 * path whose row lists any — lets the Characters mode merge them with the
+	 * path whose row lists any — lets the Characters mode view merge them with the
 	 * note's own `scribe-note-characters`.
 	 */
 	fulfilledCharacters: Record<string, string[]>;
