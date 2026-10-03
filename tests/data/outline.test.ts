@@ -105,7 +105,7 @@ test("parseOutlineTable: the created skeleton (help comment + empty row) has no 
 		"<!-- Managed by Scribe of Lagash - Visualization — created once, never rewritten.",
 		"     Chapters as files, no acts . . . . . Chapter                -> Chapter 1.md",
 		"     Scenes in chapter folders . . . . . Chapter + Scene        -> Chapter 1/Scene 2.md",
-		"     Also recognised: Folder, Date, Characters, Locations, Status. -->",
+		"     Also recognized: Folder, Date, Characters, Locations, Status. -->",
 		"",
 		"| Act | Chapter | Scene | Line | Synopsis | Characters |",
 		"| --- | ------- | ----- | ---- | -------- | ---------- |",

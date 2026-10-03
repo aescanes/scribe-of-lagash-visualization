@@ -10,7 +10,7 @@ in Obsidian.
 
 This plugin doesn't own your prose: chapters and scenes are just regular notes
 in your vault. Point the plugin at the folder that holds a story and it
-recognises chapters and scenes from their titles ("Chapter 1", "Scene II",
+recognizes chapters and scenes from their titles ("Chapter 1", "Scene II",
 "Prologue", …); a little `scribe-note-*` frontmatter is optional and
 only needed to override the title or add detail. You can see the story in three
 views: **StoryLines**, where you arrange the cards on your own lines, and the
@@ -59,14 +59,14 @@ between cards. Dropping a card onto an occupied column nudges the others
 right. When a Story Outline is set up, an **Align cards to Story Outline**
 toolbar button snaps every card — real or planned — back to the outline's
 reading order and onto the line its row names. Add /
-rename / recolour / reorder / delete lines from the line headers. Changes save
+rename / recolor / reorder / delete lines from the line headers. Changes save
 to the StoryLines file (`StoryLines.md`) automatically; `Mod+Z` undoes.
 
 <img src="https://raw.githubusercontent.com/aescanes/scribe-of-lagash-visualization/main/docs/images/storylines-view.png" alt="StoryLines view" width="600">
 
 ### **Characters view**
 The combo box at the top right of the StoryLines tab
-switches between the different move views. Characters keeps the same
+switches between the different views. Characters keeps the same
 look but is read-only: one line per character (alphabetical), each showing
 the chapters/scenes that name them in reading order, so a scene with two
 characters appears on both lines. Names come from the notes'
@@ -116,7 +116,7 @@ In the plugin settings, add the vault-relative folder that holds your story's
 notes under **Story folder**. The
 plugin scans that folder and classifies each note by its **title**:
 
-| Title looks like | Recognised as |
+| Title looks like | Recognized as |
 |---|---|
 | `Chapter 1`, `Chapter IV`, `Ch. 12 — The Fall` | chapter (number 1, 4, 12) |
 | `Scene 2`, `Scene IX` | scene |
@@ -125,7 +125,7 @@ plugin scans that folder and classifies each note by its **title**:
 
 Leave **Story folder** empty to scan the whole vault instead.
 
-### Recognised title words
+### Recognized title words
 
 The **Title language** setting picks which language's words the plugin looks for
 at the **start** of a note's title. The number may be digits or a roman numeral

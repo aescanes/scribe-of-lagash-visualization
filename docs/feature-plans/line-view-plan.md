@@ -11,7 +11,7 @@ as a historical record.
 
 ## Goal
 
-A book's default view: horizontal, coloured **lines**. Chapter / scene cards are
+A book's default view: horizontal, colored **lines**. Chapter / scene cards are
 discovered from a **book folder** (by parsing note titles), each placed on one
 line, and can be dragged between lines and reordered. The arrangement persists
 to a per-book **Lines file** (`Lines.md`).
@@ -145,7 +145,7 @@ auto-placed on the topmost lane on load and on index change. Saves are debounced
 (700 ms) via `writeBookLayout` and flushed on close; while open the in-memory
 `layout` is authoritative and the file is only re-read on open / book switch.
 
-All the layout maths (`moveCard`, `reconcilePlacements`, `addLane` /
+All the layout math (`moveCard`, `reconcilePlacements`, `addLane` /
 `renameLane` / `recolorLane` / `moveLane` / `removeLane`, `cloneLayout`) live as
 pure functions in [`canvasModel.ts`](../src/views/canvasModel.ts) and are
 unit-tested; the view only does DOM + pointer handling.
@@ -174,7 +174,7 @@ membership" prototype was built and dropped).
 ## Phase 3 — Integration & polish ✅ done
 
 - **Bases view & simple list view** — first kept, then (with the removal of the
-  frontmatter keys they depended on) **removed** in favour of the line view plus
+  frontmatter keys they depended on) **removed** in favor of the line view plus
   the coming chronological view.
 - **Frontmatter keys** — `scribe-visualization-type` / `-order` / `-timelines`
   removed. Chapter/scene comes from the title, order from folder structure +
@@ -185,14 +185,14 @@ membership" prototype was built and dropped).
   ("English", "Español"). Adding a language is one `LANGUAGE_PATTERNS` entry +
   one `LANGUAGE_LABELS` entry. Unit-tested, including that the tables don't
   bleed into each other.
-- **Canvas restyle** — each lane is now a thin coloured line (a rail `::before`)
-  with cards sitting centred on it (`top: 50%; translateY(-50%)`, coloured left
+- **Canvas restyle** — each lane is now a thin colored line (a rail `::before`)
+  with cards sitting centred on it (`top: 50%; translateY(-50%)`, colored left
   edge), rather than a tinted full-height band. Canvas surface is
   `--background-secondary`, cards `--background-primary` + `--shadow-s`, opaque
   on hover. Drag now moves the card with an inline `transform: translate(delta)`
   from its resting spot (not `position: fixed` + `left/top`, which drifted right
   when an ancestor `contain`s or transforms the fixed containing block). Lane
-  headers, colours, names, and reordering are unchanged. Ongoing: `Phase 3` is
+  headers, colors, names, and reordering are unchanged. Ongoing: `Phase 3` is
   now the home for further small visual / UX adjustments.
 - **Docs** — `CHANGELOG.md` / `README.md` updated. Screenshots still need to be
   taken in a real vault by the maintainer.
@@ -219,7 +219,7 @@ comes back it needs a fresh design, not this one.
   line (Chapter 4 on line 2 sits in the same column it would occupy if the book
   were one line). Cards created from the outline take their global manuscript
   column; the user can drag a card to any column and leave holes, and dropping
-  onto an occupied column pushes the occupant (and its right neighbours on that
+  onto an occupied column pushes the occupant (and its right neighbors on that
   line) over. No mutation compacts a line any more. When a Story Outline is
   configured, a toolbar button "Align cards to Story Outline "
   (`alignToOutlineOrder` in `canvasModel.ts`) snaps the board back to the

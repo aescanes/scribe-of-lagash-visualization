@@ -5,6 +5,12 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+- **US English throughout.** The settings heading "Behaviour" is now
+  "Behavior", and the text written into a new Story Outline file now says
+  "organized" and "Also recognized". The docs (AGENTS.md and the feature plans)
+  were converted too, and AGENTS.md now asks for US English only.
+
 ## [0.12.0](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.12.0) - 2026-10-03
 
 ### Added
@@ -44,7 +50,7 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 - The settings tab now groups its rows under **Scope** (Story folder,
-  StoryLines file name, Story Outline file name) and **Behaviour** (Title /
+  StoryLines file name, Story Outline file name) and **Behavior** (Title /
   Folder language) headings, instead of one flat list.
 - **Story folder** is now a single folder (one story per vault) instead of a
   list — the story-switcher dropdown in the StoryLines toolbar is gone.
@@ -332,7 +338,7 @@ Changed
   Lines file already exists and the outline names a line it doesn't have, a refresh
   button appears in the toolbar; clicking it adds those lines (theme-accent
   colour) in one undoable step. Lines are only ever added — never renamed,
-  recoloured, reordered, removed, and no existing card is moved.
+  recolored, reordered, removed, and no existing card is moved.
 
 ### Changed
 - The Lines file and Outline file are now created with a `(SL) ` prefix on their
@@ -416,7 +422,7 @@ Changed
 ### Added
 
 - Timeline canvas editing: drag a card along a lane to reorder it or onto
-  another lane to move it; add, rename, recolour, reorder and delete lanes from
+  another lane to move it; add, rename, recolor, reorder and delete lanes from
   the lane headers and toolbar. New chapters/scenes are auto-placed on the top
   lane. Every change saves to `Timelines.md` (debounced) and `Mod+Z` / the Undo
   button step back through changes.

@@ -165,7 +165,7 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 		];
 	}
 
-	/** Rows grouped under the "Behaviour" heading: how the plugin interprets the notes it finds. */
+	/** Rows grouped under the "Behavior" heading: how the plugin interprets the notes it finds. */
 	private behaviourRows(): SettingRow[] {
 		return [
 			{
@@ -203,7 +203,7 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 			},
 			{
 				type: "group",
-				heading: "Behaviour",
+				heading: "Behavior",
 				items: this.behaviourRows().map(({ name, desc, render }) => ({ name, desc, render })),
 			},
 		];
@@ -221,7 +221,7 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 			render(new Setting(containerEl).setName(name).setDesc(desc));
 		}
 
-		new Setting(containerEl).setName("Behaviour").setHeading();
+		new Setting(containerEl).setName("Behavior").setHeading();
 		for (const { name, desc, render } of this.behaviourRows()) {
 			render(new Setting(containerEl).setName(name).setDesc(desc));
 		}
