@@ -5,6 +5,8 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.12.1](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.12.1) - 2026-10-03
+
 ### Changed
 - **US English throughout.** The settings heading "Behaviour" is now
   "Behavior", and the text written into a new Story Outline file now says
