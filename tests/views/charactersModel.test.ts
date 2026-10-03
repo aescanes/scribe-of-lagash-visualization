@@ -20,7 +20,7 @@ function entry(n: number, characters: string[] = [], over: Partial<NovelEntry> =
 		order: n,
 		date: null,
 		characters,
-		places: [],
+		locations: [],
 		status: null,
 		wordCount: 0,
 		...over,
@@ -40,7 +40,7 @@ function planned(n: number, characters: string[] = []): PlannedEntry {
 		summary: "plan",
 		date: null,
 		characters,
-		places: [],
+		locations: [],
 		status: null,
 	};
 	return { row, type: "chapter", label: `Chapter ${n}`, expectedPath: `Book/Chapter ${n}.md`, lineId: null };
@@ -54,6 +54,7 @@ function plan(over: Partial<OutlineReconciliation> = {}): OutlineReconciliation 
 		fulfilledPaths: [],
 		fulfilledLineIds: {},
 		fulfilledCharacters: {},
+		fulfilledLocations: {},
 		unknownLines: [],
 		...over,
 	};

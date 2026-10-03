@@ -5,6 +5,18 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- **Locations view** for the StoryLines tab: the same read-only view as
+  Characters, with one line per location, built from the notes'
+  `scribe-note-locations` frontmatter and the Story Outline's `Locations`
+  column.
+
+### Changed
+- **Places are now locations.** The frontmatter key is `scribe-note-locations`
+  and the Story Outline column is `Locations`. The old `scribe-note-places` key
+  and `Places` column are still read, but never written — rename them when
+  convenient.
+
 ## [0.11.1](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.11.1) - 2026-10-03
 
 ### Changed
@@ -14,7 +26,7 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.11.0](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.11.0) - 2026-10-02
 
 ### Added
-- **Characters mode view** for the StoryLines tab: a combo box at the top right
+- **Characters view mode** for the StoryLines tab: a combo box at the top right
   switches between **StoryLines** (unchanged) and a read-only **Characters**
   view with one line per character, built from the notes'
   `scribe-note-characters` frontmatter and the Story Outline's `Characters`

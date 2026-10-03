@@ -19,6 +19,7 @@ type ColumnName =
 	| "synopsis"
 	| "date"
 	| "characters"
+	| "locations"
 	| "places"
 	| "status";
 
@@ -105,7 +106,7 @@ export function parseOutlineTable(markdownBody: string): OutlineRow[] {
 			summary: cellAt(cells, "synopsis"),
 			date: toStringOrNull(cellAt(cells, "date")),
 			characters: toStringArray(cellAt(cells, "characters")),
-			places: toStringArray(cellAt(cells, "places")),
+			locations: toStringArray(cellAt(cells, "locations") || cellAt(cells, "places")),
 			status: toStringOrNull(cellAt(cells, "status")),
 		});
 	}
@@ -204,10 +205,12 @@ export interface OutlineReconciliation {
 	fulfilledLineIds: Record<string, string>;
 	/**
 	 * Vault path -> the fulfilling row's `Characters` cell, for every fulfilled
-	 * path whose row lists any — lets the Characters mode view merge them with the
+	 * path whose row lists any — lets the Characters view merge them with the
 	 * note's own `scribe-note-characters`.
 	 */
 	fulfilledCharacters: Record<string, string[]>;
+	/** Same as `fulfilledCharacters`, for the `Locations` cell and the Locations view. */
+	fulfilledLocations: Record<string, string[]>;
 	/** `Line` cell values that matched no line in Lines.md, for diagnostics. */
 	unknownLines: string[];
 }
@@ -219,6 +222,7 @@ const emptyReconciliation: OutlineReconciliation = {
 	fulfilledPaths: [],
 	fulfilledLineIds: {},
 	fulfilledCharacters: {},
+	fulfilledLocations: {},
 	unknownLines: [],
 };
 
@@ -342,6 +346,7 @@ export function reconcileOutline(
 	const fulfilledPaths = new Set<string>();
 	const fulfilledLineIds: Record<string, string> = {};
 	const fulfilledCharacters: Record<string, string[]> = {};
+	const fulfilledLocations: Record<string, string[]> = {};
 	const unknownLines = new Set<string>();
 
 	for (const r of rowInfo) {
@@ -377,6 +382,7 @@ export function reconcileOutline(
 		fulfilledPaths.add(path);
 		if (rowLineId !== null) fulfilledLineIds[path] = rowLineId;
 		if (row.characters.length > 0) fulfilledCharacters[path] = row.characters;
+		if (row.locations.length > 0) fulfilledLocations[path] = row.locations;
 		if (row.summary) previews[path] = row.summary;
 
 		const issues: string[] = [];
@@ -416,6 +422,7 @@ export function reconcileOutline(
 		fulfilledPaths: Array.from(fulfilledPaths),
 		fulfilledLineIds,
 		fulfilledCharacters,
+		fulfilledLocations,
 		unknownLines: Array.from(unknownLines).sort(),
 	};
 }

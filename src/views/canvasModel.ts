@@ -57,6 +57,7 @@ const EMPTY_PLAN: OutlineReconciliation = {
 	fulfilledPaths: [],
 	fulfilledLineIds: {},
 	fulfilledCharacters: {},
+	fulfilledLocations: {},
 	unknownLines: [],
 };
 

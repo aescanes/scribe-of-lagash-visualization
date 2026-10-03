@@ -118,7 +118,7 @@ Original checklist:
     contiguous; otherwise renders a linked "ghost" in each lane (shared
     `data-note-path`, hover highlights all copies).
 - Card content: type dot (chapter = accent, scene = muted, matching current
-  `styles.css`), title, optional date, characters · places meta. Click → open
+  `styles.css`), title, optional date, characters · locations meta. Click → open
   the note. Badge when `source === "frontmatter"`.
 - States: no book folder configured → setup prompt; folder set but no companion
   file → "Create timeline" button that writes a starter file with one `main`

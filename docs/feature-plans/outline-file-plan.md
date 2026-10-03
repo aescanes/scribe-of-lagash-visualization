@@ -44,7 +44,7 @@ scribe-visualization: outline
 ---
 
 <!-- Managed by Scribe of Lagash - Visualization.
-     Columns: Act | Chapter | Scene | Line | Summary  (Folder/Date/Characters/Places/Status optional).
+     Columns: Act | Chapter | Scene | Line | Summary  (Folder/Date/Characters/Locations/Status optional).
      "Line" is a line name or id from Lines.md. Click a ghost card in the line view to create its note. -->
 
 | Act | Chapter | Scene | Line      | Summary                                   |
@@ -92,7 +92,7 @@ planned book on the canvas and can turn any ghost card into a real note.
 
 - **`src/types.ts`** — `OutlineRow`, `PlannedEntry`, the outline marker value.
   `OutlineRow`: `{ act, folder, chapter, scene, line, summary, date,
-  characters, places, status, rowIndex }`. `PlannedEntry`: `{ row, type:
+  characters, locations, status, rowIndex }`. `PlannedEntry`: `{ row, type:
   "chapter"|"scene", label, expectedPath, lineId: string | null }`.
 - **`src/data/outline.ts`** (no Obsidian imports):
   - `parseOutlineTable(markdownBody): OutlineRow[]` — finds the first GFM

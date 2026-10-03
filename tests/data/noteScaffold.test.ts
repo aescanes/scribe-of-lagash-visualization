@@ -20,7 +20,7 @@ function row(over: Partial<OutlineRow> = {}): OutlineRow {
 		summary: "",
 		date: null,
 		characters: [],
-		places: [],
+		locations: [],
 		status: null,
 		...over,
 	};

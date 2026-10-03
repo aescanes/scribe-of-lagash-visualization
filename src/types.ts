@@ -6,7 +6,7 @@ import type { TFile } from "obsidian";
 /**
  * Frontmatter keys the plugin reads from notes. Namespaced as
  * "scribe-note-*": one shared per-note vocabulary across the whole
- * Scribe of Lagash series, so a note's date / characters / places / status mean
+ * Scribe of Lagash series, so a note's date / characters / locations / status mean
  * the same thing to every plugin in the suite and are written once.
  *
  * Chapter/scene classification and order come from the folder structure and the
@@ -16,9 +16,12 @@ import type { TFile } from "obsidian";
 export const FRONTMATTER_KEYS = {
 	date: "scribe-note-date",
 	characters: "scribe-note-characters",
-	places: "scribe-note-places",
+	locations: "scribe-note-locations",
 	status: "scribe-note-status",
 } as const;
+
+/** Pre-rename spelling of the locations key; read as a fallback, never written. */
+export const LEGACY_PLACES_KEY = "scribe-note-places";
 
 export type EntryType = "chapter" | "scene";
 
@@ -54,7 +57,7 @@ export interface NovelEntry {
 	order: number | null;
 	date: string | null;
 	characters: string[];
-	places: string[];
+	locations: string[];
 	status: string | null;
 	/** Word count of the note's body, excluding frontmatter. */
 	wordCount: number;
@@ -117,7 +120,7 @@ export interface OutlineRow {
 	summary: string;
 	date: string | null;
 	characters: string[];
-	places: string[];
+	locations: string[];
 	status: string | null;
 }
 

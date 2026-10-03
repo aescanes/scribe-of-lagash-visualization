@@ -25,7 +25,7 @@ function entry(path: string, over: Partial<NovelEntry> = {}): NovelEntry {
 		order: null,
 		date: null,
 		characters: [],
-		places: [],
+		locations: [],
 		status: null,
 		wordCount: 0,
 		...over,
@@ -45,7 +45,7 @@ function row(over: Partial<OutlineRow> = {}): OutlineRow {
 		summary: "",
 		date: null,
 		characters: [],
-		places: [],
+		locations: [],
 		status: null,
 		...over,
 	};
@@ -74,7 +74,7 @@ test("parseOutlineTable finds the table, maps columns by name, and strips bracke
 		summary: "Berlín 2029.",
 		date: null,
 		characters: [],
-		places: [],
+		locations: [],
 		status: null,
 	});
 	assert.equal(rows[1].line, "Main line");
@@ -105,7 +105,7 @@ test("parseOutlineTable: the created skeleton (help comment + empty row) has no 
 		"<!-- Managed by Scribe of Lagash - Visualization — created once, never rewritten.",
 		"     Chapters as files, no acts . . . . . Chapter                -> Chapter 1.md",
 		"     Scenes in chapter folders . . . . . Chapter + Scene        -> Chapter 1/Scene 2.md",
-		"     Also recognised: Folder, Date, Characters, Places, Status. -->",
+		"     Also recognised: Folder, Date, Characters, Locations, Status. -->",
 		"",
 		"| Act | Chapter | Scene | Line | Synopsis | Characters |",
 		"| --- | ------- | ----- | ---- | -------- | ---------- |",
@@ -524,6 +524,7 @@ test("reconcileOutline is a no-op for an empty table", () => {
 		fulfilledPaths: [],
 		fulfilledLineIds: {},
 		fulfilledCharacters: {},
+		fulfilledLocations: {},
 		unknownLines: [],
 	});
 });
@@ -539,4 +540,11 @@ test("outlineLineNames lists distinct Line values in first-appearance order", ()
 	];
 	assert.deepEqual(outlineLineNames(rows), ["Flashbacks", "Main"]);
 	assert.deepEqual(outlineLineNames([]), []);
+});
+
+test("parseOutlineTable reads the Locations column, and the legacy Places header as a fallback", () => {
+	const table = (header: string) =>
+		[`| Chapter | ${header} |`, "| --- | --- |", "| 1 | Castle, Docks |"].join("\n");
+	assert.deepEqual(parseOutlineTable(table("Locations"))[0].locations, ["Castle", "Docks"]);
+	assert.deepEqual(parseOutlineTable(table("Places"))[0].locations, ["Castle", "Docks"]);
 });
