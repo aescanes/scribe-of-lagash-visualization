@@ -79,7 +79,7 @@ interface DragState {
 
 /**
  * The book's default view: horizontal lines with chapter/scene cards that can be
- * dragged between lines and reordered. Lines can be added, renamed, recoloured,
+ * dragged between lines and reordered. Lines can be added, renamed, recolored,
  * reordered, and removed. Every change is saved to the per-book Lines file
  * (debounced) and can be undone with Mod+Z.
  *

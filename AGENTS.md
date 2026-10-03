@@ -24,9 +24,9 @@ are ordinary Markdown notes in the vault. The plugin discovers and reads them; i
   user names it in settings *and* clicks the "Create" button there, then
   never touched again (hand-edited only);
 - **new** chapter/scene notes, only when the user clicks a placeholder card to
-  materialise a planned row (create-only; an existing note is never modified).
+  materialize a planned row (create-only; an existing note is never modified).
 
-Standing preference (from the maintainer): **favour folder structure over
+Standing preference (from the maintainer): **favor folder structure over
 frontmatter keys and settings, to keep the plugin simple.** Propose a
 folder-based approach before adding a new frontmatter field or setting.
 
@@ -37,7 +37,7 @@ folder-based approach before adding a new frontmatter field or setting.
 
 - **Line view** — the default view, and everything built so far. Chapters/scenes
   are discovered from a **story folder** by parsing note titles; the user creates
-  **lines** (horizontal coloured tracks) and drags each card onto a line. The
+  **lines** (horizontal colored tracks) and drags each card onto a line. The
   arrangement is saved in the Lines file. `LineView`, `VIEW_TYPE_LINE_VIEW`,
   ribbon icon / "Open lines" command.
 - **Characters view** — a read-only alternative to the Line view, chosen with
@@ -137,7 +137,7 @@ from `saveSettings`, which fires per keystroke) — the skeleton is a marker
 (`scribe-visualization: outline`), an empty header table, then a rendered column
 guide below it (the guide sits after the data table so `parseOutlineTable` /
 `replaceFirstTable`, which act on the first table, still target the data one).
-The `.md` extension is optional in the setting and normalised by
+The `.md` extension is optional in the setting and normalized by
 `withMdExtension()` (in `lineLayout.ts`, shared with the StoryLines file name) —
 `Outline` and `Outline.md` both resolve to `(SL) Outline.md`. The configured
 name is `(SL) `-prefixed on disk, same as the Lines file. Columns: `Act | Chapter | Scene | Line | Summary`, plus optional
@@ -163,7 +163,7 @@ name is `(SL) `-prefixed on disk, same as the Lines file. Columns: `Act | Chapte
   (theme-accent, appended last) as one undoable step. When there's no `Lines.md`
   yet, the "Create lines from outline" prompt seeds it with one line per
   distinct `Line` value (`starterLayoutFromOutline`) and puts each real note on
-  the line its row names. Either way it's additive only: no rename, recolour,
+  the line its row names. Either way it's additive only: no rename, recolor,
   reorder, remove, or moving an existing note's card.
 - Ghost cards are **draggable** like real ones: a drop writes a `Lines.md`
   placement keyed by the note's future path, so `canvasModel` positions it there
@@ -197,17 +197,17 @@ Entry point: [`src/main.ts`](src/main.ts) → `ScribeVisualizationPlugin`.
 | Outline generation | [`src/data/outlineGenerate.ts`](src/data/outlineGenerate.ts) | Pure: `generateOutlineTable(entries, layout)` → a table body from existing notes; `replaceFirstTable` swaps it in, keeping other text |
 | Note scaffold | [`src/data/noteScaffold.ts`](src/data/noteScaffold.ts) | Pure: `scaffoldNoteBody(planned)` — starter body for a note created from a ghost card: only the frontmatter keys the row filled, then the Summary as the body (no `# title` heading — the filename is the title) |
 | Vault / story index | [`src/data/vaultIndex.ts`](src/data/vaultIndex.ts) | Scans notes under the configured story folder, keeps the title-parsed ones as a live `NovelEntry[]` sorted by `byManuscriptOrder` (folder, then title number), notifies via `onChange`. First scan waits for `onLayoutReady` + `metadataCache` "resolved"; also watches `vault` create/delete/rename, debounced. `rebuild()` is public. `getStoryFolder()` / `getEntriesForBook()` |
-| Line-layout helpers | [`src/data/lineLayout.ts`](src/data/lineLayout.ts) | Pure: `parseLineLayout` (coerce loose YAML), `lineFilePath`, `withScribePrefix` / `withMdExtension` (name normalisation shared by the Lines and Outline file settings), `emptyLineLayout` |
+| Line-layout helpers | [`src/data/lineLayout.ts`](src/data/lineLayout.ts) | Pure: `parseLineLayout` (coerce loose YAML), `lineFilePath`, `withScribePrefix` / `withMdExtension` (name normalization shared by the Lines and Outline file settings), `emptyLineLayout` |
 | Path breadcrumb | [`src/data/pathContext.ts`](src/data/pathContext.ts) | Pure: `folderContext(filePath, baseFolder)` → folder segments shown under a card title |
 | Lines file I/O | [`src/data/lineFile.ts`](src/data/lineFile.ts) | `readLineLayout` / `writeLineLayout` for the per-story `Lines.md` (write preserves the note body via `processFrontMatter`, or creates the file) |
-| Line render model | [`src/views/canvasModel.ts`](src/views/canvasModel.ts) | Pure, unit-tested: `canvasModel(entries, layout, outline?)` → lines + real/ghost `cards` + `unplaced` + `plannedUnplaced`; `manuscriptColumns` (each card's default column on the shared reading-order axis); every layout edit (`moveCard` — drop at an exact column, pushing a card already there and its right neighbours over, no compaction; `alignToOutlineOrder` — snap the board back to the Story Outline: ghost cards drop any dragged placement and return to the line their `Line` cell names; a real note whose row names a line that exists in `Lines.md` (`OutlineReconciliation.fulfilledLineIds`) moves onto that line too, the same way — a real note with no row, or whose row names no valid line, keeps its current line; every placed card's column snaps to reading order (offered only when a Story Outline exists); `reconcilePlacements`, `applyPlannedPlacements`, `addLine` / `renameLine` / `recolorLine` / `moveLine` / `removeLine`, `cloneLayout`, `starterLayout`, `starterLayoutFromOutline` — a first layout with one line per outline `Line` value, entries seeded onto the line their row names at their manuscript column). **All layout maths live here, not in the view.** |
+| Line render model | [`src/views/canvasModel.ts`](src/views/canvasModel.ts) | Pure, unit-tested: `canvasModel(entries, layout, outline?)` → lines + real/ghost `cards` + `unplaced` + `plannedUnplaced`; `manuscriptColumns` (each card's default column on the shared reading-order axis); every layout edit (`moveCard` — drop at an exact column, pushing a card already there and its right neighbours over, no compaction; `alignToOutlineOrder` — snap the board back to the Story Outline: ghost cards drop any dragged placement and return to the line their `Line` cell names; a real note whose row names a line that exists in `Lines.md` (`OutlineReconciliation.fulfilledLineIds`) moves onto that line too, the same way — a real note with no row, or whose row names no valid line, keeps its current line; every placed card's column snaps to reading order (offered only when a Story Outline exists); `reconcilePlacements`, `applyPlannedPlacements`, `addLine` / `renameLine` / `recolorLine` / `moveLine` / `removeLine`, `cloneLayout`, `starterLayout`, `starterLayoutFromOutline` — a first layout with one line per outline `Line` value, entries seeded onto the line their row names at their manuscript column). **All layout math lives here, not in the view.** |
 | Characters view | [`src/views/charactersModel.ts`](src/views/charactersModel.ts) | Pure, unit-tested: `charactersModel(entries, reconciliation)` → a `CanvasModel` with one derived line per character for the read-only Characters view (needs `OutlineReconciliation.fulfilledCharacters`) |
-| Locations view | [`src/views/locationsModel.ts`](src/views/locationsModel.ts) | Same as `charactersModel` for locations (needs `fulfilledLocations`). Both delegate to [`src/views/derivedLines.ts`](src/views/derivedLines.ts): `derivedLinesModel(entries, plan, source)` — name normalisation, note ∪ outline merge + ⚠, manuscript columns, alphabetical lines, stable colour, "none" strip |
+| Locations view | [`src/views/locationsModel.ts`](src/views/locationsModel.ts) | Same as `charactersModel` for locations (needs `fulfilledLocations`). Both delegate to [`src/views/derivedLines.ts`](src/views/derivedLines.ts): `derivedLinesModel(entries, plan, source)` — name normalization, note ∪ outline merge + ⚠, manuscript columns, alphabetical lines, stable color, "none" strip |
 | Story views | [`src/views/storyViews.ts`](src/views/storyViews.ts) | Pure, unit-tested registry of the StoryLines tab's views (`STORY_VIEWS`): each `StoryViewDef` says whether it is `editable`, its empty/unplaced-strip wording, and its `buildModel`. **The view never checks which view it is in** — it reads the descriptor (`isEditable()`, `def.buildModel`). A new view (dates, …) is one entry here plus its model function; `parseStoryView` coerces saved view state |
 | Line view | [`src/views/lineView.ts`](src/views/lineView.ts) | `ItemView` (`VIEW_TYPE_LINE_VIEW`). DOM + pointer-drag only: renders from `canvasModel`, calls the pure ops via `mutate()` (push undo snapshot → apply → debounced save → re-render). Reads `Lines.md` + the outline on open / story-folder setting change / index change; a toolbar ⟳ button (shown only when `missingOutlineLines()` is non-empty) adds the lines the outline names but `Lines.md` lacks, an "Align cards to Story Outline " button (shown only while `outlineRows` is non-empty) re-spreads cards onto their reading-order columns, both as one undoable `mutate`; creates notes from ghost cards via a `confirm` modal |
 | Confirm modal | [`src/views/confirmModal.ts`](src/views/confirmModal.ts) | `confirm(app, {title, body, cta})` → `Promise<boolean>` (Obsidian ships no confirm primitive) |
 | Settings | [`src/settings/`](src/settings/) | Story folder, Line-file name, Outline-file name (empty = off) + its "Create" button, title language. `settingsTab.ts`'s rows are defined once (`settingRows()`) and rendered by both `getSettingDefinitions()` (declarative, Obsidian 1.13+, makes settings show up in Obsidian's search) and `display()` (imperative fallback for older Obsidian) |
-| Styles | [`styles.css`](styles.css) | Obsidian CSS variables only (`var(--...)`) — no hardcoded colours except user-chosen line colours from the Lines file. Canvas classes are `.scribe-canvas-*`; per-line colour is `--scribe-line-color` |
+| Styles | [`styles.css`](styles.css) | Obsidian CSS variables only (`var(--...)`) — no hardcoded colors except user-chosen line colors from the Lines file. Canvas classes are `.scribe-canvas-*`; per-line color is `--scribe-line-color` |
 
 ### Separation of responsibility
 
@@ -295,6 +295,11 @@ deliberate (documented at each spot).
 - **Comments explain *why*, not *what*.** Match the existing sparse style.
 - **Keep diffs focused** — no drive-by formatting or refactoring mixed into a
   feature/fix.
+- **Use US English only, never British English** — in code, comments, UI text,
+  docs, and commit messages: `color` not `colour`, `normalize` not `normalise`,
+  `materialize` not `materialise`, `favor` not `favour`, `behavior` not
+  `behaviour`, `recognized` not `recognised`, `math` not `maths`. (Language
+  names/labels for the shipped `es` / `en` title patterns are unaffected.)
 - Every source file starts with the SPDX `MIT` header + copyright line.
 - **License is MIT** — don't add dependencies under a copyleft (GPL/LGPL/…) or
   otherwise MIT-incompatible license.
