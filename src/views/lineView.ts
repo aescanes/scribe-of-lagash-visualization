@@ -30,7 +30,7 @@ import {
 	starterLayoutFromOutline,
 } from "./canvasModel";
 import { confirm } from "./confirmModal";
-import { DEFAULT_VIEW_MODE, LineViewMode, parseViewMode, ViewModeDef, VIEW_MODES, viewModeIds } from "./viewModes";
+import { DEFAULT_STORY_VIEW, StoryView, parseStoryView, StoryViewDef, STORY_VIEWS, storyViewIds } from "./storyViews";
 
 export const VIEW_TYPE_LINE_VIEW = "scribe-line-view";
 
@@ -96,7 +96,7 @@ export class LineView extends ItemView {
 	private undoStack: LineLayout[] = [];
 	private cardEls = new Map<string, HTMLElement[]>();
 	private drag: DragState | null = null;
-	private mode: LineViewMode = DEFAULT_VIEW_MODE;
+	private storyView: StoryView = DEFAULT_STORY_VIEW;
 	private opened = false;
 	/** True once the layout changed and hasn't been written yet. */
 	private dirty = false;
@@ -122,12 +122,14 @@ export class LineView extends ItemView {
 	}
 
 	getState(): Record<string, unknown> {
-		return { ...super.getState(), mode: this.mode };
+		return { ...super.getState(), storyView: this.storyView };
 	}
 
 	async setState(state: unknown, result: ViewStateResult): Promise<void> {
-		const mode = typeof state === "object" && state !== null && "mode" in state ? state.mode : null;
-		this.mode = parseViewMode(mode);
+		const saved = typeof state === "object" && state !== null ? state : {};
+		// `mode` is the key tabs saved before the rename.
+		const raw = "storyView" in saved ? saved.storyView : "mode" in saved ? saved.mode : null;
+		this.storyView = parseStoryView(raw);
 		await super.setState(state, result);
 		if (this.opened) this.render();
 	}
@@ -211,7 +213,7 @@ export class LineView extends ItemView {
 
 	/** Adds any newly discovered chapter/scene to the default line, and saves if so. */
 	private autoPlace(): void {
-		// A non-editable mode writes nothing; the next switch back catches up.
+		// A non-editable view writes nothing; the next switch back catches up.
 		if (!this.isEditable() || !this.fileExists || isLayoutEmpty(this.layout)) return;
 		const { layout, changed } = reconcilePlacements(
 			this.layout,
@@ -277,7 +279,7 @@ export class LineView extends ItemView {
 	}
 
 	private isEditable(): boolean {
-		return VIEW_MODES[this.mode].editable;
+		return STORY_VIEWS[this.storyView].editable;
 	}
 
 	private scheduleSave(): void {
@@ -334,10 +336,10 @@ export class LineView extends ItemView {
 		const hasContent = entries.length > 0 || this.outlineRows.length > 0;
 		const viewReady = folder !== "" && hasContent && this.fileExists && !isLayoutEmpty(this.layout);
 
-		const def = VIEW_MODES[this.mode];
+		const def = STORY_VIEWS[this.storyView];
 		root.toggleClass("is-readonly", !def.editable);
 
-		// An editable mode needs a Lines.md; a derived one only needs content.
+		// An editable view needs a Lines.md; a derived one only needs content.
 		const needsRecon = def.editable ? viewReady : folder !== "" && hasContent;
 		const recon = needsRecon ? this.reconcile(entries) : null;
 
@@ -404,29 +406,29 @@ export class LineView extends ItemView {
 
 		if (recon) this.renderEditButtons(toolbar, recon);
 
-		if (folder) this.renderModeSelect(toolbar);
+		if (folder) this.renderViewSelect(toolbar);
 	}
 
-	private renderModeSelect(toolbar: HTMLElement): void {
+	private renderViewSelect(toolbar: HTMLElement): void {
 		const select = toolbar.createEl("select", {
-			cls: "dropdown scribe-canvas-mode-select",
-			attr: { "aria-label": "View mode" },
+			cls: "dropdown scribe-canvas-view-select",
+			attr: { "aria-label": "View" },
 		});
-		for (const mode of viewModeIds()) {
-			select.createEl("option", { value: mode, text: VIEW_MODES[mode].label });
+		for (const id of storyViewIds()) {
+			select.createEl("option", { value: id, text: STORY_VIEWS[id].label });
 		}
-		select.value = this.mode;
-		select.addEventListener("change", () => void this.setMode(parseViewMode(select.value)));
+		select.value = this.storyView;
+		select.addEventListener("change", () => void this.setStoryView(parseStoryView(select.value)));
 	}
 
-	private async setMode(mode: LineViewMode): Promise<void> {
-		if (mode === this.mode) return;
+	private async setStoryView(next: StoryView): Promise<void> {
+		if (next === this.storyView) return;
 		if (this.isEditable()) {
-			// Flush pending edits before leaving; a derived mode writes nothing.
+			// Flush pending edits before leaving; a derived view writes nothing.
 			this.saveDebounced.cancel();
 			await this.save();
 		}
-		this.mode = mode;
+		this.storyView = next;
 		this.autoPlace();
 		this.app.workspace.requestSaveLayout();
 		this.render(false);
@@ -507,7 +509,7 @@ export class LineView extends ItemView {
 		});
 	}
 
-	private renderBoard(root: HTMLElement, model: CanvasModel, recon: OutlineReconciliation, def: ViewModeDef): void {
+	private renderBoard(root: HTMLElement, model: CanvasModel, recon: OutlineReconciliation, def: StoryViewDef): void {
 		const readOnly = !def.editable;
 		if (def.emptyNotice && model.lines.length === 0) this.renderNotice(root, def.emptyNotice);
 		if (readOnly && model.lines.length === 0 && model.unplaced.length === 0 && model.plannedUnplaced.length === 0) {
@@ -688,7 +690,7 @@ export class LineView extends ItemView {
 
 		const meta: string[] = [];
 		if (entry.characters.length > 0) meta.push(entry.characters.join(", "));
-		if (entry.places.length > 0) meta.push(entry.places.join(", "));
+		if (entry.locations.length > 0) meta.push(entry.locations.join(", "));
 		if (meta.length > 0) body.createDiv({ cls: "scribe-canvas-card-meta", text: meta.join(" · ") });
 
 		body.createDiv({ cls: "scribe-canvas-card-wordcount", text: formatWordCount(entry.wordCount) });

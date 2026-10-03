@@ -12,8 +12,13 @@ This plugin doesn't own your prose: chapters and scenes are just regular notes
 in your vault. Point the plugin at the folder that holds a story and it
 recognises chapters and scenes from their titles ("Chapter 1", "Scene II",
 "Prologue", …); a little `scribe-note-*` frontmatter is optional and
-only needed to override the title or add detail. The only file the plugin ever
-writes is a per-story **StoryLines file** that stores the story's default view.
+only needed to override the title or add detail. You can see the story in three
+views: **StoryLines**, where you arrange the cards on your own lines, and the
+read-only **Characters** and **Locations** views, which group the same chapters
+and scenes by who appears and where they happen. The only file the plugin ever
+writes is a per-story **StoryLines file** that stores the lines and card
+positions of the StoryLines view; the Characters and Locations views are derived
+from your notes and save nothing.
 
 ## Installation
 
@@ -43,51 +48,66 @@ plugins for planning and writing stories:
 
 ## Current features
 
-- **StoryLines view** — the story's default view (ribbon icon / "Open StoryLines" command).
-  Horizontal, colored **lines** for a story, with each chapter/scene as a card
-  sitting on a line. Pick "Create lines" the first time to seed a "Main line",
-  then drag cards between lines or along the shared column grid — columns line
-  up across every line by reading order, and you can leave deliberate gaps
-  between cards. Dropping a card onto an occupied column nudges the others
-  right. When a Story Outline is set up, an **Align cards to Story Outline **
-  toolbar button snaps every card — real or planned — back to the outline's
-  reading order and onto the line its row names. Add /
-  rename / recolour / reorder / delete lines from the line headers. Changes save
-  to the StoryLines file (`StoryLines.md`) automatically; `Mod+Z` undoes.
+### **StoryLines view**
 
-  <img src="https://raw.githubusercontent.com/aescanes/scribe-of-lagash-visualization/main/docs/images/storylines-tab.png" alt="StoryLines view" width="600">
-- **Characters mode view** — the combo box at the top right of the StoryLines tab
-  switches between **StoryLines** and **Characters**. Characters keeps the same
-  look but is read-only: one line per character (alphabetical), each showing
-  the chapters/scenes that name them in reading order, so a scene with two
-  characters appears on both lines. Names come from the notes'
-  `scribe-note-characters` frontmatter and the Story Outline's `Characters`
-  column, merged; if a note and its outline row list different characters a ⚠
-  explains the difference. Planned (not yet written) rows show as dashed,
-  non-clickable cards, and notes with no characters sit in a "No characters
-  listed" strip. Nothing is moved, created or saved in this mode, and each tab
-  remembers its own mode.
+The story's default view (ribbon icon / "Open StoryLines" command).
+Horizontal, colored **lines** for a story, with each chapter/scene as a card
+sitting on a line. Pick "Create lines" the first time to seed a "Main line",
+then drag cards between lines or along the shared column grid — columns line
+up across every line by reading order, and you can leave deliberate gaps
+between cards. Dropping a card onto an occupied column nudges the others
+right. When a Story Outline is set up, an **Align cards to Story Outline**
+toolbar button snaps every card — real or planned — back to the outline's
+reading order and onto the line its row names. Add /
+rename / recolour / reorder / delete lines from the line headers. Changes save
+to the StoryLines file (`StoryLines.md`) automatically; `Mod+Z` undoes.
 
-  <img src="https://raw.githubusercontent.com/aescanes/scribe-of-lagash-visualization/main/docs/images/character-lines-tab.png" alt="StoryLines view" width="600">
-- **Story Outline file** *(optional)* — name a file under **Story Outline file
-  name** in settings and click **Create**; it's written as an empty
-  Markdown table (Act / Chapter / Scene / Line / Synopsis/Characters). The `.md` extension
-  is optional — `Outline` and `Outline.md` both create `(SL) Outline.md`. Fill
-  it in to plan the story before the
-  notes exist: rows with no matching note appear as dashed placeholder cards
-  on the StoryLines view, and clicking one creates the note (title, Synopsis,
-  frontmatter) on that line. Once a note exists its Synopsis shows on the
-  card; a row that disagrees with the real note/folder gets a ⚠ marker — the
-  files always win.
-  
-  The optional `Characters` column (comma-separated names)
-  feeds the **Characters mode view** view, including for notes not written yet. See
-  [docs/feature-plans/outline-file-plan.md](docs/feature-plans/outline-file-plan.md).
+<img src="https://raw.githubusercontent.com/aescanes/scribe-of-lagash-visualization/main/docs/images/storylines-view.png" alt="StoryLines view" width="600">
 
-  <img src="https://raw.githubusercontent.com/aescanes/scribe-of-lagash-visualization/main/docs/images/story-outline.png" alt="Story Outline file" width="500">
+### **Characters view**
+The combo box at the top right of the StoryLines tab
+switches between the different move views. Characters keeps the same
+look but is read-only: one line per character (alphabetical), each showing
+the chapters/scenes that name them in reading order, so a scene with two
+characters appears on both lines. Names come from the notes'
+`scribe-note-characters` frontmatter and the Story Outline's `Characters`
+column, merged; if a note and its outline row list different characters a ⚠
+explains the difference. Planned (not yet written) rows show as dashed,
+non-clickable cards, and notes with no characters sit in a "No characters
+listed" strip. Nothing is moved, created or saved in this view, and each tab
+remembers its own view.
 
-Planned next: a **chronological view** ordering chapters/scenes by their
-`scribe-note-date`, and lines view grouping them by places. See
+<img src="https://raw.githubusercontent.com/aescanes/scribe-of-lagash-visualization/main/docs/images/characters-view.png" alt="Characters view" width="600">
+
+### **Locations view**
+
+The same read-only view, with one line per location.
+Names come from the notes' `scribe-note-locations` frontmatter and the Story
+Outline's `Locations` column, merged the same way (⚠ when they differ; a
+"No locations listed" strip for the rest).
+
+<img src="https://raw.githubusercontent.com/aescanes/scribe-of-lagash-visualization/main/docs/images/locations-view.png" alt="Locations view" width="600">
+
+### **Story Outline file** *(optional)*
+Name a file under **Story Outline file
+name** in settings and click **Create**; it's written as an empty
+Markdown table (Act / Chapter / Scene / Line / Synopsis/Characters). The `.md` extension
+is optional — `Outline` and `Outline.md` both create `(SL) Outline.md`. Fill
+it in to plan the story before the
+notes exist: rows with no matching note appear as dashed placeholder cards
+on the StoryLines view, and clicking one creates the note (title, Synopsis,
+frontmatter) on that line. Once a note exists its Synopsis shows on the
+card; a row that disagrees with the real note/folder gets a ⚠ marker — the
+files always win.
+The optional `Characters` and `Locations` columns (comma-separated names)
+feed the **Characters** and **Locations views**, including for notes not written yet. See
+[docs/feature-plans/outline-file-plan.md](docs/feature-plans/outline-file-plan.md).
+
+<img src="https://raw.githubusercontent.com/aescanes/scribe-of-lagash-visualization/main/docs/images/story-outline.png" alt="Story Outline file" width="500">
+
+## Planned next
+- a **chronological view** ordering chapters/scenes by    their
+`scribe-note-date`. See
 [docs/feature-plans/line-view-plan.md](docs/feature-plans/line-view-plan.md).
 
 ## Setting up a story
@@ -176,9 +196,14 @@ e.g. a `Chapter` cell of `1 - The beginning` plans `Chapter 1 - The beginning.md
 the same as if you'd typed that title directly. The `Act` / `Chapter` / `Scene`
 words and folder names follow the **Title language** setting. `Line` is a line
 name or id from the StoryLines file; `Synopsis` shows on the card and becomes
-the note body when you create it. List the people in a scene under `Characters`
-(comma-separated, e.g. `Harry, Ron, Hermione`) to enable the **Characters mode view**
-view: each name becomes a line showing the chapters/scenes it appears in. A row with neither a `Chapter` nor a `Scene`
+the note body when you create it. 
+
+List the people in a chapters/scenes under `Characters`
+(comma-separated, e.g. `Harry, Ron, Hermione`) to enable the **Characters view**:
+each name becomes a line showing the chapters/scenes it appears in. `Locations`
+does the same for the **Locations view**. 
+
+A row with neither a `Chapter` nor a `Scene`
 value is ignored, and un-numbered units (`Prologue`, …) can't be planned here —
 create those notes directly. The Story Outline file created for you repeats
 this guide below the table.
@@ -191,7 +216,7 @@ None of this is required — it only adds detail the cards can show:
 ---
 scribe-note-date: 1901-03-04       # in-story date, any free-form string
 scribe-note-characters: [Alice, Bob]
-scribe-note-places: [Riverside Tavern]
+scribe-note-locations: [Riverside Tavern]
 scribe-note-status: draft
 ---
 ```

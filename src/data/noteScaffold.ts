@@ -19,8 +19,8 @@ function frontmatterLines(planned: PlannedEntry): string[] {
 	if (row.characters.length > 0) {
 		lines.push(`${FRONTMATTER_KEYS.characters}: [${row.characters.map((c) => JSON.stringify(c)).join(", ")}]`);
 	}
-	if (row.places.length > 0) {
-		lines.push(`${FRONTMATTER_KEYS.places}: [${row.places.map((p) => JSON.stringify(p)).join(", ")}]`);
+	if (row.locations.length > 0) {
+		lines.push(`${FRONTMATTER_KEYS.locations}: [${row.locations.map((p) => JSON.stringify(p)).join(", ")}]`);
 	}
 	if (row.status) lines.push(`${FRONTMATTER_KEYS.status}: ${JSON.stringify(row.status)}`);
 	return lines;

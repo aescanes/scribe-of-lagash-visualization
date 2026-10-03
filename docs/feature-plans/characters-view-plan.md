@@ -1,11 +1,11 @@
-# Implementation plan — the Characters mode view of StoryLines
+# Implementation plan — the Characters view of StoryLines
 
 Status: **Built (phases 1–3).** Decisions below were confirmed by the maintainer. One refinement: a note/outline conflict is only flagged when *both* sides list characters and they differ — the outline column is optional, so an empty side is not a conflict.
 Branch: `feat/characters-storylines-view`.
 
 ## Goal
 
-Add a **mode selector** (combo box on the right top section) to the StoryLines toolbar with two options:
+Add a **view selector** (combo box on the right top section) to the StoryLines toolbar with two options:
 
 1. **StoryLines** — today's view, unchanged: lines come from `Lines.md`, cards
    are discovered from the folder/note structure (and the Story Outline), and
@@ -23,7 +23,7 @@ The source of truth for "who appears where":
   `OutlineRow.characters`), which also covers planned notes that have no file yet.
 
 This follows the plugin's core principle: the plugin never edits notes, and the
-Characters mode view **writes nothing at all** — not even `Lines.md`.
+Characters view **writes nothing at all** — not even `Lines.md`.
 
 ## What already exists and gets reused
 
@@ -36,8 +36,8 @@ Characters mode view **writes nothing at all** — not even `Lines.md`.
 | Card rendering, board, CSS | `renderRealCard`, `renderPlannedCard`, `.scribe-canvas-*` styles |
 | Line colours | `LINE_COLOR_PALETTE` in `canvasModel.ts` |
 
-> Note: "one card belongs to exactly one line" is a rule of the StoryLines mode
-> (`AGENTS.md`). In Characters mode view a scene with two characters **must** appear
+> Note: "one card belongs to exactly one line" is a rule of the StoryLines view
+> (`AGENTS.md`). In Characters view a scene with two characters **must** appear
 > on two lines — that is the point of the view. It is derived data, never saved,
 > so it doesn't conflict with the Lines-file rule.
 
@@ -72,7 +72,7 @@ view can reuse the existing renderer:
 - Toolbar: a `<select>` (class `dropdown`, Obsidian's native styling) with
   **StoryLines** / **Characters**, placed at the left, after the story-folder
   name.
-- `render()` branches on the mode:
+- `render()` branches on the view:
   - `storylines` → current code path, untouched.
   - `characters` → `charactersModel(...)` → same `renderCard` machinery with a
     `readOnly` flag.
@@ -80,29 +80,29 @@ view can reuse the existing renderer:
   (rename / colour / ▲ ▼ / ✕), no "Add line", "Undo", "Align", "Add N lines",
   "Create N planned notes" buttons; ghost cards are shown dashed but a click does
   **not** create a note (see open question 3). Real cards still open their note
-  on click. `Mod+Z` is a no-op in this mode.
-- Characters mode view does **not** require `Lines.md`: it works with only notes, only
+  on click. `Mod+Z` is a no-op in this view.
+- Characters view does **not** require `Lines.md`: it works with only notes, only
   an outline, or both. The "Create lines" prompt is skipped.
-- `autoPlace()` / `save()` are skipped while in Characters mode view (nothing to
+- `autoPlace()` / `save()` are skipped while in Characters view (nothing to
   write); the in-memory StoryLines `layout` and its undo stack are kept so
   switching back loses nothing.
-- Persist the chosen mode in the leaf's view state (`getState` / `setState`) so it
-  survives reloads and each open StoryLines tab remembers its own mode
+- Persist the chosen view in the leaf's view state (`getState` / `setState`) so it
+  survives reloads and each open StoryLines tab remembers its own view
   (open question 2).
 
-### 2b. Mode registry — `src/views/viewModes.ts` (added during the build)
+### 2b. View registry — `src/views/storyViews.ts` (added during the build)
 
-So future modes (places, dates, …) don't each add `if (mode === …)` checks to
-the view, the modes are described once in `VIEW_MODES`: `editable`, `emptyNotice`,
+So future views (locations, dates, …) don't each add `if (view === …)` checks to
+the view, the views are described once in `STORY_VIEWS`: `editable`, `emptyNotice`,
 `unplacedLabel`, `buildModel(ctx)`. `LineView` reads the descriptor
 (`isEditable()`, one `renderBoard(root, def.buildModel(...), recon, def)` path)
-and the selector is built from the registry. `parseViewMode` validates the saved
-view state. Tests: `tests/views/viewModes.test.ts`.
+and the selector is built from the registry. `parseStoryView` validates the saved
+view state. Tests: `tests/views/storyViews.test.ts`.
 
 ### 3. Styles — `styles.css`
 
 Only a few additions, Obsidian CSS variables only:
-`.scribe-canvas-mode-select` spacing in the toolbar and a
+`.scribe-canvas-view-select` spacing in the toolbar and a
 `.scribe-canvas-view.is-readonly` modifier (default cursor on cards, no
 grab cursor). Line colour still comes from `--scribe-line-color`.
 
@@ -118,14 +118,14 @@ grab cursor). Line colour still comes from `--scribe-line-color`.
 
 ### 5. Docs
 
-`README.md` (new mode), `CHANGELOG.md` → Unreleased, `AGENTS.md` (the "Views of a
+`README.md` (new view), `CHANGELOG.md` → Unreleased, `AGENTS.md` (the "Views of a
 story" section + architecture table + the one-card-one-line note), this plan.
 
 ## Phases (each shippable)
 
 1. **Model** — `charactersModel.ts` + `fulfilledCharacters` in `reconcileOutline`
    + tests. No UI change.
-2. **View** — selector, read-only rendering, mode persisted in view state.
+2. **View** — selector, read-only rendering, selected view persisted in view state.
 3. **Polish & docs** — styles, README / CHANGELOG / AGENTS.md, run
    `npm run validate`, test in the real vault.
 
@@ -133,20 +133,20 @@ story" section + architecture table + the one-card-one-line note), this plan.
 
 1. **Frontmatter vs. outline when both name characters for the same note:**
   Decision: Union of both and use the same warning icon with a small message with this "conflict"
-2. **Where is the selected mode remembered?** 
+2. **Where is the selected view remembered?** 
   Decision: Per-tab view state (recommended, no setting added, in line with "favour fewer settings")
-3. **Ghost cards (planned, no note yet) in Characters mode view:** 
-  Decision: Show them dashed and non-clickable (recommended — the mode is read-only)
+3. **Ghost cards (planned, no note yet) in Characters view:** 
+  Decision: Show them dashed and non-clickable (recommended — the view is read-only)
 4. **Line order for characters:** 
   Decision: Alphabetical
 5. **Notes with no characters:** 
   Decision: Shown in a "No characters listed" strip (recommended)
-6. **Default mode when opening the view:** 
+6. **Default view when opening the view:** 
   Decision: StoryLines (recommended, current behaviour)
 
 ## Out of scope (for now)
 
 - Editing characters from the view; a character ↔ line colour picker; reading
   characters from outside the `scribe-note-characters` / `Characters` column;
-  the `places` equivalent (a natural follow-up reusing the same model); the
+  the Locations equivalent (built since — see `locations-view-plan.md`); the
   planned Chronological view.

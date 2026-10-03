@@ -2,7 +2,7 @@
 // Copyright (C) 2026 aescanes
 
 import { App, Component, debounce, TFile } from "obsidian";
-import { FRONTMATTER_KEYS, NovelEntry } from "../types";
+import { FRONTMATTER_KEYS, LEGACY_PLACES_KEY, NovelEntry } from "../types";
 import { byManuscriptOrder } from "./manuscriptOrder";
 import { folderContext } from "./pathContext";
 import { DEFAULT_LANGUAGE, parseTitle } from "./titleParser";
@@ -131,7 +131,7 @@ export class VaultIndex extends Component {
 			order: parsed.number,
 			date: toStringOrNull(frontmatter[FRONTMATTER_KEYS.date]),
 			characters: toStringArray(frontmatter[FRONTMATTER_KEYS.characters]),
-			places: toStringArray(frontmatter[FRONTMATTER_KEYS.places]),
+			locations: toStringArray(frontmatter[FRONTMATTER_KEYS.locations] ?? frontmatter[LEGACY_PLACES_KEY]),
 			status: toStringOrNull(frontmatter[FRONTMATTER_KEYS.status]),
 			wordCount: countWords(content),
 		};

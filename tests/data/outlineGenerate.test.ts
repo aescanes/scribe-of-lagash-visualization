@@ -18,7 +18,7 @@ function entry(path: string, over: Partial<NovelEntry> = {}): NovelEntry {
 		order: null,
 		date: null,
 		characters: [],
-		places: [],
+		locations: [],
 		status: null,
 		wordCount: 0,
 		...over,
