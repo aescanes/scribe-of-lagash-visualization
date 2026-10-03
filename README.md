@@ -4,7 +4,7 @@
 ![Minimum Obsidian version](https://img.shields.io/badge/obsidian-%E2%89%A51.10.0-8b6cef)
 
 An [Obsidian](https://obsidian.md) plugin that helps writers visualize their
-chapters and scenes. It is the first plugin in the **Scribe of Lagash**
+chapters and scenes. It is part of the **Scribe of Lagash**
 series, a set of independent, focused tools for planning and writing stories
 in Obsidian.
 
@@ -43,7 +43,7 @@ plugins for planning and writing stories:
 
 ## Current features
 
-- **StoryLines view** ![StoryLines icon](https://raw.githubusercontent.com/aescanes/scribe-of-lagash-visualization/main/docs/images/storylines-icon.png) — the story's default view (ribbon icon / "Open StoryLines" command).
+- **StoryLines view** — the story's default view (ribbon icon / "Open StoryLines" command).
   Horizontal, colored **lines** for a story, with each chapter/scene as a card
   sitting on a line. Pick "Create lines" the first time to seed a "Main line",
   then drag cards between lines or along the shared column grid — columns line
@@ -71,7 +71,7 @@ plugins for planning and writing stories:
   <img src="https://raw.githubusercontent.com/aescanes/scribe-of-lagash-visualization/main/docs/images/character-lines-tab.png" alt="StoryLines view" width="600">
 - **Story Outline file** *(optional)* — name a file under **Story Outline file
   name** in settings and click **Create**; it's written as an empty
-  Markdown table (Act / Chapter / Scene / Line / Synopsis). The `.md` extension
+  Markdown table (Act / Chapter / Scene / Line / Synopsis/Characters). The `.md` extension
   is optional — `Outline` and `Outline.md` both create `(SL) Outline.md`. Fill
   it in to plan the story before the
   notes exist: rows with no matching note appear as dashed placeholder cards
