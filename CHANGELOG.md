@@ -5,6 +5,8 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.12.0](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.12.0) - 2026-10-03
+
 ### Added
 - **Locations view** for the StoryLines tab: the same read-only view as
   Characters, with one line per location, built from the notes'
