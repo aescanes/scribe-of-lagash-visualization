@@ -4,7 +4,7 @@ Thanks for your interest in contributing to Scribe of Lagash - Visualization.
 This project is part of the **Scribe of Lagash** series — independent
 Obsidian plugins that help writers plan and write, each focused on one
 concern. This particular plugin covers chapter/scene visualization
-(lines and, soon, matrices).
+(StoryLines, Characters and Locations views and, soon, a chronological view).
 
 ## Ways to contribute
 
@@ -27,7 +27,8 @@ npm run build    # type-check + production build
 `.npmrc` sets `ignore-scripts=true`, so `npm install` does **not** run the
 `prepare` script that installs the Husky hooks. Run `npm run prepare` once
 after cloning to enable the pre-commit hook, which runs `npm run validate`
-(`npm run typecheck && npm test && npm run lint`) before every commit.
+(`npm run typecheck && npm test && npm run lint && npm run lint:css`) before
+every commit.
 
 To try your changes in a real vault, copy (or symlink) `manifest.json`,
 `main.js`, and `styles.css` into
@@ -39,7 +40,7 @@ Before opening a PR, make sure all of these pass:
 
 ```bash
 npm run build
-npm run validate   # typecheck + test + lint (also run by the pre-commit hook)
+npm run validate   # typecheck + test + lint + lint:css (also run by the pre-commit hook)
 ```
 
 Unit tests live under `tests/`, which mirrors `src/` — the spec for
@@ -87,7 +88,8 @@ Releases are cut from `main` by a maintainer. Feature PRs must **not** bump the
 version — that happens once, at release time.
 
 1. Make sure `main` is up to date, the working tree is clean, and
-   `npm run build && npm test && npx eslint src tests` all pass.
+   `npm run build && npm test && npx eslint src tests && npx stylelint styles.css`
+   all pass.
 2. Check that `CHANGELOG.md`'s `## [Unreleased]` section lists everything in this
    release, written for a reader of `git show <tag>` — it becomes the tag
    message. You do **not** rename the heading yourself; the bump does that.
