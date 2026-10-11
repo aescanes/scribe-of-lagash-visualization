@@ -5,6 +5,38 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- **Chronological view** for the StoryLines tab: a read-only view with a single
+  line holding every chapter/scene ordered by its in-story date, from the notes'
+  `scribe-note-date` frontmatter or the Story Outline's `Date` column (the note
+  wins; a ⚠ flags a disagreement). Accepted dates are ISO (`2026`, `2026-11`,
+  `2026-11-03`) and full English or Spanish month names (`November 2026`,
+  `November 3, 2026`, `3 de noviembre de 2026`); a month followed by one number
+  is a year, so stories without a real calendar can use small years
+  (`November 1`). Cards show a readable date whatever form was typed. Notes
+  with no date, or one that isn't recognized (⚠), sit in a "No date" strip. A
+  toolbar button switches between oldest first and newest first, remembered
+  per tab. Equal dates keep chapter/scene order. Nothing is written.
+- **Cards show characters, locations and date from the note first, then from
+  the Story Outline.** The note's own frontmatter (`scribe-note-characters`,
+  `-locations`, `-date`) wins; when the note doesn't have the field, its
+  Story Outline row fills in; when neither has it, nothing is shown. Planned
+  cards show their row's values. The Characters view no longer repeats the
+  characters on its cards, nor the Locations view the locations. Characters
+  and locations each get their own line, and every date, characters and
+  locations line has a small icon.
+- **A card with no Synopsis shows the first paragraph of its note**
+  (shortened). The Synopsis comes from the Story Outline, so here the outline
+  is read first, and there is more space between it and the date, characters
+  and locations under it.
+- **Time-gap markers** in the Chronological view: a "…" in a narrow slot
+  appears between two cards whose dates are more than twice the average gap
+  apart (needs at least three dated cards); hover it for the elapsed time
+  ("about 10 years later").
+- **Readable dates on every card**, in every view (and now on planned cards
+  too): `2026-11-03` shows as "November 3, 2026" in the title language. A date
+  that isn't recognized is shown as typed.
+
 ### Changed
 - Moved the confirm modal from `src/views/` to the new `src/utils/` folder,
   since it is general-purpose and can be reused from any view or settings tab.

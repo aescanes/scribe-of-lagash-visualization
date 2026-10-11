@@ -39,6 +39,7 @@ function entry(path: string, over: Partial<NovelEntry> = {}): NovelEntry {
 		locations: [],
 		status: null,
 		wordCount: 0,
+		excerpt: null,
 		...over,
 	};
 }
@@ -211,6 +212,7 @@ function plan(over: Partial<OutlineReconciliation> = {}): OutlineReconciliation 
 		fulfilledLineIds: {},
 		fulfilledCharacters: {},
 		fulfilledLocations: {},
+		fulfilledDates: {},
 		unknownLines: [],
 		...over,
 	};

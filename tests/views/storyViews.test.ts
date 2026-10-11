@@ -17,6 +17,7 @@ const recon: OutlineReconciliation = {
 	fulfilledLineIds: {},
 	fulfilledCharacters: {},
 	fulfilledLocations: {},
+	fulfilledDates: {},
 	unknownLines: [],
 };
 
@@ -33,6 +34,7 @@ function entry(characters: string[]): NovelEntry {
 		locations: [],
 		status: null,
 		wordCount: 0,
+		excerpt: null,
 	};
 }
 
@@ -40,6 +42,7 @@ test("parseStoryView falls back to the default for unknown or malformed values",
 	assert.equal(parseStoryView("characters"), "characters");
 	assert.equal(parseStoryView("storylines"), "storylines");
 	assert.equal(parseStoryView("locations"), "locations");
+	assert.equal(parseStoryView("chronological"), "chronological");
 	assert.equal(parseStoryView("nope"), DEFAULT_STORY_VIEW);
 	assert.equal(parseStoryView(undefined), DEFAULT_STORY_VIEW);
 	assert.equal(parseStoryView("toString"), DEFAULT_STORY_VIEW);
@@ -47,7 +50,7 @@ test("parseStoryView falls back to the default for unknown or malformed values",
 });
 
 test("the selector lists every registered view, StoryLines first", () => {
-	assert.deepEqual(storyViewIds(), ["storylines", "characters", "locations"]);
+	assert.deepEqual(storyViewIds(), ["storylines", "characters", "locations", "chronological"]);
 	assert.equal(storyViewIds()[0], DEFAULT_STORY_VIEW);
 });
 
@@ -55,6 +58,7 @@ test("only the StoryLines view is editable", () => {
 	assert.equal(STORY_VIEWS.storylines.editable, true);
 	assert.equal(STORY_VIEWS.characters.editable, false);
 	assert.equal(STORY_VIEWS.locations.editable, false);
+	assert.equal(STORY_VIEWS.chronological.editable, false);
 });
 
 test("the StoryLines view builds exactly the canvas model", () => {
@@ -64,14 +68,20 @@ test("the StoryLines view builds exactly the canvas model", () => {
 	};
 	const entries = [entry(["Alice"])];
 	assert.deepEqual(
-		STORY_VIEWS.storylines.buildModel({ entries, layout, recon }),
+		STORY_VIEWS.storylines.buildModel({ entries, layout, recon, dateOrder: "asc", language: "en" }),
 		canvasModel(entries, layout, recon),
 	);
 });
 
 test("the Characters view ignores the layout and groups by character", () => {
 	const empty: LineLayout = { lines: [], placements: {} };
-	const model = STORY_VIEWS.characters.buildModel({ entries: [entry(["Alice"])], layout: empty, recon });
+	const model = STORY_VIEWS.characters.buildModel({
+		entries: [entry(["Alice"])],
+		layout: empty,
+		recon,
+		dateOrder: "asc",
+		language: "en",
+	});
 	assert.deepEqual(model.lines.map((l) => l.def.name), ["Alice"]);
 });
 
@@ -80,4 +90,28 @@ test("derived views describe their empty and unplaced states", () => {
 	assert.equal(STORY_VIEWS.characters.unplacedLabel, "No characters listed");
 	assert.equal(STORY_VIEWS.storylines.emptyNotice, null);
 	assert.equal(STORY_VIEWS.storylines.unplacedLabel, null);
+});
+
+test("the Chronological view builds one line and describes its empty and unplaced states", () => {
+	const empty: LineLayout = { lines: [], placements: {} };
+	const dated = { ...entry([]), date: "2026-11-03" };
+	const model = STORY_VIEWS.chronological.buildModel({
+		entries: [dated],
+		layout: empty,
+		recon,
+		dateOrder: "asc",
+		language: "en",
+	});
+	assert.deepEqual(model.lines.map((l) => l.def.name), ["Chronological"]);
+	assert.ok(STORY_VIEWS.chronological.emptyNotice);
+	assert.equal(STORY_VIEWS.chronological.unplacedLabel, "No date");
+	assert.equal(STORY_VIEWS.chronological.hasDateOrder, true);
+	assert.notEqual(STORY_VIEWS.storylines.hasDateOrder, true);
+});
+
+test("the Characters and Locations views leave their own field off the cards", () => {
+	assert.deepEqual(STORY_VIEWS.characters.hides, ["characters"]);
+	assert.deepEqual(STORY_VIEWS.locations.hides, ["locations"]);
+	assert.equal(STORY_VIEWS.storylines.hides, undefined);
+	assert.equal(STORY_VIEWS.chronological.hides, undefined);
 });

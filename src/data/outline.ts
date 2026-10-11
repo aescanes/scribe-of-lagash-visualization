@@ -211,6 +211,8 @@ export interface OutlineReconciliation {
 	fulfilledCharacters: Record<string, string[]>;
 	/** Same as `fulfilledCharacters`, for the `Locations` cell and the Locations view. */
 	fulfilledLocations: Record<string, string[]>;
+	/** Vault path -> the fulfilling row's `Date` cell, for the Chronological view. */
+	fulfilledDates: Record<string, string>;
 	/** `Line` cell values that matched no line in Lines.md, for diagnostics. */
 	unknownLines: string[];
 }
@@ -223,6 +225,7 @@ const emptyReconciliation: OutlineReconciliation = {
 	fulfilledLineIds: {},
 	fulfilledCharacters: {},
 	fulfilledLocations: {},
+	fulfilledDates: {},
 	unknownLines: [],
 };
 
@@ -347,6 +350,7 @@ export function reconcileOutline(
 	const fulfilledLineIds: Record<string, string> = {};
 	const fulfilledCharacters: Record<string, string[]> = {};
 	const fulfilledLocations: Record<string, string[]> = {};
+	const fulfilledDates: Record<string, string> = {};
 	const unknownLines = new Set<string>();
 
 	for (const r of rowInfo) {
@@ -383,6 +387,7 @@ export function reconcileOutline(
 		if (rowLineId !== null) fulfilledLineIds[path] = rowLineId;
 		if (row.characters.length > 0) fulfilledCharacters[path] = row.characters;
 		if (row.locations.length > 0) fulfilledLocations[path] = row.locations;
+		if (row.date) fulfilledDates[path] = row.date;
 		if (row.summary) previews[path] = row.summary;
 
 		const issues: string[] = [];
@@ -423,6 +428,7 @@ export function reconcileOutline(
 		fulfilledLineIds,
 		fulfilledCharacters,
 		fulfilledLocations,
+		fulfilledDates,
 		unknownLines: Array.from(unknownLines).sort(),
 	};
 }

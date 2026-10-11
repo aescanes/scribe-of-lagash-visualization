@@ -61,6 +61,8 @@ export interface NovelEntry {
 	status: string | null;
 	/** Word count of the note's body, excluding frontmatter. */
 	wordCount: number;
+	/** First paragraph of the body (shortened), shown on the card when its outline row has no Synopsis. */
+	excerpt: string | null;
 }
 
 /** One horizontal line in the book's default view. */

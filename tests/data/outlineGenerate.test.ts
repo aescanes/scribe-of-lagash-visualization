@@ -21,6 +21,7 @@ function entry(path: string, over: Partial<NovelEntry> = {}): NovelEntry {
 		locations: [],
 		status: null,
 		wordCount: 0,
+		excerpt: null,
 		...over,
 	};
 }

@@ -56,9 +56,17 @@ folder-based approach before adding a new frontmatter field or setting.
   (`locationsModel`; same union / ⚠ rules). Both views are thin wrappers over
   `derivedLinesModel` in `views/derivedLines.ts`. Plan:
   [`docs/feature-plans/locations-view-plan.md`](docs/feature-plans/locations-view-plan.md).
-- **Chronological view** *(planned)* — orders the same chapters/scenes by their
-  `scribe-note-date`, and only works for notes that have that property.
-  Not built yet.
+- **Chronological view** — read-only, a single derived line ordering every
+  chapter/scene by its date (`chronologicalModel` in
+  `views/chronologicalModel.ts`), from `scribe-note-date` and the Outline's
+  `Date` column (one date per card: the note's, else its row's; ⚠ when both
+  parse and differ). Dates are parsed by `data/dateParser.ts`: ISO, or full
+  English/Spanish month names; a month followed by one number is a *year*
+  (false years for calendar-less stories). Unrecognized or missing dates go to
+  a "No date" strip. Columns are ranks in time, equal dates tie-break by
+  manuscript order; an asc/desc toolbar button is kept in the leaf's view
+  state (`dateOrder`). Plan:
+  [`docs/feature-plans/chronological-view-plan.md`](docs/feature-plans/chronological-view-plan.md).
 
 > The term is **line**, not "timeline". An earlier draft called these timelines
 > and also let one card sit on several at once — that multi-membership idea was
@@ -203,6 +211,9 @@ Entry point: [`src/main.ts`](src/main.ts) → `ScribeVisualizationPlugin`.
 | Line render model | [`src/views/canvasModel.ts`](src/views/canvasModel.ts) | Pure, unit-tested: `canvasModel(entries, layout, outline?)` → lines + real/ghost `cards` + `unplaced` + `plannedUnplaced`; `manuscriptColumns` (each card's default column on the shared reading-order axis); every layout edit (`moveCard` — drop at an exact column, pushing a card already there and its right neighbours over, no compaction; `alignToOutlineOrder` — snap the board back to the Story Outline: ghost cards drop any dragged placement and return to the line their `Line` cell names; a real note whose row names a line that exists in `Lines.md` (`OutlineReconciliation.fulfilledLineIds`) moves onto that line too, the same way — a real note with no row, or whose row names no valid line, keeps its current line; every placed card's column snaps to reading order (offered only when a Story Outline exists); `reconcilePlacements`, `applyPlannedPlacements`, `addLine` / `renameLine` / `recolorLine` / `moveLine` / `removeLine`, `cloneLayout`, `starterLayout`, `starterLayoutFromOutline` — a first layout with one line per outline `Line` value, entries seeded onto the line their row names at their manuscript column). **All layout math lives here, not in the view.** |
 | Characters view | [`src/views/charactersModel.ts`](src/views/charactersModel.ts) | Pure, unit-tested: `charactersModel(entries, reconciliation)` → a `CanvasModel` with one derived line per character for the read-only Characters view (needs `OutlineReconciliation.fulfilledCharacters`) |
 | Locations view | [`src/views/locationsModel.ts`](src/views/locationsModel.ts) | Same as `charactersModel` for locations (needs `fulfilledLocations`). Both delegate to [`src/views/derivedLines.ts`](src/views/derivedLines.ts): `derivedLinesModel(entries, plan, source)` — name normalization, note ∪ outline merge + ⚠, manuscript columns, alphabetical lines, stable color, "none" strip |
+| Date parser | [`src/data/dateParser.ts`](src/data/dateParser.ts) | Pure, unit-tested: `parseStoryDate` (ISO or full en/es month names → `ParsedDate` with a sort `key`, else `null`), `compareDates`, `formatStoryDate` (human label per precision, in the title language), `dateFormatHint` |
+| Chronological view | [`src/views/chronologicalModel.ts`](src/views/chronologicalModel.ts) | Pure, unit-tested: `chronologicalModel(entries, recon, order, language)` → one-line `CanvasModel` (+ `unplacedMarks` for the "No date" strip); `parseDateOrder`. Needs `OutlineReconciliation.fulfilledDates` |
+| Card text | [`src/data/excerpt.ts`](src/data/excerpt.ts), [`src/views/cardInfo.ts`](src/views/cardInfo.ts) | Pure, unit-tested. `firstParagraph(content)` → the shortened first paragraph of a note's body (`NovelEntry.excerpt`), shown when the outline row has no Synopsis. `realCardMeta` / `plannedCardMeta` / `metaRows` → the characters and locations rows (one line each, with an icon) on a card: the note's own list wins, the outline row fills in, and a view's `StoryViewDef.hides` drops the field it groups by |
 | Story views | [`src/views/storyViews.ts`](src/views/storyViews.ts) | Pure, unit-tested registry of the StoryLines tab's views (`STORY_VIEWS`): each `StoryViewDef` says whether it is `editable`, its empty/unplaced-strip wording, and its `buildModel`. **The view never checks which view it is in** — it reads the descriptor (`isEditable()`, `def.buildModel`). A new view (dates, …) is one entry here plus its model function; `parseStoryView` coerces saved view state |
 | Line view | [`src/views/lineView.ts`](src/views/lineView.ts) | `ItemView` (`VIEW_TYPE_LINE_VIEW`). DOM + pointer-drag only: renders from `canvasModel`, calls the pure ops via `mutate()` (push undo snapshot → apply → debounced save → re-render). Reads `Lines.md` + the outline on open / story-folder setting change / index change; a toolbar ⟳ button (shown only when `missingOutlineLines()` is non-empty) adds the lines the outline names but `Lines.md` lacks, an "Align cards to Story Outline " button (shown only while `outlineRows` is non-empty) re-spreads cards onto their reading-order columns, both as one undoable `mutate`; creates notes from ghost cards via a `confirm` modal |
 | Confirm modal | [`src/utils/confirmModal.ts`](src/utils/confirmModal.ts) | `confirm(app, {title, body, cta})` → `Promise<boolean>` (Obsidian ships no confirm primitive); lives in `src/utils/` because it is general-purpose, and is identical to the Goals and Stats plugin's copy — keep the two in sync |
@@ -378,7 +389,7 @@ the Scribe of Lagash series (`scribe-note-*`):
 
 | Key | Type | Use |
 |---|---|---|
-| `scribe-note-date` | string (free-form) | in-story date shown on the card; the coming chronological view will order by it |
+| `scribe-note-date` | string | in-story date shown on the card (as a readable date in the Chronological view, which orders by it); accepted forms in the Chronological view bullet above |
 | `scribe-note-characters` | string / list | card meta; the Characters view |
 | `scribe-note-locations` | string / list | card meta; the Locations view (the old `scribe-note-places` is still read as a fallback, never written) |
 | `scribe-note-status` | string | e.g. `draft` (not yet surfaced) |

@@ -53,15 +53,17 @@
 	padding: var(--size-2-1) var(--size-4-2);
 }
 
-/* Icon-only "add the lines the outline names" button. */
-.scribe-canvas-toolbar button.scribe-canvas-refresh {
+/* Icon-only toolbar buttons: "add the lines the outline names" and the date order toggle. */
+.scribe-canvas-toolbar button.scribe-canvas-refresh,
+.scribe-canvas-toolbar button.scribe-canvas-date-order {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 	padding: var(--size-2-1) var(--size-4-3);
 }
 
-.scribe-canvas-refresh .svg-icon {
+.scribe-canvas-refresh .svg-icon,
+.scribe-canvas-date-order .svg-icon {
 	width: 16px;
 	height: 16px;
 	stroke-width: 2.75px;
@@ -98,7 +100,7 @@
 	   free-text title (e.g. an Outline "1 - The beginning" cell) routinely wraps
 	   to 2 lines where a bare number never did, so this needs more room than a
 	   single-line title alone would. */
-	min-height: 190px;
+	min-height: max(190px, calc(var(--scribe-card-height, 0px) + var(--size-4-8)));
 }
 
 .scribe-canvas-line-header {
@@ -309,6 +311,54 @@
 	border-left-color: var(--scribe-line-color);
 }
 
+/* A rail with time gaps draws its column guides as elements (see renderGapGuides),
+   because its slots aren't all one column wide. */
+.scribe-canvas-line-rail.has-gaps {
+	background-image: none;
+}
+
+.scribe-canvas-guide {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: calc(var(--scribe-guide-x) * var(--scribe-col-width) - 1px);
+	width: 1px;
+	background: var(--background-modifier-border);
+}
+
+/* A time gap in the Chronological view: a small card-like chip with "…" centred
+   on the line, in a slice of the axis narrower than a column. */
+.scribe-canvas-line-rail .scribe-canvas-gap {
+	position: absolute;
+	top: 50%;
+	left: calc(var(--scribe-gap-x) * var(--scribe-col-width));
+	width: calc(var(--scribe-gap-width) * var(--scribe-col-width));
+	transform: translateY(-50%);
+	display: flex;
+	justify-content: center;
+}
+
+.scribe-canvas-gap-dots {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--size-2-2);
+	width: calc(100% - 2 * var(--size-4-2));
+	padding: var(--size-4-5) 0;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+	box-shadow: var(--shadow-s);
+	cursor: help;
+}
+
+.scribe-canvas-gap-dot {
+	width: var(--size-4-1);
+	height: var(--size-4-1);
+	border-radius: 50%;
+	background: var(--text-normal);
+}
+
 .scribe-canvas-card.is-linked {
 	outline: 2px solid var(--interactive-accent);
 	outline-offset: 1px;
@@ -443,18 +493,49 @@
 }
 
 .scribe-canvas-card-date {
+	display: flex;
+	align-items: center;
+	gap: var(--size-2-2);
 	font-size: var(--font-ui-smaller);
 	color: var(--text-muted);
 	margin-top: 4px;
 }
 
 .scribe-canvas-card-meta {
+	display: flex;
+	align-items: center;
+	gap: var(--size-2-2);
 	margin-top: 4px;
 	font-size: var(--font-ui-smaller);
 	color: var(--text-muted);
+}
+
+.scribe-canvas-card-meta-icon {
+	display: inline-flex;
+	flex: 0 0 auto;
+}
+
+.scribe-canvas-card-meta-icon .svg-icon {
+	width: 12px;
+	height: 12px;
+}
+
+.scribe-canvas-card-meta-text {
+	min-width: 0;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
+}
+
+/* Air between the synopsis and the people / places under it. */
+.scribe-canvas-card-summary + .scribe-canvas-card-date,
+.scribe-canvas-card-summary + .scribe-canvas-card-meta {
+	margin-top: var(--size-4-2);
+}
+
+.scribe-canvas-card-date + .scribe-canvas-card-meta,
+.scribe-canvas-card-meta + .scribe-canvas-card-meta {
+	margin-top: 2px;
 }
 
 .scribe-canvas-card-wordcount {

@@ -28,6 +28,7 @@ function entry(path: string, over: Partial<NovelEntry> = {}): NovelEntry {
 		locations: [],
 		status: null,
 		wordCount: 0,
+		excerpt: null,
 		...over,
 	};
 }
@@ -525,6 +526,7 @@ test("reconcileOutline is a no-op for an empty table", () => {
 		fulfilledLineIds: {},
 		fulfilledCharacters: {},
 		fulfilledLocations: {},
+		fulfilledDates: {},
 		unknownLines: [],
 	});
 });
@@ -547,4 +549,14 @@ test("parseOutlineTable reads the Locations column, and the legacy Places header
 		[`| Chapter | ${header} |`, "| --- | --- |", "| 1 | Castle, Docks |"].join("\n");
 	assert.deepEqual(parseOutlineTable(table("Locations"))[0].locations, ["Castle", "Docks"]);
 	assert.deepEqual(parseOutlineTable(table("Places"))[0].locations, ["Castle", "Docks"]);
+});
+
+test("reconcileOutline exposes a fulfilled row's Date cell", () => {
+	const dated = row({ chapter: 1, date: "November 3, 2026" });
+	const entries = [
+		entry("Book/Chapter 1.md", { type: "chapter", order: 1 }),
+		entry("Book/Chapter 2.md", { type: "chapter", order: 2 }),
+	];
+	const result = reconcileOutline([dated, row({ chapter: 2 })], entries, layout, "Book");
+	assert.deepEqual(result.fulfilledDates, { "Book/Chapter 1.md": "November 3, 2026" });
 });
