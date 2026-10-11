@@ -9,6 +9,10 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Moved the confirm modal from `src/views/` to `src/settings/`, so it sits in
   the same place as in the Goals and Stats plugin, which now shares this exact
   file. No change in behavior.
+- Unified the README and contributing docs with the other Scribe of Lagash
+  plugins: same structure, commands, link style and formatting, plus a note on
+  how the plugins relate and corrections to statements that no longer matched
+  current behavior.
 
 ## [0.12.1](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/0.12.1) - 2026-10-03
 
