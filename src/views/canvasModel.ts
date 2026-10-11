@@ -30,10 +30,26 @@ export interface CanvasCard {
 	summary: string | null;
 	/** For a real card whose outline row disagrees with the note — advisory text. */
 	mark: string | null;
+	/** Date label to show instead of deriving one from the note / row (the Chronological view, where the date may come from the outline). */
+	dateLabel?: string | null;
+}
+
+/**
+ * A "…" marker between two cards whose dates are far apart. It takes a slice of
+ * the axis of its own, so `x` and `width` are in column units and can be
+ * fractional (the cards after it are shifted by `width`).
+ */
+export interface CanvasGap {
+	x: number;
+	width: number;
+	/** Tooltip, e.g. "about 10 years later". */
+	label: string;
 }
 
 export interface CanvasLine {
 	def: Line;
+	/** Time-gap markers (Chronological view only). */
+	gaps?: CanvasGap[];
 	/** Cards on this line, left to right (real and ghost, once the outline is merged). */
 	cards: CanvasCard[];
 }
@@ -44,6 +60,8 @@ export interface CanvasModel {
 	unplaced: NovelEntry[];
 	/** Planned rows whose `Line` cell matched no line — shown but not placed. */
 	plannedUnplaced: PlannedEntry[];
+	/** Advisory text for cards in the strip above, keyed by note path or expected path (derived views only). */
+	unplacedMarks?: Record<string, string>;
 	/** Number of columns to size the horizontal axis (at least 1). */
 	columnCount: number;
 }
@@ -58,6 +76,7 @@ const EMPTY_PLAN: OutlineReconciliation = {
 	fulfilledLineIds: {},
 	fulfilledCharacters: {},
 	fulfilledLocations: {},
+	fulfilledDates: {},
 	unknownLines: [],
 };
 

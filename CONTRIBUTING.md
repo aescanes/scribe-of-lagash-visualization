@@ -4,7 +4,7 @@ Thanks for your interest in contributing to Scribe of Lagash - Visualization.
 This project is part of the **Scribe of Lagash** series — independent
 Obsidian plugins that help writers plan and write, each focused on one
 concern. This particular plugin covers chapter/scene visualization
-(StoryLines, Characters and Locations views and, soon, a chronological view).
+(StoryLines, Characters, Locations and Chronological views).
 
 ## Ways to contribute
 

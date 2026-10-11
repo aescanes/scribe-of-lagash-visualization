@@ -7,6 +7,8 @@ import { emptyLineLayout, lineFilePath, readLineLayout, writeLineLayout } from "
 import { outlineLineNames, OutlineReconciliation, reconcileOutline } from "../data/outline";
 import { outlineFilePath, readOutline } from "../data/outlineFile";
 import { scaffoldNoteBody } from "../data/noteScaffold";
+import { displayDate } from "../data/dateParser";
+import { CardInfoField, CardMeta, metaRows, plannedCardMeta, realCardMeta } from "./cardInfo";
 import { folderContext } from "../data/pathContext";
 import { LineLayout, NovelEntry, OutlineRow, PlannedEntry } from "../types";
 import {
@@ -30,6 +32,7 @@ import {
 	starterLayoutFromOutline,
 } from "./canvasModel";
 import { confirm } from "../utils/confirmModal";
+import { DateOrder, DEFAULT_DATE_ORDER, parseDateOrder } from "./chronologicalModel";
 import { DEFAULT_STORY_VIEW, StoryView, parseStoryView, StoryViewDef, STORY_VIEWS, storyViewIds } from "./storyViews";
 
 export const VIEW_TYPE_LINE_VIEW = "scribe-line-view";
@@ -97,6 +100,9 @@ export class LineView extends ItemView {
 	private cardEls = new Map<string, HTMLElement[]>();
 	private drag: DragState | null = null;
 	private storyView: StoryView = DEFAULT_STORY_VIEW;
+	private dateOrder: DateOrder = DEFAULT_DATE_ORDER;
+	/** What the board being rendered needs while drawing each card. */
+	private cardCtx: { recon: OutlineReconciliation; hides: readonly CardInfoField[] } | null = null;
 	private opened = false;
 	/** True once the layout changed and hasn't been written yet. */
 	private dirty = false;
@@ -122,7 +128,7 @@ export class LineView extends ItemView {
 	}
 
 	getState(): Record<string, unknown> {
-		return { ...super.getState(), storyView: this.storyView };
+		return { ...super.getState(), storyView: this.storyView, dateOrder: this.dateOrder };
 	}
 
 	async setState(state: unknown, result: ViewStateResult): Promise<void> {
@@ -130,6 +136,7 @@ export class LineView extends ItemView {
 		// `mode` is the key tabs saved before the rename.
 		const raw = "storyView" in saved ? saved.storyView : "mode" in saved ? saved.mode : null;
 		this.storyView = parseStoryView(raw);
+		this.dateOrder = parseDateOrder("dateOrder" in saved ? saved.dateOrder : null);
 		await super.setState(state, result);
 		if (this.opened) this.render();
 	}
@@ -368,7 +375,18 @@ export class LineView extends ItemView {
 		}
 		if (!recon) return;
 
-		this.renderBoard(root, def.buildModel({ entries, layout: this.layout, recon }), recon, def);
+		this.renderBoard(
+			root,
+			def.buildModel({
+				entries,
+				layout: this.layout,
+				recon,
+				dateOrder: this.dateOrder,
+				language: this.plugin.settings.titleLanguage,
+			}),
+			recon,
+			def,
+		);
 		if (def.editable) this.renderDiagnostics(root, entries, recon);
 		this.equalizeCardHeights();
 
@@ -394,6 +412,11 @@ export class LineView extends ItemView {
 			for (const el of cards) tallest = Math.max(tallest, el.offsetHeight);
 			if (tallest === 0) return;
 			for (const el of cards) el.style.setProperty("min-height", `${tallest}px`);
+			// Cards float over their line, so the line has to grow with them or
+			// the taller cards of neighbouring lines would overlap.
+			this.contentEl
+				.querySelector<HTMLElement>(".scribe-canvas-board")
+				?.style.setProperty("--scribe-card-height", `${tallest}px`);
 		});
 	}
 
@@ -406,7 +429,23 @@ export class LineView extends ItemView {
 
 		if (recon) this.renderEditButtons(toolbar, recon);
 
+		if (folder && STORY_VIEWS[this.storyView].hasDateOrder) this.renderDateOrderButton(toolbar);
+
 		if (folder) this.renderViewSelect(toolbar);
+	}
+
+	private renderDateOrderButton(toolbar: HTMLElement): void {
+		const asc = this.dateOrder === "asc";
+		const button = toolbar.createEl("button", {
+			cls: "scribe-canvas-date-order",
+			attr: { "aria-label": asc ? "Oldest first (click for newest first)" : "Newest first (click for oldest first)" },
+		});
+		setIcon(button, asc ? "arrow-down-narrow-wide" : "arrow-up-wide-narrow");
+		button.addEventListener("click", () => {
+			this.dateOrder = asc ? "desc" : "asc";
+			this.app.workspace.requestSaveLayout();
+			this.render();
+		});
 	}
 
 	private renderViewSelect(toolbar: HTMLElement): void {
@@ -511,6 +550,7 @@ export class LineView extends ItemView {
 
 	private renderBoard(root: HTMLElement, model: CanvasModel, recon: OutlineReconciliation, def: StoryViewDef): void {
 		const readOnly = !def.editable;
+		this.cardCtx = { recon, hides: def.hides ?? [] };
 		if (def.emptyNotice && model.lines.length === 0) this.renderNotice(root, def.emptyNotice);
 		if (readOnly && model.lines.length === 0 && model.unplaced.length === 0 && model.plannedUnplaced.length === 0) {
 			return;
@@ -535,7 +575,17 @@ export class LineView extends ItemView {
 				readOnly,
 			);
 			const rail = lineEl.createDiv({ cls: "scribe-canvas-line-rail" });
+			this.renderGapGuides(rail, line);
 			for (const card of line.cards) this.renderCard(rail, card, false, readOnly);
+			for (const gap of line.gaps ?? []) {
+				const gapEl = rail.createDiv({ cls: "scribe-canvas-gap" });
+				gapEl.style.setProperty("--scribe-gap-x", String(gap.x));
+				gapEl.style.setProperty("--scribe-gap-width", String(gap.width));
+				// Three drawn dots, not an "…" glyph: the glyph sits on the text baseline,
+				// so it can't be centered in the chip.
+				const dots = gapEl.createSpan({ cls: "scribe-canvas-gap-dots", attr: { "aria-label": gap.label } });
+				for (let i = 0; i < 3; i++) dots.createSpan({ cls: "scribe-canvas-gap-dot" });
+			}
 		});
 
 		if (model.unplaced.length > 0 || model.plannedUnplaced.length > 0) {
@@ -549,7 +599,12 @@ export class LineView extends ItemView {
 			});
 			const rail = strip.createDiv({ cls: "scribe-canvas-unplaced-rail" });
 			for (const entry of model.unplaced) {
-				this.renderCard(rail, { kind: "real", entry, planned: null, x: 0, summary: null, mark: null }, true, readOnly);
+				this.renderCard(
+					rail,
+					{ kind: "real", entry, planned: null, x: 0, summary: null, mark: model.unplacedMarks?.[entry.file.path] ?? null },
+					true,
+					readOnly,
+				);
 			}
 			for (const p of model.plannedUnplaced) {
 				this.renderCard(
@@ -560,12 +615,30 @@ export class LineView extends ItemView {
 						planned: p,
 						x: 0,
 						summary: p.row.summary || null,
-						mark: readOnly ? null : (recon.marks[p.expectedPath] ?? null),
+						mark: readOnly
+							? (model.unplacedMarks?.[p.expectedPath] ?? null)
+							: (recon.marks[p.expectedPath] ?? null),
 					},
 					true,
 					readOnly,
 				);
 			}
+		}
+	}
+
+	/**
+	 * A line with time-gap markers has slots of unequal width, so the rail's
+	 * repeating column guides no longer line up with its cards; draw one guide at
+	 * the right edge of every slot instead. Painted before the cards, so they sit on top.
+	 */
+	private renderGapGuides(rail: HTMLElement, line: CanvasModel["lines"][number]): void {
+		if (!line.gaps || line.gaps.length === 0) return;
+		rail.addClass("has-gaps");
+		const edges = new Set<number>();
+		for (const card of line.cards) edges.add(card.x + 1);
+		for (const gap of line.gaps) edges.add(gap.x + gap.width);
+		for (const edge of edges) {
+			rail.createDiv({ cls: "scribe-canvas-guide" }).style.setProperty("--scribe-guide-x", String(edge));
 		}
 	}
 
@@ -656,7 +729,7 @@ export class LineView extends ItemView {
 
 	private renderCard(parent: HTMLElement, card: CanvasCard, flow: boolean, readOnly: boolean): void {
 		if (card.kind === "planned" && card.planned) {
-			this.renderPlannedCard(parent, card.planned, card.x, card.summary, card.mark, flow, readOnly);
+			this.renderPlannedCard(parent, card.planned, card.x, card.summary, card.mark, flow, readOnly, card.dateLabel);
 			return;
 		}
 		if (card.entry) this.renderRealCard(parent, card, flow, readOnly);
@@ -685,13 +758,15 @@ export class LineView extends ItemView {
 		if (entry.context.length > 0) {
 			body.createDiv({ cls: "scribe-canvas-card-context", text: entry.context.join(" - ") });
 		}
-		if (entry.date) body.createDiv({ cls: "scribe-canvas-card-date", text: entry.date });
-		if (card.summary) body.createDiv({ cls: "scribe-canvas-card-summary", text: card.summary });
+		const summary = card.summary ?? entry.excerpt;
+		if (summary) body.createDiv({ cls: "scribe-canvas-card-summary", text: summary });
 
-		const meta: string[] = [];
-		if (entry.characters.length > 0) meta.push(entry.characters.join(", "));
-		if (entry.locations.length > 0) meta.push(entry.locations.join(", "));
-		if (meta.length > 0) body.createDiv({ cls: "scribe-canvas-card-meta", text: meta.join(" · ") });
+		// Like people and places: the note's own date wins, the outline row's fills in.
+		const dateText =
+			card.dateLabel ??
+			displayDate(entry.date ?? this.cardCtx?.recon.fulfilledDates[entry.file.path], this.plugin.settings.titleLanguage);
+		if (dateText) this.renderCardDate(body, dateText);
+		this.renderCardMeta(body, realCardMeta(entry, this.cardCtx?.recon ?? null, this.cardCtx?.hides ?? []));
 
 		body.createDiv({ cls: "scribe-canvas-card-wordcount", text: formatWordCount(entry.wordCount) });
 
@@ -708,6 +783,22 @@ export class LineView extends ItemView {
 		el.addEventListener("mouseleave", () => this.setLinked(entry.file.path, false));
 	}
 
+	/** The date row: a calendar icon, then the text. */
+	private renderCardDate(body: HTMLElement, text: string): void {
+		const el = body.createDiv({ cls: "scribe-canvas-card-date" });
+		setIcon(el.createSpan({ cls: "scribe-canvas-card-meta-icon" }), "calendar");
+		el.createSpan({ cls: "scribe-canvas-card-meta-text", text });
+	}
+
+	/** Characters and locations, one row each, led by a small icon. */
+	private renderCardMeta(body: HTMLElement, meta: CardMeta): void {
+		for (const row of metaRows(meta)) {
+			const el = body.createDiv({ cls: "scribe-canvas-card-meta" });
+			setIcon(el.createSpan({ cls: "scribe-canvas-card-meta-icon" }), row.field === "characters" ? "users" : "map-pin");
+			el.createSpan({ cls: "scribe-canvas-card-meta-text", text: row.text });
+		}
+	}
+
 	/** A ghost card for a planned outline row whose note doesn't exist yet. */
 	private renderPlannedCard(
 		parent: HTMLElement,
@@ -717,6 +808,7 @@ export class LineView extends ItemView {
 		mark: string | null,
 		flow: boolean,
 		readOnly: boolean,
+		dateLabel?: string | null,
 	): void {
 		const el = parent.createDiv({
 			cls: `scribe-canvas-card scribe-canvas-card--planned${flow ? " is-flow" : ""}`,
@@ -741,6 +833,9 @@ export class LineView extends ItemView {
 			body.createDiv({ cls: "scribe-canvas-card-context", text: context.join(" - ") });
 		}
 		if (summary) body.createDiv({ cls: "scribe-canvas-card-summary", text: summary });
+		const dateText = dateLabel ?? displayDate(planned.row.date, this.plugin.settings.titleLanguage);
+		if (dateText) this.renderCardDate(body, dateText);
+		this.renderCardMeta(body, plannedCardMeta(planned.row, this.cardCtx?.hides ?? []));
 		if (readOnly) return;
 		body.createDiv({ cls: "scribe-canvas-card-create", text: "＋ Create note" });
 

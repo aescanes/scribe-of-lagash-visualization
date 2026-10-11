@@ -6,6 +6,7 @@ import { FRONTMATTER_KEYS, LEGACY_PLACES_KEY, NovelEntry } from "../types";
 import { byManuscriptOrder } from "./manuscriptOrder";
 import { folderContext } from "./pathContext";
 import { DEFAULT_LANGUAGE, parseTitle } from "./titleParser";
+import { firstParagraph } from "./excerpt";
 import { countWords } from "./wordCount";
 
 /** Settings the index needs; supplied lazily so it always reads current values. */
@@ -134,6 +135,7 @@ export class VaultIndex extends Component {
 			locations: toStringArray(frontmatter[FRONTMATTER_KEYS.locations] ?? frontmatter[LEGACY_PLACES_KEY]),
 			status: toStringOrNull(frontmatter[FRONTMATTER_KEYS.status]),
 			wordCount: countWords(content),
+			excerpt: firstParagraph(content),
 		};
 	}
 }

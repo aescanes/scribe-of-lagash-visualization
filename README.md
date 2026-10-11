@@ -21,7 +21,7 @@ that stores the lines and card positions of the StoryLines view; the optional
 **Story Outline file**, created as an empty table when you ask for it (and
 filled from your notes only if you run **Generate Story Outline from notes**
 while it is still empty); and a new chapter or scene note when you click a
-planned card from the outline. The Characters and Locations views are derived
+planned card from the outline. The Characters, Locations and Chronological views are derived
 from your notes and save nothing.
 
 ## Installation
@@ -73,6 +73,22 @@ to the StoryLines file (`StoryLines.md`) automatically; `Mod+Z` undoes.
 
 <img src="https://raw.githubusercontent.com/aescanes/scribe-of-lagash-visualization/main/docs/images/storylines-view.png" alt="StoryLines view" width="600">
 
+### What a card shows
+
+A card shows its title, folder breadcrumb, a short text, then the date, the
+characters and the locations (each on its own line, with a small icon), and
+the word count.
+
+The date, characters and locations come from the **note first**: its
+`scribe-note-date`, `scribe-note-characters` and `scribe-note-locations`
+frontmatter. If the note doesn't have one, the **Story Outline row** fills it
+in, and if neither has it nothing is shown. Planned cards show their row's. The
+Characters and Locations views leave their own field off the cards, since the
+lines already say it.
+
+The short text is the Story Outline's Synopsis; a note whose row has none shows
+the first paragraph of the note instead.
+
 ### Characters view
 
 The combo box at the top right of the StoryLines tab
@@ -98,6 +114,37 @@ Outline's `Locations` column, merged the same way (⚠ when they differ; a
 
 <img src="https://raw.githubusercontent.com/aescanes/scribe-of-lagash-visualization/main/docs/images/locations-view.png" alt="Locations view" width="600">
 
+### Chronological view
+
+The same read-only view, with a single line that orders every chapter and
+scene by its in-story date. The date comes from the note's `scribe-note-date`
+frontmatter or the Story Outline's `Date` column (if both exist the note wins,
+and a ⚠ explains a difference). The button next to the combo box switches
+between oldest first and newest first. Scenes with the same date keep their
+chapter/scene order; notes with no date, or a date that isn't recognized (⚠),
+sit in a "No date" strip. When two neighbouring cards are much further apart in time than usual (more
+than twice the average gap), a bold **…** marker takes a narrow slot between them; hover
+it to see how long passed (for example "about 10 years later").
+Cards in every view show a readable date (`November 3, 2026`)
+whatever form you typed (in the **Title language**); the notes are never rewritten.
+
+Accepted dates (English and Spanish month names, full names only):
+
+| Form | Examples |
+|---|---|
+| Year / month / day (ISO) | `2026`, `2026-11`, `2026-11-03` |
+| Month and year | `November 2026`, `noviembre de 2026` |
+| Day, month and year | `November 3, 2026`, `3 November 2026`, `3 de noviembre de 2026` |
+
+A month followed by a single number is always a **year**, so a story without a
+real calendar can use small made-up years: `November 1`, `December 1`,
+`January 2` are November and December of year 1, then January of year 2. A day
+needs a year too (`November 3, 1`). A bare month, `03/01/2026`, abbreviations
+and impossible dates (`2026-02-30`) are not recognized. Real and made-up years
+in the same story simply sort by number.
+
+<img src="https://raw.githubusercontent.com/aescanes/scribe-of-lagash-visualization/main/docs/images/chronological-view.png" alt="Chronological view" width="600">
+
 ### Story Outline file _(optional)_
 
 Name a file under **Story Outline file
@@ -121,9 +168,10 @@ fills an empty outline from them; see
 
 ## Planned next
 
-- a **chronological view** ordering chapters/scenes by their
-  `scribe-note-date`. See
-  [docs/feature-plans/line-view-plan.md](docs/feature-plans/line-view-plan.md).
+- a **Plot view**: a read-only matrix of the whole story, with one row per
+  chapter/scene and one column per piece of information (Title, Status,
+  Characters, Locations, Date, …), built from the notes' `scribe-note-*`
+  frontmatter and the Story Outline.
 
 ## Setting up a story
 
@@ -216,7 +264,9 @@ the note body when you create it.
 List the people in a chapters/scenes under `Characters`
 (comma-separated, e.g. `Harry, Ron, Hermione`) to enable the **Characters view**:
 each name becomes a line showing the chapters/scenes it appears in. `Locations`
-does the same for the **Locations view**.
+does the same for the **Locations view**. Add a `Date` column (see the
+[Chronological view](#chronological-view) for the accepted forms) to place
+planned rows on the **Chronological view**.
 
 A row with neither a `Chapter` nor a `Scene`
 value is ignored, and un-numbered units (`Prologue`, …) can't be planned here —
