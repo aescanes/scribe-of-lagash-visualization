@@ -29,7 +29,7 @@ import {
 	starterLayout,
 	starterLayoutFromOutline,
 } from "./canvasModel";
-import { confirm } from "./confirmModal";
+import { confirm } from "../settings/confirmModal";
 import { DEFAULT_STORY_VIEW, StoryView, parseStoryView, StoryViewDef, STORY_VIEWS, storyViewIds } from "./storyViews";
 
 export const VIEW_TYPE_LINE_VIEW = "scribe-line-view";
