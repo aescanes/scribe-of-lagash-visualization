@@ -276,6 +276,7 @@ scribe-note-status: draft
 
 ```bash
 npm install
+npm run prepare  # activate the Husky pre-commit hook (once; npm install skips it because ignore-scripts=true)
 npm run dev    # watch build, outputs main.js
 npm run build  # type-check + production build
 npm test       # unit tests (Node's built-in runner; no test framework dependency)
