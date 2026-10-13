@@ -12,16 +12,18 @@ This plugin doesn't own your prose: chapters and scenes are just regular notes
 in your vault. Point the plugin at the folder that holds a story and it
 recognizes chapters and scenes from their titles ("Chapter 1", "Scene II",
 "Prologue", …); a little `scribe-note-*` frontmatter is optional and
-only needed to override the title or add detail. You can see the story in three
-views: **StoryLines**, where you arrange the cards on your own lines, and the
-read-only **Characters** and **Locations** views, which group the same chapters
-and scenes by who appears and where they happen. It never edits a note you
+only needed to override the title or add detail. You can see the story in
+several views: **StoryLines**, where you arrange the cards on your own lines;
+the read-only **Characters**, **Locations** and **Chronological** views, which
+group the same chapters and scenes by who appears, where they happen and when;
+and the **Plot matrix**, the Story Outline as an editable table of squares. It never edits a note you
 already wrote. What it does write is limited to: a per-story **StoryLines file**
 that stores the lines and card positions of the StoryLines view; the optional
 **Story Outline file**, created as an empty table when you ask for it (and
 filled from your notes only if you run **Generate Story Outline from notes**
 while it is still empty); and a new chapter or scene note when you click a
-planned card from the outline. The Characters, Locations and Chronological views are derived
+planned card from the outline; the Plot matrix also edits the cells of the Story Outline you
+click. The Characters, Locations and Chronological views are derived
 from your notes and save nothing.
 
 ## Installation
@@ -145,6 +147,32 @@ in the same story simply sort by number.
 
 <img src="https://raw.githubusercontent.com/aescanes/scribe-of-lagash-visualization/main/docs/images/chronological-view.png" alt="Chronological view" width="600">
 
+### Plot matrix view
+
+The Story Outline as a matrix of big squares, in the same look as the other
+views: one row per outline row, and one column per piece of information —
+**Act / Chapter / Scene** (one square), **Line**, **Synopsis**, **Characters**,
+**Locations**, **Date**, **Status** and **Comments**. Rows whose note doesn't
+exist yet are dashed, a line's color marks the left edge, and a ⚠ shows when a
+row disagrees with the real note.
+
+Unlike the other views it is editable, and what it edits is the **Story Outline
+file**: click a square to change that cell of the table (Enter or clicking away
+saves, Escape cancels). The pencil on the first square edits the Act, Chapter
+and Scene cells; **Add row** appends a new numbered row. Only the cell you edit
+is rewritten, and an edit is refused if the table changed in the meantime.
+Notes, `Lines.md` and every other row stay as they are.
+
+A short line under each column title says what goes there. **Status** is a
+picker: No Status (an empty cell), TO DO, In Progress, First Draft, Revised
+Draft, Final Draft or Done. If you type something else into the table, it is
+left as you wrote it and shown with a ⚠ instead of being treated as a status.
+
+Without a Story Outline file the matrix is read-only and built from your notes
+(their titles, folders, `scribe-note-*` frontmatter, line placement and first
+paragraph). `Comments` is yours alone: it lives only in the outline table and is
+never copied into a note.
+
 ### Story Outline file _(optional)_
 
 Name a file under **Story Outline file
@@ -165,13 +193,6 @@ fills an empty outline from them; see
 [docs/feature-plans/outline-file-plan.md](docs/feature-plans/outline-file-plan.md).
 
 <img src="https://raw.githubusercontent.com/aescanes/scribe-of-lagash-visualization/main/docs/images/story-outline.png" alt="Story Outline file" width="500">
-
-## Planned next
-
-- a **Plot view**: a read-only matrix of the whole story, with one row per
-  chapter/scene and one column per piece of information (Title, Status,
-  Characters, Locations, Date, …), built from the notes' `scribe-note-*`
-  frontmatter and the Story Outline.
 
 ## Setting up a story
 
@@ -252,14 +273,26 @@ notes, fill the columns that match your layout:
 | Scenes in chapter folders | `Chapter` + `Scene`         | `Chapter 1/Scene 2.md`       |
 | …grouped in acts          | `Act` + `Chapter` + `Scene` | `Act I/Chapter 1/Scene 2.md` |
 | Scenes with no chapter    | `Scene` (+ optional `Act`)  | `Scene 2.md`                 |
-| Custom folder             | `Folder` (overrides `Act`)  | `<Folder>/Chapter 1.md`      |
 
 Numbers may be digits or roman numerals, optionally followed by free text —
 e.g. a `Chapter` cell of `1 - The beginning` plans `Chapter 1 - The beginning.md`,
 the same as if you'd typed that title directly. The `Act` / `Chapter` / `Scene`
 words and folder names follow the **Title language** setting. `Line` is a line
 name or id from the StoryLines file; `Synopsis` shows on the card and becomes
-the note body when you create it.
+the note body when you create it. `Status` and `Comments` are for your own
+bookkeeping; `Comments` stays in the table and is never copied into a note.
+
+A new outline file asks Obsidian to show it at the full width of the pane (a
+`cssclasses: [scribe-outline-wide]` line in its frontmatter), so the table can
+show more columns without scrolling. An outline you created earlier gets the
+same line added to its frontmatter the next time the plugin reads it (any
+`cssclasses` you already had are kept).
+
+The outline always has every column (`Act`, `Chapter`, `Scene`, `Line`,
+`Synopsis`, `Characters`, `Locations`, `Date`, `Status`, `Comments`): when the
+plugin reads the file and one is missing, it adds it in its usual place (for
+example `Scene` right after `Chapter`). Existing columns and your text are never changed, and a column you
+delete comes back the next time the file is read.
 
 List the people in a chapters/scenes under `Characters`
 (comma-separated, e.g. `Harry, Ron, Hermione`) to enable the **Characters view**:
@@ -287,7 +320,6 @@ chapter or scene note, it writes one row:
 
 | Column     | What the command fills in                                                                           |
 | ---------- | --------------------------------------------------------------------------------------------------- |
-| `Folder`   | The folders the note sits in under the story folder, e.g. `Act I` (empty for a note directly in it) |
 | `Chapter`  | The chapter number (for a scene, read from its chapter folder's name)                               |
 | `Scene`    | The scene number, for scene notes                                                                   |
 | `Line`     | The name of the line the note's card sits on in the StoryLines file, if it has been placed          |
@@ -303,7 +335,7 @@ Things to know:
   skipped.
 - **The generated table uses the columns above.** It replaces the empty
   starter table, so the optional `Act`, `Characters` and `Locations` columns are
-  not part of it (the act is already in `Folder`). Add those columns back by hand
+  not part of it. Add those columns back by hand
   if you want them. Any text around the table, such as the column guide, is kept.
 - **It doesn't change your notes or the StoryLines file.** Because every row
   matches a note that already exists, the outline shows no placeholder cards

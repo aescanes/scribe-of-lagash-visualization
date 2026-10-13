@@ -11,7 +11,7 @@ import { DEFAULT_LANGUAGE, parseTitle } from "./titleParser";
  * is read back from its chapter folder's name.
  */
 
-const COLUMNS = ["Folder", "Chapter", "Scene", "Line", "Synopsis"];
+const COLUMNS = ["Chapter", "Scene", "Line", "Synopsis"];
 
 function cell(value: string | number | null): string {
 	return value === null || value === undefined ? "" : String(value);
@@ -27,6 +27,30 @@ export function isOutlineRowable(entry: NovelEntry): boolean {
 	return entry.type === "scene" || entry.order !== null;
 }
 
+/**
+ * An entry's Chapter / Scene numbers as an Outline row would carry them: a
+ * scene's chapter is read back from its chapter folder's name. Also the folder
+ * names around it, for the Plot matrix view's notes-only mode.
+ */
+export function outlineUnitsOf(
+	entry: NovelEntry,
+	language: string = DEFAULT_LANGUAGE,
+): { chapter: number | null; scene: number | null; chapterFolder: string | null; outerFolders: string[] } {
+	const isScene = entry.type === "scene";
+	const chapterFolder = isScene ? entry.context[entry.context.length - 1] ?? null : null;
+	const chapter = isScene
+		? chapterFolder
+			? parseTitle(chapterFolder, language)?.number ?? null
+			: null
+		: entry.order;
+	return {
+		chapter,
+		scene: isScene ? entry.order : null,
+		chapterFolder,
+		outerFolders: isScene ? entry.context.slice(0, -1) : entry.context,
+	};
+}
+
 export function generateOutlineTable(
 	entries: NovelEntry[],
 	layout: LineLayout,
@@ -35,20 +59,12 @@ export function generateOutlineTable(
 	const lineNameById = new Map(layout.lines.map((l) => [l.id, l.name]));
 
 	const rows = entries.filter(isOutlineRowable).map((entry) => {
-		const isScene = entry.type === "scene";
-		const folder = (isScene ? entry.context.slice(0, -1) : entry.context).join("/");
-		const chapterFolder = isScene ? entry.context[entry.context.length - 1] : undefined;
-		const chapter = isScene
-			? chapterFolder
-				? parseTitle(chapterFolder, language)?.number ?? null
-				: null
-			: entry.order;
-		const scene = isScene ? entry.order : null;
+		const { chapter, scene } = outlineUnitsOf(entry, language);
 
 		const placedLine = layout.placements[entry.file.path]?.lines[0];
 		const line = placedLine ? lineNameById.get(placedLine) ?? placedLine : "";
 
-		return [cell(folder), cell(chapter), cell(scene), cell(line), ""];
+		return [cell(chapter), cell(scene), cell(line), ""];
 	});
 
 	const widths = COLUMNS.map((name, i) =>

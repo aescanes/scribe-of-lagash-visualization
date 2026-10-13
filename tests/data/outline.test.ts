@@ -37,7 +37,6 @@ function row(over: Partial<OutlineRow> = {}): OutlineRow {
 	return {
 		rowIndex: 0,
 		act: null,
-		folder: null,
 		chapter: null,
 		chapterText: null,
 		scene: null,
@@ -48,6 +47,7 @@ function row(over: Partial<OutlineRow> = {}): OutlineRow {
 		characters: [],
 		locations: [],
 		status: null,
+		comments: null,
 		...over,
 	};
 }
@@ -66,7 +66,6 @@ test("parseOutlineTable finds the table, maps columns by name, and strips bracke
 	assert.deepEqual(rows[0], {
 		rowIndex: 0,
 		act: "I",
-		folder: null,
 		chapter: 1,
 		chapterText: "1",
 		scene: null,
@@ -77,6 +76,7 @@ test("parseOutlineTable finds the table, maps columns by name, and strips bracke
 		characters: [],
 		locations: [],
 		status: null,
+		comments: null,
 	});
 	assert.equal(rows[1].line, "Main line");
 });
@@ -103,10 +103,10 @@ test("parseOutlineTable returns [] when there is no table", () => {
 
 test("parseOutlineTable: the created skeleton (help comment + empty row) has no data rows", () => {
 	const skeleton = [
-		"<!-- Managed by Scribe of Lagash - Visualization — created once, never rewritten.",
+		"<!-- Managed by Scribe of Lagash - Visualization — edit by hand or in the Plot matrix view.",
 		"     Chapters as files, no acts . . . . . Chapter                -> Chapter 1.md",
 		"     Scenes in chapter folders . . . . . Chapter + Scene        -> Chapter 1/Scene 2.md",
-		"     Also recognized: Folder, Date, Characters, Locations, Status. -->",
+		"     Also recognized: Date, Characters, Locations, Status. -->",
 		"",
 		"| Act | Chapter | Scene | Line | Synopsis | Characters |",
 		"| --- | ------- | ----- | ---- | -------- | ---------- |",
@@ -171,14 +171,7 @@ test("expectedNotePath nests a scene under its chapter's folder", () => {
 	);
 });
 
-test("expectedNotePath prefers an explicit Folder cell over Act", () => {
-	assert.equal(
-		expectedNotePath(row({ act: "I", folder: "Part One", chapter: 1 }), "Book"),
-		"Book/Part One/Chapter 1.md",
-	);
-});
-
-test("expectedNotePath omits the folder segment when there's no Act or Folder", () => {
+test("expectedNotePath omits the folder segment when there's no Act", () => {
 	assert.equal(expectedNotePath(row({ chapter: 3 }), "Book"), "Book/Chapter 3.md");
 });
 
@@ -203,13 +196,6 @@ test("expectedNotePath carries a Scene cell's free text, nesting under its chapt
 	assert.equal(
 		expectedNotePath(row({ chapter: 1, chapterText: "1", scene: 2, sceneText: "2 - The reveal" }), "Book"),
 		"Book/Chapter 1/Scene 2 - The reveal.md",
-	);
-});
-
-test("expectedNotePath keeps a multi-segment Folder cell", () => {
-	assert.equal(
-		expectedNotePath(row({ folder: "Act I/Part 2", chapter: 1 }), "Book"),
-		"Book/Act I/Part 2/Chapter 1.md",
 	);
 });
 
@@ -527,6 +513,7 @@ test("reconcileOutline is a no-op for an empty table", () => {
 		fulfilledCharacters: {},
 		fulfilledLocations: {},
 		fulfilledDates: {},
+		rowPaths: {},
 		unknownLines: [],
 	});
 });

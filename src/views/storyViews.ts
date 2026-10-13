@@ -9,16 +9,17 @@ import { locationsModel } from "./locationsModel";
 import { chronologicalModel, DateOrder } from "./chronologicalModel";
 import { dateFormatHint } from "../data/dateParser";
 import { CardInfoField } from "./cardInfo";
+import { PlotMatrixContext, PlotMatrixModel, plotMatrixModel } from "./plotMatrixModel";
 
 /**
- * The views of the StoryLines tab (StoryLines, Characters, Locations, Chronological), described
+ * The views of the StoryLines tab (StoryLines, Characters, Locations, Chronological, Plot matrix), described
  * once so the tab never has to ask "which view am I in?" — it reads `editable` /
  * `buildModel` off the descriptor.
  * A new view is one entry here plus its model function.
  * No Obsidian APIs — unit-tested.
  */
 
-export type StoryView = "storylines" | "characters" | "locations" | "chronological";
+export type StoryView = "storylines" | "characters" | "locations" | "chronological" | "plotMatrix";
 
 export interface StoryViewContext {
 	entries: NovelEntry[];
@@ -30,7 +31,9 @@ export interface StoryViewContext {
 	language: string;
 }
 
+/** A view drawn as lines of cards (every view but Plot matrix). */
 export interface StoryViewDef {
+	kind: "board";
 	label: string;
 	/**
 	 * Whether the board can be edited (drag, line controls, undo, notes created
@@ -49,11 +52,24 @@ export interface StoryViewDef {
 	buildModel(ctx: StoryViewContext): CanvasModel;
 }
 
+/**
+ * The Plot matrix view: the Story Outline as a matrix. It never edits `Lines.md`
+ * (`editable` is about that file); the matrix edits the Outline file itself,
+ * and only when one exists — see `PlotMatrixModel.editable`.
+ */
+export interface PlotMatrixViewDef {
+	kind: "matrix";
+	label: string;
+	editable: false;
+	buildPlotMatrix(ctx: PlotMatrixContext): PlotMatrixModel;
+}
+
 export const DEFAULT_STORY_VIEW: StoryView = "storylines";
 
 /** Insertion order is the order of the selector's options. */
-export const STORY_VIEWS: Record<StoryView, StoryViewDef> = {
+export const STORY_VIEWS: Record<Exclude<StoryView, "plotMatrix">, StoryViewDef> & { plotMatrix: PlotMatrixViewDef } = {
 	storylines: {
+		kind: "board",
 		label: "StoryLines",
 		editable: true,
 		emptyNotice: null,
@@ -61,6 +77,7 @@ export const STORY_VIEWS: Record<StoryView, StoryViewDef> = {
 		buildModel: ({ entries, layout, recon }) => canvasModel(entries, layout, recon),
 	},
 	characters: {
+		kind: "board",
 		label: "Characters",
 		editable: false,
 		hides: ["characters"],
@@ -71,6 +88,7 @@ export const STORY_VIEWS: Record<StoryView, StoryViewDef> = {
 		buildModel: ({ entries, recon }) => charactersModel(entries, recon),
 	},
 	locations: {
+		kind: "board",
 		label: "Locations",
 		editable: false,
 		hides: ["locations"],
@@ -81,6 +99,7 @@ export const STORY_VIEWS: Record<StoryView, StoryViewDef> = {
 		buildModel: ({ entries, recon }) => locationsModel(entries, recon),
 	},
 	chronological: {
+		kind: "board",
 		label: "Chronological",
 		editable: false,
 		hasDateOrder: true,
@@ -90,6 +109,12 @@ export const STORY_VIEWS: Record<StoryView, StoryViewDef> = {
 		unplacedLabel: "No date",
 		buildModel: ({ entries, recon, dateOrder, language }) =>
 			chronologicalModel(entries, recon, dateOrder, language),
+	},
+	plotMatrix: {
+		kind: "matrix",
+		label: "Plot matrix",
+		editable: false,
+		buildPlotMatrix: plotMatrixModel,
 	},
 };
 

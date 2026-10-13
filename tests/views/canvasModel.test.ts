@@ -177,7 +177,6 @@ function outlineRow(over: Partial<OutlineRow> = {}): OutlineRow {
 	return {
 		rowIndex: 0,
 		act: null,
-		folder: null,
 		chapter: null,
 		chapterText: null,
 		scene: null,
@@ -188,6 +187,7 @@ function outlineRow(over: Partial<OutlineRow> = {}): OutlineRow {
 		characters: [],
 		locations: [],
 		status: null,
+		comments: null,
 		...over,
 	};
 }
@@ -213,6 +213,7 @@ function plan(over: Partial<OutlineReconciliation> = {}): OutlineReconciliation 
 		fulfilledCharacters: {},
 		fulfilledLocations: {},
 		fulfilledDates: {},
+		rowPaths: {},
 		unknownLines: [],
 		...over,
 	};

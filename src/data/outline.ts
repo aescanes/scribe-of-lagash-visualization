@@ -12,7 +12,6 @@ import { DEFAULT_LANGUAGE, actLabel, parseLeadingNumber, unitLabel } from "./tit
 
 type ColumnName =
 	| "act"
-	| "folder"
 	| "chapter"
 	| "scene"
 	| "line"
@@ -21,12 +20,67 @@ type ColumnName =
 	| "characters"
 	| "locations"
 	| "places"
-	| "status";
+	| "status"
+	| "comments";
+
+/**
+ * Every column the Outline table carries, in the order a new table lists them.
+ * The plugin adds any that an existing table lacks (`ensureOutlineColumns`), so
+ * a feature never goes silent over a missing column. A legacy `Places` header
+ * counts as `Locations`.
+ */
+export const OUTLINE_COLUMNS = [
+	"Act",
+	"Chapter",
+	"Scene",
+	"Line",
+	"Synopsis",
+	"Characters",
+	"Locations",
+	"Date",
+	"Status",
+	"Comments",
+] as const;
 
 /** Splits one `| a | b |` line into raw, trimmed cell strings. */
-function splitTableRow(line: string): string[] {
-	const trimmed = line.trim().replace(/^\|/, "").replace(/\|$/, "");
-	return trimmed.split("|").map((cell) => cell.trim());
+export function splitTableRow(line: string): string[] {
+	return tableCellSpans(line).map(({ start, end }) => line.slice(start, end).trim());
+}
+
+/**
+ * Where each cell's text sits in a `| a | b |` line (the leading/trailing pipe
+ * is optional), as `[start, end)` offsets into `line`. A pipe escaped as `\|`
+ * belongs to its cell's text.
+ */
+export function tableCellSpans(line: string): { start: number; end: number }[] {
+	const spans: { start: number; end: number }[] = [];
+	let end = line.length;
+	while (end > 0 && /\s/.test(line[end - 1])) end--;
+	let start = 0;
+	while (start < end && /\s/.test(line[start])) start++;
+	if (line[start] === "|") start++;
+	if (end > start && line[end - 1] === "|" && line[end - 2] !== "\\") end--;
+
+	let cellStart = start;
+	for (let i = start; i < end; i++) {
+		if (line[i] === "\\") i++;
+		else if (line[i] === "|") {
+			spans.push({ start: cellStart, end: i });
+			cellStart = i + 1;
+		}
+	}
+	spans.push({ start: cellStart, end });
+	return spans;
+}
+
+/** Cell text as written in the table → its value (`\|` is a literal pipe). */
+function unescapeCell(cell: string): string {
+	return cell.replace(/\\\|/g, "|");
+}
+
+/** A value as it must be written in a one-line table cell. */
+export function escapeCell(value: string): string {
+	return value.replace(/\r?\n/g, " ").replace(/\|/g, "\\|").trim();
 }
 
 /** Strips the user's own `[M]`-style bracket shorthand from a data cell. */
@@ -35,7 +89,7 @@ function stripCell(cell: string): string {
 	return (match ? match[1] : cell).trim();
 }
 
-function isSeparatorRow(cells: string[]): boolean {
+export function isSeparatorRow(cells: string[]): boolean {
 	return cells.length > 0 && cells.every((cell) => /^:?-+:?$/.test(cell));
 }
 
@@ -63,6 +117,19 @@ function toStringArray(value: string): string[] {
  * it plans nothing yet.
  */
 export function parseOutlineTable(markdownBody: string): OutlineRow[] {
+	return scanOutlineTable(markdownBody).rows.map((r) => r.row);
+}
+
+/**
+ * `parseOutlineTable` plus where things sit: the lowercase header cells, and
+ * for each kept row the index (into `body.split("\n")`) of its line — what a
+ * cell edit needs to find its row. Skipped rows have no entry, so a row's
+ * `rowIndex` is its position in this list, not its line in the table.
+ */
+export function scanOutlineTable(markdownBody: string): {
+	header: string[];
+	rows: { row: OutlineRow; lineIndex: number }[];
+} {
 	const lines = markdownBody.split(/\r?\n/);
 
 	let headerAt = -1;
@@ -73,16 +140,16 @@ export function parseOutlineTable(markdownBody: string): OutlineRow[] {
 			break;
 		}
 	}
-	if (headerAt === -1) return [];
+	if (headerAt === -1) return { header: [], rows: [] };
 
 	const header = splitTableRow(lines[headerAt]).map((cell) => cell.toLowerCase());
 	const colIndex = (name: ColumnName): number => header.indexOf(name);
 	const cellAt = (cells: string[], name: ColumnName): string => {
 		const i = colIndex(name);
-		return i === -1 || i >= cells.length ? "" : stripCell(cells[i]);
+		return i === -1 || i >= cells.length ? "" : unescapeCell(stripCell(cells[i]));
 	};
 
-	const rows: OutlineRow[] = [];
+	const rows: { row: OutlineRow; lineIndex: number }[] = [];
 	for (let i = headerAt + 2; i < lines.length; i++) {
 		const line = lines[i];
 		if (!line.includes("|")) break;
@@ -95,22 +162,25 @@ export function parseOutlineTable(markdownBody: string): OutlineRow[] {
 		if (chapter === null && scene === null) continue;
 
 		rows.push({
-			rowIndex: rows.length,
-			act: toStringOrNull(cellAt(cells, "act")),
-			folder: toStringOrNull(cellAt(cells, "folder")),
-			chapter,
-			chapterText: chapter === null ? null : chapterCell,
-			scene,
-			sceneText: scene === null ? null : sceneCell,
-			line: toStringOrNull(cellAt(cells, "line")),
-			summary: cellAt(cells, "synopsis"),
-			date: toStringOrNull(cellAt(cells, "date")),
-			characters: toStringArray(cellAt(cells, "characters")),
-			locations: toStringArray(cellAt(cells, "locations") || cellAt(cells, "places")),
-			status: toStringOrNull(cellAt(cells, "status")),
+			lineIndex: i,
+			row: {
+				rowIndex: rows.length,
+				act: toStringOrNull(cellAt(cells, "act")),
+				chapter,
+				chapterText: chapter === null ? null : chapterCell,
+				scene,
+				sceneText: scene === null ? null : sceneCell,
+				line: toStringOrNull(cellAt(cells, "line")),
+				summary: cellAt(cells, "synopsis"),
+				date: toStringOrNull(cellAt(cells, "date")),
+				characters: toStringArray(cellAt(cells, "characters")),
+				locations: toStringArray(cellAt(cells, "locations") || cellAt(cells, "places")),
+				status: toStringOrNull(cellAt(cells, "status")),
+				comments: toStringOrNull(cellAt(cells, "comments")),
+			},
 		});
 	}
-	return rows;
+	return { header, rows };
 }
 
 /**
@@ -167,13 +237,13 @@ function folderOf(path: string): string {
  * inside its chapter's folder — the existing folder-nesting rule). Any free
  * text after the Chapter/Scene cell's number (e.g. "1 - The beginning")
  * carries through into the name, the same way it would in a real note title.
- * `folder` is the row's `Folder` cell, else `"<Act label> <Act cell>"` when
+ * `folder` is `"<Act label> <Act cell>"` when
  * there's an `Act` cell, else omitted.
  */
 export function expectedNotePath(row: OutlineRow, book: string, language: string = DEFAULT_LANGUAGE): string {
 	const parts = [trimSlashes(book)].filter(Boolean);
 
-	const folder = row.folder ?? (row.act ? `${actLabel(language)} ${row.act}` : null);
+	const folder = row.act ? `${actLabel(language)} ${row.act}` : null;
 	if (folder) parts.push(trimSlashes(folder));
 
 	if (row.scene !== null) {
@@ -213,6 +283,8 @@ export interface OutlineReconciliation {
 	fulfilledLocations: Record<string, string[]>;
 	/** Vault path -> the fulfilling row's `Date` cell, for the Chronological view. */
 	fulfilledDates: Record<string, string>;
+	/** Outline `rowIndex` -> the path of the note that fulfills it (absent for a ghost row), for the Plot matrix view. */
+	rowPaths: Record<number, string>;
 	/** `Line` cell values that matched no line in Lines.md, for diagnostics. */
 	unknownLines: string[];
 }
@@ -226,6 +298,7 @@ const emptyReconciliation: OutlineReconciliation = {
 	fulfilledCharacters: {},
 	fulfilledLocations: {},
 	fulfilledDates: {},
+	rowPaths: {},
 	unknownLines: [],
 };
 
@@ -351,6 +424,7 @@ export function reconcileOutline(
 	const fulfilledCharacters: Record<string, string[]> = {};
 	const fulfilledLocations: Record<string, string[]> = {};
 	const fulfilledDates: Record<string, string> = {};
+	const rowPaths: Record<number, string> = {};
 	const unknownLines = new Set<string>();
 
 	for (const r of rowInfo) {
@@ -384,6 +458,7 @@ export function reconcileOutline(
 
 		const path = matched.file.path;
 		fulfilledPaths.add(path);
+		rowPaths[row.rowIndex] = path;
 		if (rowLineId !== null) fulfilledLineIds[path] = rowLineId;
 		if (row.characters.length > 0) fulfilledCharacters[path] = row.characters;
 		if (row.locations.length > 0) fulfilledLocations[path] = row.locations;
@@ -429,6 +504,7 @@ export function reconcileOutline(
 		fulfilledCharacters,
 		fulfilledLocations,
 		fulfilledDates,
+		rowPaths,
 		unknownLines: Array.from(unknownLines).sort(),
 	};
 }

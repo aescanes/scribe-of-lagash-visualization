@@ -4,19 +4,23 @@
 import { App, normalizePath, parseYaml, TFile } from "obsidian";
 import { OutlineRow } from "../types";
 import { withMdExtension, withScribePrefix } from "./lineLayout";
-import { parseOutlineTable } from "./outline";
+import { OUTLINE_COLUMNS, parseOutlineTable } from "./outline";
+import { CellEditResult, OutlineColumn, appendOutlineRow, ensureOutlineColumns, setOutlineCell } from "./outlineEdit";
 import { replaceFirstTable } from "./outlineGenerate";
 
 /**
- * Reads the optional per-book "Outline file" — a hand-edited Markdown table
+ * Reads the optional per-book "Outline file" — a Markdown table
  * planning the book's chapters/scenes, described in
- * `docs/feature-plans/outline-file-plan.md`. The plugin only ever *creates*
- * this file (the empty skeleton, once, when the user names it in settings);
- * the table itself is edited by hand and never rewritten by the plugin.
+ * `docs/feature-plans/outline-file-plan.md`. The plugin *creates* this file
+ * (the empty skeleton, once, when the user names it in settings) and otherwise
+ * only appends header columns the table lacks; the rows are edited by hand.
  */
 
 const MARKER_KEY = "scribe-visualization";
 const MARKER_VALUE = "outline";
+
+/** Lets the file's table use the full pane width (see `styles.css`); written into new outline files. */
+const OUTLINE_WIDE_CLASS = "scribe-outline-wide";
 
 const FRONTMATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/;
 
@@ -49,20 +53,25 @@ export function outlineFilePath(bookFolder: string, fileName: string): string {
  * `scribe-visualization: outline` marker.
  */
 export async function readOutline(app: App, path: string): Promise<OutlineRow[]> {
-	if (!path) return [];
+	return (await readOutlineFile(app, path)).rows;
+}
+
+/** `readOutline` plus whether a usable (marked) Outline file exists — it may have no rows yet. */
+export async function readOutlineFile(app: App, path: string): Promise<{ exists: boolean; rows: OutlineRow[] }> {
+	if (!path) return { exists: false, rows: [] };
 	const file = app.vault.getAbstractFileByPath(normalizePath(path));
-	if (!(file instanceof TFile)) return [];
+	if (!(file instanceof TFile)) return { exists: false, rows: [] };
 
 	const content = await app.vault.read(file);
 	const { frontmatter, body } = splitFrontmatter(content);
-	if (!hasMarker(frontmatter)) return [];
-	return parseOutlineTable(body);
+	if (!hasMarker(frontmatter)) return { exists: false, rows: [] };
+	return { exists: true, rows: parseOutlineTable(body) };
 }
 
 /**
  * Creates `path` with an empty table skeleton when it doesn't exist yet. Does
  * nothing if `path` is empty or the file is already there — the plugin never
- * overwrites a hand-edited outline. Returns whether a new file was written.
+ * overwrites an outline the user has edited. Returns whether a new file was written.
  */
 export async function ensureOutlineFile(app: App, path: string): Promise<boolean> {
 	if (!path) return false;
@@ -72,18 +81,20 @@ export async function ensureOutlineFile(app: App, path: string): Promise<boolean
 	const body = [
 		"---",
 		`${MARKER_KEY}: ${MARKER_VALUE}`,
+		`cssclasses: [${OUTLINE_WIDE_CLASS}]`,
 		"---",
 		"",
-		"<!-- Managed by Scribe of Lagash - Visualization — created once, never",
-		"     rewritten by the plugin.",
+		"<!-- Managed by Scribe of Lagash - Visualization.",
 		"",
-		"     Edit the table below by hand; click a placeholder card in the",
-		"     StoryLines view to create a row's note.",
+		"     Edit the table below by hand, or cell by cell in the Plot matrix view.",
+		"     The plugin only changes the cell you edit there, and adds any column",
+		"     that is missing. Click a placeholder card in the StoryLines view to",
+		"     create a row's note.",
 		"     A guide to the columns is at the bottom of this file. -->",
 		"",
-		"| Act | Chapter | Scene | Line | Synopsis | Characters | Locations | Date |",
-		"| --- | ------- | ----- | ---- | -------- | ---------- | --------- | ---- |",
-		"|     |         |       |      |          |            |           |      |",
+		`| ${OUTLINE_COLUMNS.join(" | ")} |`,
+		`| ${OUTLINE_COLUMNS.map((name) => "-".repeat(name.length)).join(" | ")} |`,
+		`| ${OUTLINE_COLUMNS.map((name) => " ".repeat(name.length)).join(" | ")} |`,
 		"",
 		"---",
 		"",
@@ -99,7 +110,6 @@ export async function ensureOutlineFile(app: App, path: string): Promise<boolean
 		"| Scenes in chapter folders | `Chapter` + `Scene` | `Chapter 1/Scene 2.md` |",
 		"| …grouped in acts | `Act` + `Chapter` + `Scene` | `Act I/Chapter 1/Scene 2.md` |",
 		"| Scenes with no chapter | `Scene` (+ optional `Act`) | `Scene 2.md` |",
-		"| Custom folder | `Folder` (overrides `Act`) | `<Folder>/Chapter 1.md` |",
 		"",
 		"- Numbers may be digits or roman numerals (`IV`), optionally followed by",
 		"  free text, e.g. `1 - The beginning` — carried into the note's title the",
@@ -115,7 +125,9 @@ export async function ensureOutlineFile(app: App, path: string): Promise<boolean
 		"  Full month names in English or Spanish only. A month followed by a single",
 		"  number is a year (`November 1` is November of year 1), so a story with no real",
 		"  calendar can use small years. A day needs a year (`November 3, 1`).",
-		"- Also recognized: `Folder`, `Status` (still under development).",
+		"- `Status` (optional) - where the chapter or scene stands, e.g. `draft`.",
+		"- `Comments` (optional) - your own remarks on the row. They stay in this table; they are not copied into the note.",
+		"- Any column missing from the table is added automatically when the plugin reads this file.",
 		"- A row with neither a Chapter nor a Scene value is ignored. Prologue /",
 		"  Epilogue / Interlude have no number and can't be planned here — create",
 		"  those notes directly.",
@@ -124,6 +136,106 @@ export async function ensureOutlineFile(app: App, path: string): Promise<boolean
 	].join("\n");
 	await app.vault.create(normalized, body);
 	return true;
+}
+
+/**
+ * Adds any column the Outline table lacks (`OUTLINE_COLUMNS`), leaving the
+ * rest of the file untouched. Does nothing — and doesn't write — when the file
+ * is missing, unmarked, or already complete, so the change event a write fires
+ * ends the loop on the next read. Returns whether it wrote.
+ */
+export async function ensureOutlineColumnsInFile(app: App, path: string): Promise<boolean> {
+	if (!path) return false;
+	const file = app.vault.getAbstractFileByPath(normalizePath(path));
+	if (!(file instanceof TFile)) return false;
+
+	const check = (content: string): boolean => {
+		const { frontmatter, body } = splitFrontmatter(content);
+		return hasMarker(frontmatter) && ensureOutlineColumns(body).added.length > 0;
+	};
+	if (!check(await app.vault.read(file))) return false;
+
+	let wrote = false;
+	await app.vault.process(file, (content) => {
+		if (!check(content)) return content;
+		const { body } = splitFrontmatter(content);
+		wrote = true;
+		return content.slice(0, content.length - body.length) + ensureOutlineColumns(body).body;
+	});
+	return wrote;
+}
+
+/**
+ * Adds the full-width `cssclasses` entry to the Outline file's frontmatter when it
+ * is missing, keeping any classes the user already has. Does nothing for a file
+ * that is missing, unmarked, or already has it. Returns whether it wrote.
+ */
+export async function ensureOutlineWideClass(app: App, path: string): Promise<boolean> {
+	if (!path) return false;
+	const file = app.vault.getAbstractFileByPath(normalizePath(path));
+	if (!(file instanceof TFile)) return false;
+
+	const { frontmatter } = splitFrontmatter(await app.vault.read(file));
+	if (!hasMarker(frontmatter)) return false;
+	const classes = (frontmatter as Record<string, unknown>).cssclasses;
+	const has = Array.isArray(classes) ? classes.includes(OUTLINE_WIDE_CLASS) : classes === OUTLINE_WIDE_CLASS;
+	if (has) return false;
+
+	await app.fileManager.processFrontMatter(file, (fm: Record<string, unknown>) => {
+		const current = fm.cssclasses;
+		if (Array.isArray(current)) {
+			if (!current.includes(OUTLINE_WIDE_CLASS)) current.push(OUTLINE_WIDE_CLASS);
+		} else if (typeof current === "string" && current.trim() !== "") {
+			fm.cssclasses = [current, OUTLINE_WIDE_CLASS];
+		} else {
+			fm.cssclasses = [OUTLINE_WIDE_CLASS];
+		}
+	});
+	return true;
+}
+
+/**
+ * Writes one cell of the Outline table, re-checked against the file's current
+ * content inside the atomic `process()` so an edit never lands on a row that
+ * moved. `target` is the row as the caller displayed it (see `setOutlineCell`).
+ * Returns why it did not write, or `{ ok: true }`.
+ */
+export async function writeOutlineCell(
+	app: App,
+	path: string,
+	target: { rowIndex: number; chapterText: string | null; sceneText: string | null },
+	column: OutlineColumn,
+	value: string,
+): Promise<{ ok: true } | { ok: false; reason: "no-file" | "no-column" | "no-row" | "stale" }> {
+	const file = path ? app.vault.getAbstractFileByPath(normalizePath(path)) : null;
+	if (!(file instanceof TFile)) return { ok: false, reason: "no-file" };
+
+	let result: CellEditResult = { ok: false, reason: "no-row" };
+	await app.vault.process(file, (content) => {
+		const { frontmatter, body } = splitFrontmatter(content);
+		if (!hasMarker(frontmatter)) return content;
+		result = setOutlineCell(body, target, column, value);
+		if (!result.ok) return content;
+		return content.slice(0, content.length - body.length) + result.body;
+	});
+	return result.ok ? { ok: true } : result;
+}
+
+/** Appends an empty, numbered row to the Outline table. Returns whether it wrote. */
+export async function appendOutlineRowToFile(app: App, path: string): Promise<boolean> {
+	const file = path ? app.vault.getAbstractFileByPath(normalizePath(path)) : null;
+	if (!(file instanceof TFile)) return false;
+
+	let wrote = false;
+	await app.vault.process(file, (content) => {
+		const { frontmatter, body } = splitFrontmatter(content);
+		if (!hasMarker(frontmatter)) return content;
+		const next = appendOutlineRow(body);
+		if (next === null) return content;
+		wrote = true;
+		return content.slice(0, content.length - body.length) + next;
+	});
+	return wrote;
 }
 
 /**

@@ -5,7 +5,29 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Removed
+- **The Story Outline's `Folder` column.** A row's folder is now always
+  `<Act label> <Act>` (or none). A leftover `Folder` column in an existing
+  outline is ignored. "Generate outline from notes" no longer writes it.
+
 ### Added
+- New Story Outline files are created at the full width of the pane (a
+  `cssclasses: [scribe-outline-wide]` line in their frontmatter) so the table
+  shows more columns. An outline you already have gets the line added the next
+  time the plugin reads it, keeping any `cssclasses` it already had.
+- **Plot matrix view** for the StoryLines tab: the Story Outline as a matrix of big
+  squares, one row per outline row (Act / Chapter / Scene, Line, Synopsis,
+  Characters, Locations, Date, Status, Comments). Click a square to edit that
+  cell of the outline table; "Add row" appends a numbered row. Only the edited
+  cell changes, and an edit is refused if the table changed under it. Without an
+  Outline file the matrix is read-only and built from your notes. Each column has a
+  one-line hint under its title; **Status** is a picker (No Status, TO DO, In
+  Progress, First Draft, Revised Draft, Final Draft, Done), and any other value
+  typed into the table is kept and flagged with a ⚠.
+- **`Comments` column in the Story Outline**, and a complete column set: a new
+  outline is created with every column, and whenever the plugin reads an
+  existing outline it adds any column that is missing, in its usual place (`Scene` after
+  `Chapter`; nothing else in the file changes). `Comments` stays in the table; it is never copied into a note.
 - **Chronological view** for the StoryLines tab: a read-only view with a single
   line holding every chapter/scene ordered by its in-story date, from the notes'
   `scribe-note-date` frontmatter or the Story Outline's `Date` column (the note

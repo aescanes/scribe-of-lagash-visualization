@@ -77,7 +77,7 @@ const LANGUAGE_LABELS: Record<string, string> = {
 	es: "Español",
 };
 
-/** Word used to name a planned row's folder when it has no explicit `Folder` cell. */
+/** Word used to name a planned row's folder from its `Act` cell. */
 const ACT_LABELS: Record<string, string> = {
 	en: "Act",
 	es: "Acto",

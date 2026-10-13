@@ -49,12 +49,12 @@ test("generateOutlineTable emits a row per entry that round-trips through parseO
 
 	assert.equal(rows.length, 2);
 	assert.deepEqual(
-		{ folder: rows[0].folder, chapter: rows[0].chapter, scene: rows[0].scene, line: rows[0].line },
-		{ folder: "Act I", chapter: 1, scene: null, line: "Main line" },
+		{ chapter: rows[0].chapter, scene: rows[0].scene, line: rows[0].line },
+		{ chapter: 1, scene: null, line: "Main line" },
 	);
 	assert.deepEqual(
-		{ folder: rows[1].folder, chapter: rows[1].chapter, scene: rows[1].scene },
-		{ folder: "Act I", chapter: 1, scene: 2 },
+		{ chapter: rows[1].chapter, scene: rows[1].scene },
+		{ chapter: 1, scene: 2 },
 	);
 });
 
@@ -62,8 +62,8 @@ test("generateOutlineTable: a chapter file directly under the book (no Act) roun
 	const entries = [entry("Book/Chapter 1.md", { type: "chapter", order: 1, context: [] })];
 	const rows = parseOutlineTable(generateOutlineTable(entries, layout));
 	assert.deepEqual(
-		{ folder: rows[0].folder, chapter: rows[0].chapter, scene: rows[0].scene },
-		{ folder: null, chapter: 1, scene: null },
+		{ chapter: rows[0].chapter, scene: rows[0].scene },
+		{ chapter: 1, scene: null },
 	);
 });
 
@@ -73,8 +73,8 @@ test("generateOutlineTable: a scene under a chapter folder with no Act round-tri
 	];
 	const rows = parseOutlineTable(generateOutlineTable(entries, layout));
 	assert.deepEqual(
-		{ folder: rows[0].folder, chapter: rows[0].chapter, scene: rows[0].scene },
-		{ folder: null, chapter: 2, scene: 1 },
+		{ chapter: rows[0].chapter, scene: rows[0].scene },
+		{ chapter: 2, scene: 1 },
 	);
 });
 
@@ -82,8 +82,8 @@ test("generateOutlineTable: a scene directly under the book (no chapter folder) 
 	const entries = [entry("Book/Scene 2.md", { type: "scene", order: 2, context: [], title: "Scene 2" })];
 	const rows = parseOutlineTable(generateOutlineTable(entries, layout));
 	assert.deepEqual(
-		{ folder: rows[0].folder, chapter: rows[0].chapter, scene: rows[0].scene },
-		{ folder: null, chapter: null, scene: 2 },
+		{ chapter: rows[0].chapter, scene: rows[0].scene },
+		{ chapter: null, scene: 2 },
 	);
 });
 

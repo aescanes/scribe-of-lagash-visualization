@@ -32,7 +32,6 @@ function planned(n: number, characters: string[] = []): PlannedEntry {
 	const row: OutlineRow = {
 		rowIndex: n,
 		act: null,
-		folder: null,
 		chapter: n,
 		chapterText: String(n),
 		scene: null,
@@ -43,6 +42,7 @@ function planned(n: number, characters: string[] = []): PlannedEntry {
 		characters,
 		locations: [],
 		status: null,
+		comments: null,
 	};
 	return { row, type: "chapter", label: `Chapter ${n}`, expectedPath: `Book/Chapter ${n}.md`, lineId: null };
 }
@@ -57,6 +57,7 @@ function plan(over: Partial<OutlineReconciliation> = {}): OutlineReconciliation 
 		fulfilledCharacters: {},
 		fulfilledLocations: {},
 		fulfilledDates: {},
+		rowPaths: {},
 		unknownLines: [],
 		...over,
 	};

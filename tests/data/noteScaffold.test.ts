@@ -11,7 +11,6 @@ function row(over: Partial<OutlineRow> = {}): OutlineRow {
 	return {
 		rowIndex: 0,
 		act: null,
-		folder: null,
 		chapter: 1,
 		chapterText: "1",
 		scene: null,
@@ -22,6 +21,7 @@ function row(over: Partial<OutlineRow> = {}): OutlineRow {
 		characters: [],
 		locations: [],
 		status: null,
+		comments: null,
 		...over,
 	};
 }
