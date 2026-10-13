@@ -50,8 +50,9 @@ view can reuse the existing renderer:
 
 - Collect characters from every real entry (`entry.characters`) and every
   **planned** row (`plan.planned[].row.characters`).
-- For a real note that fulfils an outline row, take the **union** of the note's
-  characters and the row's (see open question 1). `reconcileOutline` will need
+- For a real note that fulfils an outline row, the row's characters win and the
+  note's fill in when the row lists none (outline → note → nothing; this replaced
+  the original union, see open question 1). `reconcileOutline` will need
   to expose the fulfilling row's characters (a `fulfilledCharacters` map keyed by
   note path, next to `fulfilledLineIds`) — an additive change.
 - Normalize names for matching: trim, strip `[[wikilink]]` brackets / `|alias`,

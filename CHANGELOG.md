@@ -30,7 +30,7 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `Chapter`; nothing else in the file changes). `Comments` stays in the table; it is never copied into a note.
 - **Chronological view** for the StoryLines tab: a read-only view with a single
   line holding every chapter/scene ordered by its in-story date, from the notes'
-  `scribe-note-date` frontmatter or the Story Outline's `Date` column (the note
+  `scribe-note-date` frontmatter or the Story Outline's `Date` column (the outline
   wins; a ⚠ flags a disagreement). Accepted dates are ISO (`2026`, `2026-11`,
   `2026-11-03`) and full English or Spanish month names (`November 2026`,
   `November 3, 2026`, `3 de noviembre de 2026`); a month followed by one number
@@ -39,10 +39,10 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   with no date, or one that isn't recognized (⚠), sit in a "No date" strip. A
   toolbar button switches between oldest first and newest first, remembered
   per tab. Equal dates keep chapter/scene order. Nothing is written.
-- **Cards show characters, locations and date from the note first, then from
-  the Story Outline.** The note's own frontmatter (`scribe-note-characters`,
-  `-locations`, `-date`) wins; when the note doesn't have the field, its
-  Story Outline row fills in; when neither has it, nothing is shown. Planned
+- **Cards show characters, locations and date from the Story Outline first,
+  then from the note.** The outline row wins; when the row doesn't have the
+  field, the note's own frontmatter (`scribe-note-characters`, `-locations`,
+  `-date`) fills in; when neither has it, nothing is shown. Planned
   cards show their row's values. The Characters view no longer repeats the
   characters on its cards, nor the Locations view the locations. Characters
   and locations each get their own line, and every date, characters and
@@ -60,6 +60,15 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   that isn't recognized is shown as typed.
 
 ### Changed
+- **The Story Outline now takes precedence over a note's frontmatter** for the
+  date, characters and locations, everywhere (cards, Characters, Locations and
+  Chronological views): outline row first, then the note, then nothing. Before,
+  the note won (and the Characters / Locations views showed the union of both).
+  Writers without an outline file are unaffected. When both have a value and
+  they differ, the outline's is shown and the existing ⚠ explains the
+  difference. The same ⚠ appears when the outline row leaves the field empty
+  while the note has a value (the note's is shown) in the Characters,
+  Locations and Chronological views.
 - Moved the confirm modal from `src/views/` to the new `src/utils/` folder,
   since it is general-purpose and can be reused from any view or settings tab.
   The Goals and Stats plugin now shares this exact file in the same location. No change in behavior.

@@ -50,8 +50,8 @@ test("parseStoryView falls back to the default for unknown or malformed values",
 	assert.equal(isStoryView(null), false);
 });
 
-test("the selector lists every registered view, StoryLines first", () => {
-	assert.deepEqual(storyViewIds(), ["storylines", "characters", "locations", "chronological", "plotMatrix"]);
+test("the selector lists every registered view, StoryLines first and the Plot matrix right after it", () => {
+	assert.deepEqual(storyViewIds(), ["storylines", "plotMatrix", "characters", "locations", "chronological"]);
 	assert.equal(storyViewIds()[0], DEFAULT_STORY_VIEW);
 });
 

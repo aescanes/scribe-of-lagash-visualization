@@ -36,6 +36,16 @@ folder-based approach before adding a new frontmatter field or setting.
 
 ### Views of a story
 
+**Precedence (applies to every view and card):** when a value can come from both
+the Outline row and the note's `scribe-note-*` frontmatter — date, characters,
+locations, synopsis — the **Outline wins, then the note, then nothing**. Writers
+who plan keep the outline as the source of truth; writers without an outline
+get their notes. A real difference between the two is shown in the winner's
+value plus the existing ⚠ "differs between the note and the story outline"
+mark; so is a row that leaves the field empty while the note has it (a note
+with no row at all is never flagged). (Line membership is not part of this: `Lines.md` and the folder
+structure still win over the outline.)
+
 - **Line view** — the default view, and everything built so far. Chapters/scenes
   are discovered from a **story folder** by parsing note titles; the user creates
   **lines** (horizontal colored tracks) and drags each card onto a line. The
@@ -45,7 +55,7 @@ folder-based approach before adding a new frontmatter field or setting.
   the combo box at the top right of the same tab (view kept in the leaf's view
   state, default Line view). One derived line per character, alphabetical,
   built by `charactersModel` in `views/charactersModel.ts` from
-  `scribe-note-characters` and the Outline's `Characters` column (union; a ⚠
+  `scribe-note-characters` and the Outline's `Characters` column (outline's names win, else the note's; a ⚠
   mark when both list names and differ). Cards sit on the same
   manuscript-order columns; a scene naming two characters appears on both
   lines (derived, never saved — the one-card-one-line rule is for Lines.md).
@@ -54,13 +64,13 @@ folder-based approach before adding a new frontmatter field or setting.
   [`docs/feature-plans/characters-view-plan.md`](docs/feature-plans/characters-view-plan.md).
 - **Locations view** — the same read-only view, one derived line per
   location, from `scribe-note-locations` and the Outline's `Locations` column
-  (`locationsModel`; same union / ⚠ rules). Both views are thin wrappers over
+  (`locationsModel`; same precedence / ⚠ rules). Both views are thin wrappers over
   `derivedLinesModel` in `views/derivedLines.ts`. Plan:
   [`docs/feature-plans/locations-view-plan.md`](docs/feature-plans/locations-view-plan.md).
 - **Chronological view** — read-only, a single derived line ordering every
   chapter/scene by its date (`chronologicalModel` in
   `views/chronologicalModel.ts`), from `scribe-note-date` and the Outline's
-  `Date` column (one date per card: the note's, else its row's; ⚠ when both
+  `Date` column (one date per card: its row's, else the note's; ⚠ when both
   parse and differ). Dates are parsed by `data/dateParser.ts`: ISO, or full
   English/Spanish month names; a month followed by one number is a *year*
   (false years for calendar-less stories). Unrecognized or missing dates go to
@@ -226,7 +236,7 @@ Entry point: [`src/main.ts`](src/main.ts) → `ScribeVisualizationPlugin`.
 | Locations view | [`src/views/locationsModel.ts`](src/views/locationsModel.ts) | Same as `charactersModel` for locations (needs `fulfilledLocations`). Both delegate to [`src/views/derivedLines.ts`](src/views/derivedLines.ts): `derivedLinesModel(entries, plan, source)` — name normalization, note ∪ outline merge + ⚠, manuscript columns, alphabetical lines, stable color, "none" strip |
 | Date parser | [`src/data/dateParser.ts`](src/data/dateParser.ts) | Pure, unit-tested: `parseStoryDate` (ISO or full en/es month names → `ParsedDate` with a sort `key`, else `null`), `compareDates`, `formatStoryDate` (human label per precision, in the title language), `dateFormatHint` |
 | Chronological view | [`src/views/chronologicalModel.ts`](src/views/chronologicalModel.ts) | Pure, unit-tested: `chronologicalModel(entries, recon, order, language)` → one-line `CanvasModel` (+ `unplacedMarks` for the "No date" strip); `parseDateOrder`. Needs `OutlineReconciliation.fulfilledDates` |
-| Card text | [`src/data/excerpt.ts`](src/data/excerpt.ts), [`src/views/cardInfo.ts`](src/views/cardInfo.ts) | Pure, unit-tested. `firstParagraph(content)` → the shortened first paragraph of a note's body (`NovelEntry.excerpt`), shown when the outline row has no Synopsis. `realCardMeta` / `plannedCardMeta` / `metaRows` → the characters and locations rows (one line each, with an icon) on a card: the note's own list wins, the outline row fills in, and a view's `StoryViewDef.hides` drops the field it groups by |
+| Card text | [`src/data/excerpt.ts`](src/data/excerpt.ts), [`src/views/cardInfo.ts`](src/views/cardInfo.ts) | Pure, unit-tested. `firstParagraph(content)` → the shortened first paragraph of a note's body (`NovelEntry.excerpt`), shown when the outline row has no Synopsis. `realCardMeta` / `plannedCardMeta` / `metaRows` → the characters and locations rows (one line each, with an icon) on a card: the outline row's list wins, the note's own fills in, and a view's `StoryViewDef.hides` drops the field it groups by |
 | Story views | [`src/views/storyViews.ts`](src/views/storyViews.ts) | Pure, unit-tested registry of the StoryLines tab's views (`STORY_VIEWS`): each `StoryViewDef` says whether it is `editable`, its empty/unplaced-strip wording, and its `buildModel`. **The view never checks which view it is in** — it reads the descriptor (`isEditable()`, `def.buildModel`). A new view (dates, …) is one entry here plus its model function; `parseStoryView` coerces saved view state |
 | Line view | [`src/views/lineView.ts`](src/views/lineView.ts) | `ItemView` (`VIEW_TYPE_LINE_VIEW`). DOM + pointer-drag only: renders from `canvasModel`, calls the pure ops via `mutate()` (push undo snapshot → apply → debounced save → re-render). Reads `Lines.md` + the outline on open / story-folder setting change / index change; a toolbar ⟳ button (shown only when `missingOutlineLines()` is non-empty) adds the lines the outline names but `Lines.md` lacks, an "Align cards to Story Outline " button (shown only while `outlineRows` is non-empty) re-spreads cards onto their reading-order columns, both as one undoable `mutate`; creates notes from ghost cards via a `confirm` modal |
 | Confirm modal | [`src/utils/confirmModal.ts`](src/utils/confirmModal.ts) | `confirm(app, {title, body, cta})` → `Promise<boolean>` (Obsidian ships no confirm primitive); lives in `src/utils/` because it is general-purpose, and is identical to the Goals and Stats plugin's copy — keep the two in sync |

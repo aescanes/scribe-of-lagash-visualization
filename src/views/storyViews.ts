@@ -19,7 +19,7 @@ import { PlotMatrixContext, PlotMatrixModel, plotMatrixModel } from "./plotMatri
  * No Obsidian APIs — unit-tested.
  */
 
-export type StoryView = "storylines" | "characters" | "locations" | "chronological" | "plotMatrix";
+export type StoryView = "storylines" | "plotMatrix" | "characters" | "locations" | "chronological";
 
 export interface StoryViewContext {
 	entries: NovelEntry[];
@@ -76,6 +76,12 @@ export const STORY_VIEWS: Record<Exclude<StoryView, "plotMatrix">, StoryViewDef>
 		unplacedLabel: null,
 		buildModel: ({ entries, layout, recon }) => canvasModel(entries, layout, recon),
 	},
+	plotMatrix: {
+		kind: "matrix",
+		label: "Plot matrix",
+		editable: false,
+		buildPlotMatrix: plotMatrixModel,
+	},
 	characters: {
 		kind: "board",
 		label: "Characters",
@@ -109,12 +115,6 @@ export const STORY_VIEWS: Record<Exclude<StoryView, "plotMatrix">, StoryViewDef>
 		unplacedLabel: "No date",
 		buildModel: ({ entries, recon, dateOrder, language }) =>
 			chronologicalModel(entries, recon, dateOrder, language),
-	},
-	plotMatrix: {
-		kind: "matrix",
-		label: "Plot matrix",
-		editable: false,
-		buildPlotMatrix: plotMatrixModel,
 	},
 };
 

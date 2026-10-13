@@ -643,7 +643,21 @@
 }
 
 .scribe-plot-matrix-head-title {
+	display: flex;
+	align-items: center;
+	gap: var(--size-2-3);
 	color: var(--text-normal);
+}
+
+.scribe-plot-matrix-head-icon {
+	display: inline-flex;
+	flex: none;
+	color: var(--text-muted);
+}
+
+.scribe-plot-matrix-head-icon .svg-icon {
+	width: var(--icon-s);
+	height: var(--icon-s);
 }
 
 .scribe-plot-matrix-head-hint {

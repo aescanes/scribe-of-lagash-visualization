@@ -51,24 +51,33 @@ function named(names: string[]): NamedItem[] {
 }
 
 /**
- * The note's own names and its outline row's, merged. When both sides list
- * some and they differ, `conflict` describes how — advisory only, the union is
- * what gets drawn. A side that lists none is not a conflict: the outline's
- * outline column is optional.
+ * The names a card is drawn under: its outline row's when the row lists any,
+ * else the note's own (outline, then note, then nothing). When both sides list
+ * some and they differ, `conflict` describes how — advisory only, the outline's
+ * names are still the ones drawn. A note that lists none is not a conflict, and
+ * neither is an outline with no row for the note (no outline, nothing to
+ * disagree with). But a row that lists none while the note does is flagged: the
+ * outline is the source of truth, so its gap is worth a look.
  */
 function mergeSources(
 	fromNote: string[],
 	fromOutline: string[],
 	noun: string,
+	hasRow: boolean,
 ): { names: NamedItem[]; conflict: string | null } {
 	const note = named(fromNote);
 	const outline = named(fromOutline);
 	const noteKeys = new Set(note.map((c) => c.key));
 	const outlineKeys = new Set(outline.map((c) => c.key));
 
-	const names = [...note];
-	for (const c of outline) if (!noteKeys.has(c.key)) names.push(c);
+	const names = outline.length > 0 ? outline : note;
 
+	if (note.length > 0 && outline.length === 0 && hasRow) {
+		return {
+			names,
+			conflict: `${noun} differ between the note and the story outline (only in the note: ${note.map((c) => c.name).join(", ")})`,
+		};
+	}
 	if (note.length === 0 || outline.length === 0) return { names, conflict: null };
 
 	const onlyNote = note.filter((c) => !outlineKeys.has(c.key)).map((c) => c.name);
@@ -108,6 +117,7 @@ export function derivedLinesModel(
 	source: DerivedLinesSource,
 ): CanvasModel {
 	const columns = manuscriptColumns(entries, plan.planned);
+	const fulfilled = new Set(plan.fulfilledPaths);
 
 	const items: Item[] = [];
 	for (const entry of entries) {
@@ -116,6 +126,7 @@ export function derivedLinesModel(
 				source.fromEntry(entry),
 				source.fromOutlineFulfilled(plan, path),
 				source.noun,
+				fulfilled.has(path),
 			);
 		const column = columns.get(path) ?? 0;
 		items.push({

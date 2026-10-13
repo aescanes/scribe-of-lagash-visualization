@@ -36,6 +36,18 @@ const COLUMN_HINTS: Record<"Act / Chapter / Scene" | FieldColumn, string> = {
 	Comments: "Your own remarks. Never copied to a note.",
 };
 
+/** Lucide icon beside each column title; characters, locations and date match the cards'. */
+const COLUMN_ICONS: Record<keyof typeof COLUMN_HINTS, string> = {
+	"Act / Chapter / Scene": "book-open",
+	Line: "route",
+	Synopsis: "text",
+	Characters: "users",
+	Locations: "map-pin",
+	Date: "calendar",
+	Status: "list-checks",
+	Comments: "message-square",
+};
+
 const MULTILINE: ReadonlySet<FieldColumn> = new Set(["Synopsis", "Comments"]);
 
 function rawValue(row: PlotMatrixRow, column: FieldColumn): string {
@@ -70,7 +82,9 @@ export function renderPlotMatrix(parent: HTMLElement, model: PlotMatrixModel, cb
 
 	for (const title of ["Act / Chapter / Scene", ...FIELD_COLUMNS] as const) {
 		const head = grid.createDiv({ cls: "scribe-plot-matrix-head" });
-		head.createDiv({ cls: "scribe-plot-matrix-head-title", text: title });
+		const heading = head.createDiv({ cls: "scribe-plot-matrix-head-title" });
+		setIcon(heading.createSpan({ cls: "scribe-plot-matrix-head-icon" }), COLUMN_ICONS[title]);
+		heading.createSpan({ text: title });
 		head.createDiv({ cls: "scribe-plot-matrix-head-hint", text: COLUMN_HINTS[title] });
 	}
 

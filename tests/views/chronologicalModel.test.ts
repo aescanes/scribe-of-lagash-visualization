@@ -134,16 +134,18 @@ test("a note falls back to its outline row's date", () => {
 	assert.equal(model.lines[0].cards[0].mark, null);
 });
 
-test("when note and outline disagree the note wins, with a warning", () => {
+test("when note and outline disagree the outline wins, with a warning", () => {
 	const model = chronologicalModel(
 		[entry(1, "2026-01-01"), entry(2, "2026-02-01")],
 		plan({ fulfilledDates: { "Book/Chapter 1.md": "2027-01-01" } }),
 		"asc",
 		"en",
 	);
-	assert.deepEqual(titles(model), ["Chapter 1", "Chapter 2"]);
-	assert.match(model.lines[0].cards[0].mark ?? "", /date differs between the note and the story outline/);
-	assert.equal(model.lines[0].cards[1].mark, null);
+	// Chapter 1's outline date (2027) puts it after Chapter 2 (2026-02), whatever its note says.
+	assert.deepEqual(titles(model), ["Chapter 2", "Chapter 1"]);
+	assert.equal(model.lines[0].cards[0].mark, null);
+	assert.match(model.lines[0].cards[1].mark ?? "", /date differs between the note and the story outline/);
+	assert.equal(model.lines[0].cards[1].dateLabel, "January 1, 2027");
 });
 
 test("the same moment written two ways is not a conflict", () => {
@@ -222,4 +224,13 @@ test("undated cards don't count towards the gaps", () => {
 		"en",
 	);
 	assert.deepEqual(model.lines[0].gaps, []);
+});
+
+test("an outline row with no date, while the note has one, warns but still uses the note's", () => {
+	const withRow = chronologicalModel([entry(1, "2026-01-01")], plan({ fulfilledPaths: ["Book/Chapter 1.md"] }), "asc", "en");
+	assert.match(withRow.lines[0].cards[0].mark ?? "", /story outline: empty/);
+	assert.equal(withRow.lines[0].cards[0].dateLabel, "January 1, 2026");
+
+	const noRow = chronologicalModel([entry(1, "2026-01-01")], plan(), "asc", "en");
+	assert.equal(noRow.lines[0].cards[0].mark, null, "no outline row, nothing to disagree with");
 });

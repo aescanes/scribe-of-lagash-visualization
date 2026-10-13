@@ -843,10 +843,10 @@ export class LineView extends ItemView {
 		const summary = card.summary ?? entry.excerpt;
 		if (summary) body.createDiv({ cls: "scribe-canvas-card-summary", text: summary });
 
-		// Like people and places: the note's own date wins, the outline row's fills in.
+		// Like people and places: the outline row's date wins, the note's fills in.
 		const dateText =
 			card.dateLabel ??
-			displayDate(entry.date ?? this.cardCtx?.recon.fulfilledDates[entry.file.path], this.plugin.settings.titleLanguage);
+			displayDate(this.cardCtx?.recon.fulfilledDates[entry.file.path] ?? entry.date, this.plugin.settings.titleLanguage);
 		if (dateText) this.renderCardDate(body, dateText);
 		this.renderCardMeta(body, realCardMeta(entry, this.cardCtx?.recon ?? null, this.cardCtx?.hides ?? []));
 

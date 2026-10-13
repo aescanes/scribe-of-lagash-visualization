@@ -6,8 +6,8 @@ import { OutlineReconciliation } from "../data/outline";
 
 /**
  * Which people / places a card lists under its text. Pure — no Obsidian APIs.
- * A note's own frontmatter wins over its outline row; the row fills in when the
- * note lists none (and is all a planned card has). A view that groups by one of
+ * The outline row wins over the note's own frontmatter; the note fills in when
+ * the row lists none (the row is all a planned card has). A view that groups by one of
  * these fields leaves it off the cards, since the lines already say it.
  */
 
@@ -18,8 +18,9 @@ export interface CardMeta {
 	locations: string[];
 }
 
-function pick(note: string[], outline: string[]): string[] {
-	return note.length > 0 ? note : outline;
+/** Outline, then note, then nothing. */
+function pick(outline: string[], note: string[]): string[] {
+	return outline.length > 0 ? outline : note;
 }
 
 function without(meta: CardMeta, hides: readonly CardInfoField[]): CardMeta {
@@ -37,8 +38,8 @@ export function realCardMeta(
 	const path = entry.file.path;
 	return without(
 		{
-			characters: pick(entry.characters, recon?.fulfilledCharacters[path] ?? []),
-			locations: pick(entry.locations, recon?.fulfilledLocations[path] ?? []),
+			characters: pick(recon?.fulfilledCharacters[path] ?? [], entry.characters),
+			locations: pick(recon?.fulfilledLocations[path] ?? [], entry.locations),
 		},
 		hides,
 	);

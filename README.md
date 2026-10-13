@@ -81,11 +81,15 @@ A card shows its title, folder breadcrumb, a short text, then the date, the
 characters and the locations (each on its own line, with a small icon), and
 the word count.
 
-The date, characters and locations come from the **note first**: its
-`scribe-note-date`, `scribe-note-characters` and `scribe-note-locations`
-frontmatter. If the note doesn't have one, the **Story Outline row** fills it
-in, and if neither has it nothing is shown. Planned cards show their row's. The
-Characters and Locations views leave their own field off the cards, since the
+The date, characters and locations follow one rule everywhere in the plugin:
+the **Story Outline row first**, then the **note**, then nothing. If you keep a
+Story Outline, its row is the source of truth; if you write without one (or a
+row leaves the field empty), the note's `scribe-note-date`,
+`scribe-note-characters` and `scribe-note-locations` frontmatter is used. When
+both have a value and they differ, the outline's is shown and a ⚠ explains the
+difference. A ⚠ also appears when the outline has a row for the note but leaves
+the field empty while the note has a value (the note's value is shown). A note
+with no outline row never gets this warning. Planned cards show their row's. The Characters and Locations views leave their own field off the cards, since the
 lines already say it.
 
 The short text is the Story Outline's Synopsis; a note whose row has none shows
@@ -99,7 +103,8 @@ look but is read-only: one line per character (alphabetical), each showing
 the chapters/scenes that name them in reading order, so a scene with two
 characters appears on both lines. Names come from the notes'
 `scribe-note-characters` frontmatter and the Story Outline's `Characters`
-column, merged; if a note and its outline row list different characters a ⚠
+column; the outline's names win, and the note's are used when the row lists
+none. If a note and its outline row list different characters a ⚠
 explains the difference. Planned (not yet written) rows show as dashed,
 non-clickable cards, and notes with no characters sit in a "No characters
 listed" strip. Nothing is moved, created or saved in this view, and each tab
@@ -111,7 +116,8 @@ remembers its own view.
 
 The same read-only view, with one line per location.
 Names come from the notes' `scribe-note-locations` frontmatter and the Story
-Outline's `Locations` column, merged the same way (⚠ when they differ; a
+Outline's `Locations` column, with the same rule (outline first, then the note;
+⚠ when they differ; a
 "No locations listed" strip for the rest).
 
 <img src="https://raw.githubusercontent.com/aescanes/scribe-of-lagash-visualization/main/docs/images/locations-view.png" alt="Locations view" width="600">
@@ -120,7 +126,7 @@ Outline's `Locations` column, merged the same way (⚠ when they differ; a
 
 The same read-only view, with a single line that orders every chapter and
 scene by its in-story date. The date comes from the note's `scribe-note-date`
-frontmatter or the Story Outline's `Date` column (if both exist the note wins,
+frontmatter or the Story Outline's `Date` column (if both exist the outline wins,
 and a ⚠ explains a difference). The button next to the combo box switches
 between oldest first and newest first. Scenes with the same date keep their
 chapter/scene order; notes with no date, or a date that isn't recognized (⚠),

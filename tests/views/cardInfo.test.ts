@@ -29,25 +29,33 @@ const recon = {
 	fulfilledLocations: { "Book/Chapter 1.md": ["Docks"] },
 };
 
-test("a note's own people and places win over its outline row", () => {
+test("the outline row's people and places win over the note's own", () => {
 	assert.deepEqual(realCardMeta(entry(["Alice"], ["Castle"]), recon, []), {
-		characters: ["Alice"],
-		locations: ["Castle"],
+		characters: ["Ron"],
+		locations: ["Docks"],
 	});
 });
 
-test("the outline row fills in what the note doesn't list", () => {
-	assert.deepEqual(realCardMeta(entry([], ["Castle"]), recon, []), { characters: ["Ron"], locations: ["Castle"] });
+test("the note fills in what the outline row doesn't list, and with no outline it is all there is", () => {
+	const onlyCharacters = { fulfilledCharacters: { "Book/Chapter 1.md": ["Ron"] }, fulfilledLocations: {} };
+	assert.deepEqual(realCardMeta(entry(["Alice"], ["Castle"]), onlyCharacters, []), {
+		characters: ["Ron"],
+		locations: ["Castle"],
+	});
+	assert.deepEqual(realCardMeta(entry(["Alice"], ["Castle"]), null, []), {
+		characters: ["Alice"],
+		locations: ["Castle"],
+	});
 	assert.deepEqual(realCardMeta(entry([], []), null, []), { characters: [], locations: [] });
 });
 
 test("a view can hide the field it already groups by", () => {
 	assert.deepEqual(realCardMeta(entry(["Alice"], ["Castle"]), recon, ["characters"]), {
 		characters: [],
-		locations: ["Castle"],
+		locations: ["Docks"],
 	});
 	assert.deepEqual(realCardMeta(entry(["Alice"], ["Castle"]), recon, ["locations"]), {
-		characters: ["Alice"],
+		characters: ["Ron"],
 		locations: [],
 	});
 });

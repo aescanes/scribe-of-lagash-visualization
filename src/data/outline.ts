@@ -275,8 +275,8 @@ export interface OutlineReconciliation {
 	fulfilledLineIds: Record<string, string>;
 	/**
 	 * Vault path -> the fulfilling row's `Characters` cell, for every fulfilled
-	 * path whose row lists any — lets the Characters view merge them with the
-	 * note's own `scribe-note-characters`.
+	 * path whose row lists any — what the Characters view and the cards show in
+	 * preference to the note's own `scribe-note-characters`.
 	 */
 	fulfilledCharacters: Record<string, string[]>;
 	/** Same as `fulfilledCharacters`, for the `Locations` cell and the Locations view. */

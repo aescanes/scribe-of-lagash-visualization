@@ -53,22 +53,26 @@ export function chronologicalModel(
 	language: string,
 ): CanvasModel {
 	const columns = manuscriptColumns(entries, plan.planned);
+	const fulfilled = new Set(plan.fulfilledPaths);
 
 	const items: Item[] = [];
 	for (const entry of entries) {
 		const path = entry.file.path;
 		const noteText = entry.date;
 		const outlineText = plan.fulfilledDates[path] ?? null;
-		// A card has one date: the note's, falling back to its outline row's.
-		const text = noteText ?? outlineText;
+		// A card has one date: its outline row's, falling back to the note's.
+		const text = outlineText ?? noteText;
 		const date = parseStoryDate(text);
 
 		let mark: string | null = null;
 		if (text && !date) {
 			mark = unrecognized(text);
+		} else if (noteText && !outlineText && fulfilled.has(path)) {
+			// The outline has a row for this note but no date; the note's fills in.
+			mark = `date differs between the note and the story outline (note: ${noteText}; story outline: empty)`;
 		} else if (noteText && outlineText) {
-			const outlineDate = parseStoryDate(outlineText);
-			if (date && outlineDate && date.key !== outlineDate.key) {
+			const noteDate = parseStoryDate(noteText);
+			if (date && noteDate && date.key !== noteDate.key) {
 				mark = `date differs between the note and the story outline (note: ${noteText}; story outline: ${outlineText})`;
 			}
 		}
