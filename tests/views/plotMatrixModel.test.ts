@@ -161,3 +161,17 @@ test("status: offered values are canonical, an empty one is none, anything else 
 	assert.deepEqual([b.statusLabel, b.statusInvalid], ["", false]);
 	assert.deepEqual([c.statusLabel, c.statusInvalid, c.status], ["wip", true, "wip"]);
 });
+
+test("without an outline, a scene directly under an act folder shows the act, not a chapter", () => {
+	const entries = [
+		entry("Book/Act II/Scene 2 - second.md", {
+			type: "scene",
+			order: 2,
+			context: ["Act II"],
+			title: "Scene 2 - second",
+		}),
+	];
+	const [r] = plotMatrixModel(ctx(entries, [], false)).rows;
+	assert.equal(r.actLabel, "Act II");
+	assert.equal(r.unit, "Scene 2 - second");
+});

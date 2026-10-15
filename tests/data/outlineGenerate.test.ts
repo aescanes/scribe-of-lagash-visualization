@@ -4,7 +4,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { generateOutlineTable, isOutlineRowable, replaceFirstTable } from "../../src/data/outlineGenerate";
+import { generateOutlineTable, isOutlineRowable, outlineUnitsOf, replaceFirstTable } from "../../src/data/outlineGenerate";
 import { parseOutlineTable } from "../../src/data/outline";
 import { LineLayout, NovelEntry } from "../../src/types";
 
@@ -123,4 +123,22 @@ test("replaceFirstTable swaps the skeleton table but keeps the surrounding text"
 test("replaceFirstTable appends when there is no table", () => {
 	const out = replaceFirstTable("Just notes.\n", "| Folder |\n| ------ |");
 	assert.equal(out, "Just notes.\n\n| Folder |\n| ------ |\n");
+});
+
+test("outlineUnitsOf: in an Act/Scene layout the act folder is not read as a chapter", () => {
+	const scene = entry("Book/Act II/Scene 2.md", { type: "scene", order: 2, context: ["Act II"], title: "Scene 2" });
+	assert.deepEqual(outlineUnitsOf(scene), { chapter: null, scene: 2, chapterFolder: null, outerFolders: ["Act II"] });
+
+	const nested = entry("Book/Act II/Chapter 2/Scene 3.md", {
+		type: "scene",
+		order: 3,
+		context: ["Act II", "Chapter 2"],
+		title: "Scene 3",
+	});
+	assert.deepEqual(outlineUnitsOf(nested), {
+		chapter: 2,
+		scene: 3,
+		chapterFolder: "Chapter 2",
+		outerFolders: ["Act II"],
+	});
 });

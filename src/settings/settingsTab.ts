@@ -3,7 +3,7 @@
 
 import { App, Notice, normalizePath, PluginSettingTab, Setting, SettingDefinitionItem, TFolder } from "obsidian";
 import type ScribeVisualizationPlugin from "../main";
-import { availableLanguages, languageLabel } from "../data/titleParser";
+import { actLabel, availableLanguages, languageLabel, unitLabel } from "../data/titleParser";
 import { FolderSuggest } from "./folderSuggest";
 
 /** One settings row: shared between the declarative (Obsidian 1.13+) and imperative (fallback) render paths. */
@@ -33,6 +33,20 @@ function introDesc(): DocumentFragment {
 			"A chapter/scene can be a single note or a folder — pick one style per story, don't mix them. " +
 				"See the plugin's README for the supported layouts.",
 		);
+	});
+}
+
+/** The title-language row's description, ending with the words that language uses ("Act, Chapter, Scene"). */
+function titleLanguageDesc(language: string): DocumentFragment {
+	return createFragment((frag) => {
+		frag.appendText(
+			"Which language's patterns to use when reading act/chapter/scene numbers from note titles and folders.",
+		);
+		frag.createEl("br");
+		frag.appendText("Example: ");
+		frag.createEl("code", {
+			text: [actLabel(language), unitLabel("chapter", language), unitLabel("scene", language)].join(", "),
+		});
 	});
 }
 
@@ -170,13 +184,14 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 		return [
 			{
 				name: "Note title / folder name language",
-				desc: "Which language's patterns to use when reading act/chapter/scene numbers from note titles and folders.",
+				desc: titleLanguageDesc(this.plugin.settings.titleLanguage),
 				render: (setting) => {
 					setting.addDropdown((dropdown) => {
 						for (const lang of availableLanguages()) dropdown.addOption(lang, languageLabel(lang));
 						dropdown.setValue(this.plugin.settings.titleLanguage);
 						dropdown.onChange(async (value) => {
 							this.plugin.settings.titleLanguage = value;
+							setting.setDesc(titleLanguageDesc(value));
 							await this.plugin.saveSettings();
 						});
 					});

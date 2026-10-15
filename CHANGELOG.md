@@ -25,7 +25,7 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   typed into the table is kept and flagged with a ⚠.
 - **Chronological view** for the StoryLines tab: a read-only view with a single
   line holding every chapter/scene ordered by its in-story date, from the notes'
-  `scribe-note-date` frontmatter or the Story Outline's `Date` column (the outline
+  `scribe-note-date` property or the Story Outline's `Date` column (the outline
   wins; a ⚠ flags a disagreement). Accepted dates are ISO (`2026`, `2026-11`,
   `2026-11-03`) and full English or Spanish month names (`November 2026`,
   `November 3, 2026`, `3 de noviembre de 2026`); a month followed by one number
@@ -35,12 +35,12 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   toolbar button switches between oldest first and newest first, remembered
   per tab. Equal dates keep chapter/scene order. Nothing is written.
 - New Story Outline files are created at the full width of the pane (a
-  `cssclasses: [scribe-outline-wide]` line in their frontmatter) so the table
+  `cssclasses: [scribe-outline-wide]` line in their properties) so the table
   shows more columns. An outline you already have gets the line added the next
   time the plugin reads it, keeping any `cssclasses` it already had.
 - **Cards show characters, locations and date from the Story Outline first,
   then from the note.** The outline row wins; when the row doesn't have the
-  field, the note's own frontmatter (`scribe-note-characters`, `-locations`,
+  field, the note's own properties (`scribe-note-characters`, `-locations`,
   `-date`) fills in; when neither has it, nothing is shown. Planned
   cards show their row's values. The Characters view no longer repeats the
   characters on its cards, nor the Locations view the locations. Characters
@@ -63,7 +63,7 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   that isn't recognized is shown as typed.
 
 ### Changed
-- **The Story Outline now takes precedence over a note's frontmatter** for the
+- **The Story Outline now takes precedence over a note's properties** for the
   date, characters and locations, everywhere (cards, Characters, Locations and
   Chronological views): outline row first, then the note, then nothing. Before,
   the note won (and the Characters / Locations views showed the union of both).

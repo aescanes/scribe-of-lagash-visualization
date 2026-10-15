@@ -11,7 +11,7 @@ in Obsidian.
 This plugin doesn't own your prose: chapters and scenes are just regular notes
 in your vault. Point the plugin at the folder that holds a story and it
 recognizes chapters and scenes from their titles ("Chapter 1", "Scene II",
-"Prologue", …); a little `scribe-note-*` frontmatter is optional and
+"Prologue", …); a few `scribe-note-*` properties are optional and
 only needed to override the title or add detail. You can see the story in
 several views: **StoryLines**, where you arrange the cards on your own lines;
 the read-only **Characters**, **Locations** and **Chronological** views, which
@@ -85,7 +85,7 @@ The date, characters and locations follow one rule everywhere in the plugin:
 the **Story Outline row first**, then the **note**, then nothing. If you keep a
 Story Outline, its row is the source of truth; if you write without one (or a
 row leaves the field empty), the note's `scribe-note-date`,
-`scribe-note-characters` and `scribe-note-locations` frontmatter is used. When
+`scribe-note-characters` and `scribe-note-locations` properties are used. When
 both have a value and they differ, the outline's is shown and a ⚠ explains the
 difference. A ⚠ also appears when the outline has a row for the note but leaves
 the field empty while the note has a value (the note's value is shown). A note
@@ -102,7 +102,7 @@ switches between the different views. Characters keeps the same
 look but is read-only: one line per character (alphabetical), each showing
 the chapters/scenes that name them in reading order, so a scene with two
 characters appears on both lines. Names come from the notes'
-`scribe-note-characters` frontmatter and the Story Outline's `Characters`
+`scribe-note-characters` property and the Story Outline's `Characters`
 column; the outline's names win, and the note's are used when the row lists
 none. If a note and its outline row list different characters a ⚠
 explains the difference. Planned (not yet written) rows show as dashed,
@@ -115,7 +115,7 @@ remembers its own view.
 ### Locations view
 
 The same read-only view, with one line per location.
-Names come from the notes' `scribe-note-locations` frontmatter and the Story
+Names come from the notes' `scribe-note-locations` property and the Story
 Outline's `Locations` column, with the same rule (outline first, then the note;
 ⚠ when they differ; a
 "No locations listed" strip for the rest).
@@ -126,7 +126,7 @@ Outline's `Locations` column, with the same rule (outline first, then the note;
 
 The same read-only view, with a single line that orders every chapter and
 scene by its in-story date. The date comes from the note's `scribe-note-date`
-frontmatter or the Story Outline's `Date` column (if both exist the outline wins,
+property or the Story Outline's `Date` column (if both exist the outline wins,
 and a ⚠ explains a difference). The button next to the combo box switches
 between oldest first and newest first. Scenes with the same date keep their
 chapter/scene order; notes with no date, or a date that isn't recognized (⚠),
@@ -175,7 +175,7 @@ Draft, Final Draft or Done. If you type something else into the table, it is
 left as you wrote it and shown with a ⚠ instead of being treated as a status.
 
 Without a Story Outline file the matrix is read-only and built from your notes
-(their titles, folders, `scribe-note-*` frontmatter, line placement and first
+(their titles, folders, `scribe-note-*` properties, line placement and first
 paragraph, shown under Synopsis; the Comments column is left out). `Comments` is yours alone: it lives only in the outline table and is
 never copied into a note.
 
@@ -190,7 +190,7 @@ is optional — `Outline` and `Outline.md` both create `(SL) Outline.md`. Fill
 it in to plan the story before the
 notes exist: rows with no matching note appear as dashed placeholder cards
 on the StoryLines view, and clicking one creates the note (title, Synopsis,
-frontmatter) on that line. Once a note exists its Synopsis shows on the
+properties) on that line. Once a note exists its Synopsis shows on the
 card; a row that disagrees with the real note/folder gets a ⚠ marker — the
 files always win.
 The optional `Characters` and `Locations` columns (comma-separated names)
@@ -238,7 +238,7 @@ So with **Title language** set to Español, `Cap. 3 — La caída` is chapter 3 
 ### Story structure
 
 A note's place in the manuscript comes from **where it sits in folders**, not
-from frontmatter. Any of these layouts works — but pick **one per story**:
+from properties. Any of these layouts works — but pick **one per story**:
 
 | Layout                        | On disk (under the story folder)                                       |
 | ----------------------------- | ---------------------------------------------------------------------- |
@@ -291,9 +291,9 @@ the note body when you create it. `Status` and `Comments` are for your own
 bookkeeping; `Comments` stays in the table and is never copied into a note.
 
 A new outline file asks Obsidian to show it at the full width of the pane (a
-`cssclasses: [scribe-outline-wide]` line in its frontmatter), so the table can
+`cssclasses: [scribe-outline-wide]` line in its properties), so the table can
 show more columns without scrolling. An outline you created earlier gets the
-same line added to its frontmatter the next time the plugin reads it (any
+same line added to its properties the next time the plugin reads it (any
 `cssclasses` you already had are kept).
 
 The outline always has every column (`Act`, `Chapter`, `Scene`, `Line`,
@@ -349,9 +349,10 @@ Things to know:
   matches a note that already exists, the outline shows no placeholder cards
   until you add new rows.
 
-### Optional frontmatter
+### Optional properties
 
-None of this is required — it only adds detail the cards can show:
+None of this is required — it only adds detail the cards can show. They are
+ordinary note properties (the YAML block at the top of the note):
 
 ```yaml
 ---

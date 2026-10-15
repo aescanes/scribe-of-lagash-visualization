@@ -5,6 +5,7 @@ import { setIcon } from "obsidian";
 import { dateFormatHint } from "../data/dateParser";
 import { OutlineColumn } from "../data/outlineEdit";
 import { NO_STATUS, OUTLINE_STATUSES, statusHint } from "../data/outlineStatus";
+import { FRONTMATTER_KEYS } from "../types";
 import { PlotMatrixModel, PlotMatrixRow } from "./plotMatrixModel";
 
 /**
@@ -20,6 +21,9 @@ export interface PlotMatrixCallbacks {
 	addRow(): Promise<void>;
 }
 
+/** How the notes' frontmatter keys are written in prose; shown as code, so not UI text to case. */
+const NOTE_KEYS_PATTERN = "scribe-note-*";
+
 /** Columns after the first (Act / Chapter / Scene), in matrix order. */
 const FIELD_COLUMNS = ["Line", "Synopsis", "Characters", "Locations", "Date", "Status", "Comments"] as const;
 type FieldColumn = (typeof FIELD_COLUMNS)[number];
@@ -28,7 +32,7 @@ type FieldColumn = (typeof FIELD_COLUMNS)[number];
 const COLUMN_HINTS: Record<"Act / Chapter / Scene" | FieldColumn, string> = {
 	"Act / Chapter / Scene": "Where the row sits. Chapter and Scene start with a number (3, IV).",
 	Line: "Pick one of your StoryLines lines.",
-	Synopsis: "What happens. Becomes the note's text.",
+	Synopsis: "Brief summary or general overview of the main points.",
 	Characters: "Names separated by commas.",
 	Locations: "Places separated by commas.",
 	Date: "2026-11-03, November 2026, November 3, 2026…",
@@ -47,6 +51,22 @@ const COLUMN_ICONS: Record<keyof typeof COLUMN_HINTS, string> = {
 	Status: "list-checks",
 	Comments: "message-square",
 };
+
+/** The note property each column reads when the matrix is built from the notes. */
+const NOTE_PROPERTIES: Partial<Record<FieldColumn, string>> = {
+	Characters: FRONTMATTER_KEYS.characters,
+	Locations: FRONTMATTER_KEYS.locations,
+	Date: FRONTMATTER_KEYS.date,
+	Status: FRONTMATTER_KEYS.status,
+};
+
+/** Read-only, the synopsis is the note's own first paragraph rather than something typed here. */
+const READ_ONLY_SYNOPSIS_HINT = "First paragraph of the note.";
+
+/** Comments live only in the outline table, so a notes-only matrix has nowhere to read them from. */
+function visibleColumns(model: PlotMatrixModel): readonly FieldColumn[] {
+	return model.editable ? FIELD_COLUMNS : FIELD_COLUMNS.filter((c) => c !== "Comments");
+}
 
 const MULTILINE: ReadonlySet<FieldColumn> = new Set(["Synopsis", "Comments"]);
 
@@ -71,21 +91,33 @@ function rawValue(row: PlotMatrixRow, column: FieldColumn): string {
 
 export function renderPlotMatrix(parent: HTMLElement, model: PlotMatrixModel, cb: PlotMatrixCallbacks): void {
 	if (!model.editable) {
-		parent.createDiv({
-			cls: "scribe-canvas-notice",
-			text: "Read-only: built from your notes. Name a Story Outline file in the plugin settings and create it to edit this matrix.",
-		});
+		const notice = parent.createDiv({ cls: "scribe-canvas-notice" });
+		notice.appendText("Read-only: built from your notes and properties ");
+		notice.createEl("code", { text: NOTE_KEYS_PATTERN });
+		notice.appendText(".");
+		notice.createDiv({ cls: "scribe-canvas-notice-spacer" });
+		notice.append("Create a Story Outline file in the plugin settings and create it to edit this matrix.")
 	}
 
 	const scroll = parent.createDiv({ cls: "scribe-canvas-scroll scribe-plot-matrix-scroll" });
 	const grid = scroll.createDiv({ cls: "scribe-plot-matrix-grid" });
 
-	for (const title of ["Act / Chapter / Scene", ...FIELD_COLUMNS] as const) {
+	grid.toggleClass("is-readonly", !model.editable);
+	const columns = visibleColumns(model);
+	for (const title of ["Act / Chapter / Scene", ...columns] as const) {
 		const head = grid.createDiv({ cls: "scribe-plot-matrix-head" });
 		const heading = head.createDiv({ cls: "scribe-plot-matrix-head-title" });
 		setIcon(heading.createSpan({ cls: "scribe-plot-matrix-head-icon" }), COLUMN_ICONS[title]);
 		heading.createSpan({ text: title });
-		head.createDiv({ cls: "scribe-plot-matrix-head-hint", text: COLUMN_HINTS[title] });
+		head.createDiv({
+			cls: "scribe-plot-matrix-head-hint",
+			text: title === "Synopsis" && !model.editable ? READ_ONLY_SYNOPSIS_HINT : COLUMN_HINTS[title],
+		});
+		const property = model.editable || title === "Act / Chapter / Scene" ? undefined : NOTE_PROPERTIES[title];
+		if (property) {
+			const source = head.createDiv({ cls: "scribe-plot-matrix-head-hint" });
+			source.createEl("code", { text: property });
+		}
 	}
 
 	if (model.rows.length === 0) {
@@ -118,7 +150,7 @@ function renderRow(grid: HTMLElement, row: PlotMatrixRow, model: PlotMatrixModel
 	if (row.lineColor) unit.style.setProperty("--scribe-line-color", row.lineColor);
 	renderUnit(unit, row, model.editable, cb);
 
-	for (const column of FIELD_COLUMNS) {
+	for (const column of visibleColumns(model)) {
 		const cell = grid.createDiv({
 			cls: `scribe-plot-matrix-cell${row.ghost ? " is-planned" : ""}${model.editable ? " is-editable" : ""}`,
 		});

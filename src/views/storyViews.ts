@@ -78,7 +78,7 @@ export const STORY_VIEWS: Record<Exclude<StoryView, "plotMatrix">, StoryViewDef>
 	},
 	plotMatrix: {
 		kind: "matrix",
-		label: "Plot matrix",
+		label: "Plot Matrix",
 		editable: false,
 		buildPlotMatrix: plotMatrixModel,
 	},
@@ -88,7 +88,7 @@ export const STORY_VIEWS: Record<Exclude<StoryView, "plotMatrix">, StoryViewDef>
 		editable: false,
 		hides: ["characters"],
 		emptyNotice:
-			"No characters found. List them in a note's scribe-note-characters frontmatter " +
+			"No characters found. List them in a note's scribe-note-characters property " +
 			"or in the Characters column of the story outline.",
 		unplacedLabel: "No characters listed",
 		buildModel: ({ entries, recon }) => charactersModel(entries, recon),
@@ -99,7 +99,7 @@ export const STORY_VIEWS: Record<Exclude<StoryView, "plotMatrix">, StoryViewDef>
 		editable: false,
 		hides: ["locations"],
 		emptyNotice:
-			"No locations found. List them in a note's scribe-note-locations frontmatter " +
+			"No locations found. List them in a note's scribe-note-locations property " +
 			"or in the Locations column of the story outline.",
 		unplacedLabel: "No locations listed",
 		buildModel: ({ entries, recon }) => locationsModel(entries, recon),
@@ -110,7 +110,7 @@ export const STORY_VIEWS: Record<Exclude<StoryView, "plotMatrix">, StoryViewDef>
 		editable: false,
 		hasDateOrder: true,
 		emptyNotice:
-			"No dated notes found. Add a scribe-note-date to a note's frontmatter or a Date to " +
+			"No dated notes found. Add a scribe-note-date property to a note or a Date to " +
 			`the story outline (${dateFormatHint()}).`,
 		unplacedLabel: "No date",
 		buildModel: ({ entries, recon, dateOrder, language }) =>

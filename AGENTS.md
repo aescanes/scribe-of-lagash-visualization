@@ -33,6 +33,7 @@ folder-based approach before adding a new frontmatter field or setting.
 
 ### Nomenclature
 - In some point of the project we start using in the documents and UI the word `story` instead `novel` or `book` and `writer` instead `novelist`. The code remains using the old nomenclature to avoid a big refactor of the code.
+- In UI text and docs for writers say **property / properties** (what Obsidian shows in its Properties panel); in code, comments and this file keep **frontmatter**, which matches the Obsidian API (`processFrontMatter`, `FRONTMATTER_KEYS`).
 
 ### Views of a story
 

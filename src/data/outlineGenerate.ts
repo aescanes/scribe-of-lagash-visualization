@@ -37,17 +37,17 @@ export function outlineUnitsOf(
 	language: string = DEFAULT_LANGUAGE,
 ): { chapter: number | null; scene: number | null; chapterFolder: string | null; outerFolders: string[] } {
 	const isScene = entry.type === "scene";
-	const chapterFolder = isScene ? entry.context[entry.context.length - 1] ?? null : null;
-	const chapter = isScene
-		? chapterFolder
-			? parseTitle(chapterFolder, language)?.number ?? null
-			: null
-		: entry.order;
+	// A scene's innermost folder is its chapter only if it reads as one: in an
+	// "Act I/Scene 1.md" layout it is the act, and must stay with the outer folders.
+	const lastFolder = isScene ? entry.context[entry.context.length - 1] ?? null : null;
+	const parsedFolder = lastFolder ? parseTitle(lastFolder, language) : null;
+	const chapterFolder = parsedFolder?.type === "chapter" ? lastFolder : null;
+	const chapter = isScene ? parsedFolder?.type === "chapter" ? parsedFolder.number : null : entry.order;
 	return {
 		chapter,
 		scene: isScene ? entry.order : null,
 		chapterFolder,
-		outerFolders: isScene ? entry.context.slice(0, -1) : entry.context,
+		outerFolders: isScene && chapterFolder ? entry.context.slice(0, -1) : entry.context,
 	};
 }
 
