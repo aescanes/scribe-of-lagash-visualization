@@ -723,7 +723,15 @@ export class LineView extends ItemView {
 			for (const entry of model.unplaced) {
 				this.renderCard(
 					rail,
-					{ kind: "real", entry, planned: null, x: 0, summary: null, mark: model.unplacedMarks?.[entry.file.path] ?? null },
+					{
+						kind: "real",
+						entry,
+						planned: null,
+						x: 0,
+						// Outline synopsis first, like every card on a line; the note's paragraph fills in at render.
+						summary: recon.previews[entry.file.path] ?? null,
+						mark: model.unplacedMarks?.[entry.file.path] ?? null,
+					},
 					true,
 					readOnly,
 				);
