@@ -131,8 +131,19 @@ export class LineView extends ItemView {
 		return VIEW_TYPE_LINE_VIEW;
 	}
 
+	/** "(SL) Visualization: <view>" — the tab names the view it is showing. */
 	getDisplayText(): string {
-		return "(SL) StoryLines";
+		return `(SL) Visualization: ${STORY_VIEWS[this.storyView].label}`;
+	}
+
+	/**
+	 * Obsidian caches the title in two places: the tab (`updateHeader`, not in the
+	 * public typings, refreshes it) and the title above the content, which that call
+	 * leaves alone, so it is set here directly.
+	 */
+	private refreshTabTitle(): void {
+		(this.leaf as WorkspaceLeaf & { updateHeader?: () => void }).updateHeader?.();
+		this.containerEl.querySelector<HTMLElement>(".view-header-title")?.setText(this.getDisplayText());
 	}
 
 	getIcon(): string {
@@ -150,6 +161,7 @@ export class LineView extends ItemView {
 		this.storyView = parseStoryView(raw);
 		this.dateOrder = parseDateOrder("dateOrder" in saved ? saved.dateOrder : null);
 		await super.setState(state, result);
+		this.refreshTabTitle();
 		if (this.opened) this.render();
 	}
 
@@ -587,6 +599,7 @@ export class LineView extends ItemView {
 			await this.save();
 		}
 		this.storyView = next;
+		this.refreshTabTitle();
 		this.autoPlace();
 		this.app.workspace.requestSaveLayout();
 		this.render(false);

@@ -30,13 +30,13 @@ export default class ScribeVisualizationPlugin extends Plugin {
 
 		this.registerView(VIEW_TYPE_LINE_VIEW, (leaf) => new LineView(leaf, this));
 
-		this.addRibbonIcon(LINE_ICON_ID, "(SL) visualization: Open StoryLines", () => {
+		this.addRibbonIcon(LINE_ICON_ID, "(SL) visualization: Open", () => {
 			void this.activateView(VIEW_TYPE_LINE_VIEW);
 		}).addClass("scribe-ribbon-icon");
 
 		this.addCommand({
 			id: "open-scribe-visualization-lines",
-			name: "Open StoryLines",
+			name: "Open visualizations",
 			callback: () => this.activateView(VIEW_TYPE_LINE_VIEW),
 		});
 

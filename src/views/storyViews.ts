@@ -12,7 +12,7 @@ import { CardInfoField } from "./cardInfo";
 import { PlotMatrixContext, PlotMatrixModel, plotMatrixModel } from "./plotMatrixModel";
 
 /**
- * The views of the StoryLines tab (StoryLines, Characters, Locations, Chronological, Plot matrix), described
+ * The views of the Visualization tab (StoryLines, Characters, Locations, Chronological, Plot matrix), described
  * once so the tab never has to ask "which view am I in?" — it reads `editable` /
  * `buildModel` off the descriptor.
  * A new view is one entry here plus its model function.

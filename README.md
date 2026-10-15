@@ -61,7 +61,9 @@ describe the same notes.
 
 ### StoryLines view
 
-The story's default view (ribbon icon / "Open StoryLines" command).
+The plugin opens in a **Visualization** tab (ribbon icon / "Open visualizations"
+command), and the tab's title names the view it is showing, e.g. "(SL)
+Visualization: Plot matrix". StoryLines is its default view.
 Horizontal, colored **lines** for a story, with each chapter/scene as a card
 sitting on a line. Pick "Create lines" the first time to seed a "Main line",
 then drag cards between lines or along the shared column grid — columns line
@@ -113,7 +115,7 @@ never copied into a note.
 
 ### Characters view
 
-The combo box at the top right of the StoryLines tab
+The combo box at the top right of the Visualization tab
 switches between the different views. Characters keeps the same
 look but is read-only: one line per character (alphabetical), each showing
 the chapters/scenes that name them in reading order, so a scene with two

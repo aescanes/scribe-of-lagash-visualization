@@ -74,6 +74,10 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   given the topmost line, as the board does.
 
 ### Changed
+- The tab is now titled **(SL) Visualization: <view>** (for example "(SL)
+  Visualization: Plot matrix") and the title follows the view you pick. The
+  command is now **Open visualizations** and the ribbon tooltip "(SL)
+  visualization: Open" (the command's id, and so any hotkey, is unchanged).
 - **The Story Outline now takes precedence over a note's properties** for the
   date, characters and locations, everywhere (cards, Characters, Locations and
   Chronological views): outline row first, then the note, then nothing. Before,
