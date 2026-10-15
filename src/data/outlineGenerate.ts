@@ -2,16 +2,32 @@
 // Copyright (C) 2026 aescanes
 
 import { LineLayout, NovelEntry } from "../types";
-import { DEFAULT_LANGUAGE, parseTitle } from "./titleParser";
+import { OUTLINE_COLUMNS, escapeCell } from "./outline";
+import { DEFAULT_LANGUAGE, actLabel, parseTitle } from "./titleParser";
 
 /**
  * Builds an Outline table from the notes that already exist — the starting
- * point for the "Generate outline from notes" command. Pure. The Summary
- * column is left blank for the author to fill in; a scene row's Chapter number
- * is read back from its chapter folder's name.
+ * point for the "Generate outline from notes" command. Pure. Every outline
+ * column is written: Act / Chapter / Scene come from the folders and titles
+ * (a scene row's Chapter number is read back from its chapter folder's name),
+ * Line from the note's placement in Lines.md, and Characters / Locations /
+ * Date / Status from the note's own properties. Synopsis and Comments are left
+ * blank for the author to fill in.
  */
 
-const COLUMNS = ["Chapter", "Scene", "Line", "Synopsis"];
+const COLUMNS: readonly string[] = OUTLINE_COLUMNS;
+
+/**
+ * The Act cell for a note: its outermost folder when that reads as "<Act label>
+ * <name>" ("Act I" -> "I"). Any other folder has no Act cell to live in, and
+ * the row's expected folder then differs from the note's (the usual ⚠).
+ */
+function actCell(outerFolders: string[], language: string): string {
+	const first = outerFolders[0];
+	if (!first) return "";
+	const match = new RegExp(`^${actLabel(language)}\\s+(.+)$`, "i").exec(first.trim());
+	return match ? match[1].trim() : "";
+}
 
 function cell(value: string | number | null): string {
 	return value === null || value === undefined ? "" : String(value);
@@ -57,20 +73,35 @@ export function generateOutlineTable(
 	language: string = DEFAULT_LANGUAGE,
 ): string {
 	const lineNameById = new Map(layout.lines.map((l) => [l.id, l.name]));
+	// A note with no placement lands on the topmost line when the board opens, so that is
+	// the line its row should name too.
+	const fallbackLine = [...layout.lines].sort((a, b) => a.order - b.order)[0]?.id ?? null;
 
 	const rows = entries.filter(isOutlineRowable).map((entry) => {
-		const { chapter, scene } = outlineUnitsOf(entry, language);
+		const { chapter, scene, outerFolders } = outlineUnitsOf(entry, language);
 
-		const placedLine = layout.placements[entry.file.path]?.lines[0];
+		const placedLine = layout.placements[entry.file.path]?.lines[0] ?? fallbackLine;
 		const line = placedLine ? lineNameById.get(placedLine) ?? placedLine : "";
 
-		return [cell(chapter), cell(scene), cell(line), ""];
+		const values: Record<(typeof OUTLINE_COLUMNS)[number], string> = {
+			Act: actCell(outerFolders, language),
+			Chapter: cell(chapter),
+			Scene: cell(scene),
+			Line: line,
+			Synopsis: "",
+			Characters: entry.characters.join(", "),
+			Locations: entry.locations.join(", "),
+			Date: entry.date ?? "",
+			Status: entry.status ?? "",
+			Comments: "",
+		};
+		return OUTLINE_COLUMNS.map((name) => escapeCell(values[name]));
 	});
 
 	const widths = COLUMNS.map((name, i) =>
 		Math.max(name.length, 3, ...rows.map((r) => r[i].length)),
 	);
-	const line = (parts: string[]): string =>
+	const line = (parts: readonly string[]): string =>
 		`| ${parts.map((p, i) => p.padEnd(widths[i])).join(" | ")} |`;
 
 	return [line(COLUMNS), line(widths.map((w) => "-".repeat(w))), ...rows.map(line)].join("\n");

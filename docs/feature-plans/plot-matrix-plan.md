@@ -120,8 +120,10 @@ Row state is shown like the other views: a row with no note yet is a dashed
 note (click the label to open it, same as a real card). Marks from
 `reconcileOutline` appear as the ⚠ on the label square.
 
-"Add row" at the bottom appends a blank-ish row (`| | N | … |`) with the next
-chapter number. "Delete row" is **deferred** (destructive, needs a confirm
+"Add row" at the bottom appends an empty row (no Act, Chapter or Scene; the writer fills
+them in with the pencil). Such a row is shown as "Not numbered yet" and found by its line in the
+file (`OutlineRow.sourceLine`), because the parser, and every other view, ignore a row with no
+Chapter or Scene. "Delete row" is **deferred** (destructive, needs a confirm
 modal; not v1).
 
 ### Look

@@ -99,10 +99,10 @@ const EDIT_TABLE = [
 	"outro",
 ].join("\n");
 
-const t = (rowIndex: number, chapterText: string) => ({ rowIndex, chapterText, sceneText: null });
+const t = (lineIndex: number, chapterText: string | null) => ({ lineIndex, chapterText, sceneText: null });
 
 test("setOutlineCell changes only the edited cell", () => {
-	const r = setOutlineCell(EDIT_TABLE, t(0, "1"), "Synopsis", "new text");
+	const r = setOutlineCell(EDIT_TABLE, t(3, "1"), "Synopsis", "new text");
 	assert.ok(r.ok);
 	const before = EDIT_TABLE.split("\n");
 	const after = r.body.split("\n");
@@ -113,20 +113,28 @@ test("setOutlineCell changes only the edited cell", () => {
 	assert.deepEqual(parseOutlineTable(r.body).map((x) => x.summary), ["new text", "second"]);
 });
 
-test("setOutlineCell addresses rows by parsed index, skipping rows the parser skips", () => {
-	const r = setOutlineCell(EDIT_TABLE, t(1, "2"), "Line", "Other");
+test("setOutlineCell addresses a row by its line, and can fill in a row with no Chapter or Scene yet", () => {
+	const r = setOutlineCell(EDIT_TABLE, t(5, "2"), "Line", "Other");
 	assert.ok(r.ok);
 	assert.deepEqual(parseOutlineTable(r.body).map((x) => x.line), ["Main", "Other"]);
+
+	// "skipped" is not a number, so that row has no Chapter yet either; numbering it keeps the rest.
+	const blank = setOutlineCell(EDIT_TABLE, t(4, null), "Chapter", "7");
+	assert.ok(blank.ok);
+	assert.equal(parseOutlineTable(blank.body).length, 3);
+	const empty = setOutlineCell("| Chapter | Line |\n| --- | --- |\n|  |  |\n", t(2, null), "Chapter", "3");
+	assert.ok(empty.ok);
+	assert.equal(parseOutlineTable(empty.body)[0].chapter, 3);
 });
 
 test("setOutlineCell refuses a stale row and a missing column", () => {
-	assert.deepEqual(setOutlineCell(EDIT_TABLE, t(0, "9"), "Line", "x"), { ok: false, reason: "stale" });
-	assert.deepEqual(setOutlineCell(EDIT_TABLE, t(5, "1"), "Line", "x"), { ok: false, reason: "no-row" });
-	assert.deepEqual(setOutlineCell(EDIT_TABLE, t(0, "1"), "Date", "x"), { ok: false, reason: "no-column" });
+	assert.deepEqual(setOutlineCell(EDIT_TABLE, t(3, "9"), "Line", "x"), { ok: false, reason: "stale" });
+	assert.deepEqual(setOutlineCell(EDIT_TABLE, t(9, "1"), "Line", "x"), { ok: false, reason: "no-row" });
+	assert.deepEqual(setOutlineCell(EDIT_TABLE, t(3, "1"), "Date", "x"), { ok: false, reason: "no-column" });
 });
 
 test("setOutlineCell escapes pipes and newlines so the value round-trips", () => {
-	const r = setOutlineCell(EDIT_TABLE, t(0, "1"), "Synopsis", "a | b\nc");
+	const r = setOutlineCell(EDIT_TABLE, t(3, "1"), "Synopsis", "a | b\nc");
 	assert.ok(r.ok);
 	const rows = parseOutlineTable(r.body);
 	assert.equal(rows[0].summary, "a | b c");
@@ -135,14 +143,14 @@ test("setOutlineCell escapes pipes and newlines so the value round-trips", () =>
 
 test("setOutlineCell extends a row shorter than the column", () => {
 	const body = "| Chapter | Line | Synopsis |\n| --- | --- | --- |\n| 1 |\n";
-	const r = setOutlineCell(body, t(0, "1"), "Synopsis", "hi");
+	const r = setOutlineCell(body, t(2, "1"), "Synopsis", "hi");
 	assert.ok(r.ok);
 	assert.equal(parseOutlineTable(r.body)[0].summary, "hi");
 });
 
 test("setOutlineCell edits a Places column as Locations, and keeps CRLF", () => {
 	const body = "| Chapter | Places |\r\n| --- | --- |\r\n| 1 | Rome |\r\n";
-	const r = setOutlineCell(body, t(0, "1"), "Locations", "Paris");
+	const r = setOutlineCell(body, t(2, "1"), "Locations", "Paris");
 	assert.ok(r.ok);
 	assert.deepEqual(parseOutlineTable(r.body)[0].locations, ["Paris"]);
 	assert.ok(!/[^\r]\n/.test(r.body));
@@ -153,28 +161,20 @@ test("a cell that already holds an escaped pipe parses as one cell", () => {
 	assert.equal(rows[0].summary, "a | b");
 });
 
+import { scanOutlineTable } from "../../src/data/outline";
 import { appendOutlineRow, unitEditProblem } from "../../src/data/outlineEdit";
 
-test("appendOutlineRow adds a numbered empty row after the table, leaving the rest alone", () => {
+test("appendOutlineRow adds an empty row after the table, leaving the rest alone", () => {
 	const out = appendOutlineRow(EDIT_TABLE);
 	assert.ok(out);
 	const lines = out.split("\n");
 	assert.equal(lines.length, EDIT_TABLE.split("\n").length + 1);
 	assert.equal(lines[lines.length - 1], "outro");
-	const rows = parseOutlineTable(out);
-	assert.equal(rows.length, 3);
-	assert.equal(rows[2].chapter, 3);
-});
-
-test("appendOutlineRow numbers scenes when the table has no Chapter column, and starts at 1", () => {
-	const scenes = appendOutlineRow("| Scene | Line |\n| --- | --- |\n| 4 | A |\n");
-	assert.ok(scenes);
-	assert.equal(parseOutlineTable(scenes)[1].scene, 5);
-	const first = appendOutlineRow("| Chapter | Line |\n| --- | --- |\n");
-	assert.ok(first);
-	assert.equal(parseOutlineTable(first)[0].chapter, 1);
+	assert.equal(lines[6].replace(/[\s|]/g, ""), "", "the new line has no text");
+	assert.equal(lines[6].split("|").length, lines[1].split("|").length, "one cell per column");
+	assert.equal(parseOutlineTable(out).length, 2, "the parser still ignores a row with no Chapter or Scene");
+	assert.equal(scanOutlineTable(out).blanks.length, 2, "the 'skipped' row and the new one are blank rows");
 	assert.equal(appendOutlineRow("no table"), null);
-	assert.equal(appendOutlineRow("| Line |\n| --- |\n"), null);
 });
 
 test("unitEditProblem keeps a row parseable", () => {

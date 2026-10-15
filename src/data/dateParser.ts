@@ -193,3 +193,29 @@ export function displayDate(text: string | null | undefined, language: string): 
 export function dateFormatHint(): string {
 	return "2026-11-03, November 2026, November 3, 2026 or 3 de noviembre de 2026 (a month followed by one number is a year)";
 }
+
+/**
+ * Why a note's date and its outline row's disagree, or null. Two dates that
+ * parse to the same moment ("2026-11" and "November 2026") agree. A row that
+ * leaves the date empty while the note has one is flagged too, but only when
+ * `hasRow`: a note the outline doesn't mention has nothing to disagree with.
+ */
+export function dateConflict(
+	noteText: string | null | undefined,
+	outlineText: string | null | undefined,
+	hasRow: boolean,
+): string | null {
+	const note = noteText?.trim() ?? "";
+	const outline = outlineText?.trim() ?? "";
+	if (note && !outline && hasRow) {
+		return `date differs between the note and the story outline (note: ${note}; story outline: empty)`;
+	}
+	if (note && outline) {
+		const noteDate = parseStoryDate(note);
+		const outlineDate = parseStoryDate(outline);
+		if (noteDate && outlineDate && noteDate.key !== outlineDate.key) {
+			return `date differs between the note and the story outline (note: ${note}; story outline: ${outline})`;
+		}
+	}
+	return null;
+}

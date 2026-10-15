@@ -758,6 +758,11 @@
 	overflow-wrap: anywhere;
 }
 
+.scribe-plot-matrix-unit-title.is-empty {
+	color: var(--text-faint);
+	font-weight: 400;
+}
+
 .scribe-plot-matrix-unit-title.is-link {
 	cursor: pointer;
 }
@@ -766,10 +771,12 @@
 	color: var(--text-accent);
 }
 
-.scribe-plot-matrix-unit-note {
+.scribe-plot-matrix-unit-create {
+	display: inline-block;
 	margin-top: 4px;
-	color: var(--text-faint);
+	color: var(--text-accent);
 	font-size: var(--font-ui-smaller);
+	cursor: pointer;
 }
 
 .scribe-plot-matrix-unit-edit {
@@ -791,6 +798,10 @@
 	margin-bottom: var(--size-2-3);
 	color: var(--text-muted);
 	font-size: var(--font-ui-smaller);
+}
+
+.scribe-plot-matrix-cell-mark {
+	margin-top: var(--size-2-2);
 }
 
 .scribe-plot-matrix-text {

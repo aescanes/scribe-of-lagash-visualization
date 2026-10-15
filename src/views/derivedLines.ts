@@ -59,7 +59,7 @@ function named(names: string[]): NamedItem[] {
  * disagree with). But a row that lists none while the note does is flagged: the
  * outline is the source of truth, so its gap is worth a look.
  */
-function mergeSources(
+export function mergeSources(
 	fromNote: string[],
 	fromOutline: string[],
 	noun: string,

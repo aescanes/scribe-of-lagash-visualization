@@ -102,25 +102,25 @@ export type CellEditResult =
 
 /**
  * Sets one cell of the first table in `body`. `target` names the row the
- * caller was showing (its `rowIndex`, as parsed, plus its Chapter / Scene cell
- * text): if the table changed underneath and that row no longer sits there,
- * nothing is written (`stale`). The rest of the table, and the cell's row, are
- * kept as they were; only the edited cell is re-padded. A row shorter than the
- * column is extended with empty cells.
+ * caller was showing (the index of its line in the body, plus its Chapter /
+ * Scene cell text): if the table changed underneath and that row no longer sits
+ * there, nothing is written (`stale`). The rest of the table is kept as it was;
+ * only the edited cell is re-padded. A row shorter than the column is extended
+ * with empty cells. Rows with no Chapter or Scene yet can be edited too.
  */
 export function setOutlineCell(
 	body: string,
-	target: { rowIndex: number; chapterText: string | null; sceneText: string | null },
+	target: { lineIndex: number; chapterText: string | null; sceneText: string | null },
 	column: OutlineColumn,
 	value: string,
 ): CellEditResult {
-	const { header, rows } = scanOutlineTable(body);
+	const { header, rows, blanks } = scanOutlineTable(body);
 	const wanted = column.toLowerCase();
 	let col = header.indexOf(wanted);
 	if (col === -1 && wanted === "locations") col = header.indexOf("places");
 	if (col === -1) return { ok: false, reason: "no-column" };
 
-	const found = rows[target.rowIndex];
+	const found = [...rows, ...blanks].find((r) => r.lineIndex === target.lineIndex);
 	if (!found) return { ok: false, reason: "no-row" };
 	if (found.row.chapterText !== target.chapterText || found.row.sceneText !== target.sceneText) {
 		return { ok: false, reason: "stale" };
@@ -143,10 +143,10 @@ export function setOutlineCell(
 }
 
 /**
- * Appends an empty row after the first table's last line, numbered one past the
- * highest Chapter in the table (or, with no chapters, the highest Scene). The
- * rest of the file is untouched. Returns null when there is no table or it has
- * neither a `Chapter` nor a `Scene` column to number the row in.
+ * Appends an empty row after the first table's last line; the rest of the file
+ * is untouched. The row carries no Act, Chapter or Scene: the writer fills them
+ * in (the Plot matrix shows such rows, every other view ignores them). Returns
+ * null when there is no table.
  */
 export function appendOutlineRow(body: string): string | null {
 	const raw = body.split("\n");
@@ -163,21 +163,12 @@ export function appendOutlineRow(body: string): string | null {
 	}
 	if (headerAt === -1) return null;
 
-	const header = splitTableRow(lines[headerAt]).map(canonicalColumn);
-	const numberColumn = header.includes("chapter") ? "chapter" : header.includes("scene") ? "scene" : null;
-	if (numberColumn === null) return null;
-
-	const { rows } = scanOutlineTable(body);
-	const numbers = rows.map((r) => (numberColumn === "chapter" ? r.row.chapter : r.row.scene) ?? 0);
-	const next = (numbers.length > 0 ? Math.max(...numbers) : 0) + 1;
-
+	const columns = splitTableRow(lines[headerAt]).length;
 	let last = headerAt + 1;
 	while (last + 1 < lines.length && lines[last + 1].includes("|")) last++;
 
-	const cells = header.map((name) => (name === numberColumn ? String(next) : ""));
-	const newLine = `| ${cells.join(" | ")} |`.replace(/ {2,}\|/g, " |");
+	const newLine = `|${"  |".repeat(columns)}`;
 	const eol = cr[last];
-	// A table that ends the file has no newline after it; keep it that way.
 	lines.splice(last + 1, 0, newLine);
 	cr.splice(last + 1, 0, eol);
 	return lines.map((line, i) => line + cr[i]).join("\n");

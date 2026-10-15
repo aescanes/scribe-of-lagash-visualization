@@ -17,9 +17,18 @@ export interface PlotMatrixCallbacks {
 	/** Opens the real note behind a row. */
 	openNote(path: string): void;
 	/** Writes one cell of the Outline table; the caller re-renders afterwards. */
-	editCell(row: PlotMatrixRow, column: OutlineColumn, value: string): Promise<void>;
+	/** Resolves to whether the cell was written. */
+	editCell(row: PlotMatrixRow, column: OutlineColumn, value: string): Promise<boolean>;
 	addRow(): Promise<void>;
+	/** Creates the note a ghost row plans, after the usual confirmation. */
+	createNote(expectedPath: string): Promise<void>;
 }
+
+/** What an unnumbered row shows in place of its Act / Chapter / Scene. */
+const BLANK_UNIT_TEXT = "Not numbered yet";
+
+/** Same label as the dashed cards of the line views. */
+const CREATE_NOTE_LABEL = "＋ Create note";
 
 /** How the notes' frontmatter keys are written in prose; shown as code, so not UI text to case. */
 const NOTE_KEYS_PATTERN = "scribe-note-*";
@@ -169,7 +178,10 @@ function renderUnit(unit: HTMLElement, row: PlotMatrixRow, editable: boolean, cb
 	if (row.actLabel) unit.createDiv({ cls: "scribe-plot-matrix-unit-act", text: row.actLabel });
 
 	const titleRow = unit.createDiv({ cls: "scribe-plot-matrix-unit-title-row" });
-	const title = titleRow.createDiv({ cls: "scribe-plot-matrix-unit-title", text: row.unit });
+	const title = titleRow.createDiv({
+		cls: `scribe-plot-matrix-unit-title${row.blank ? " is-empty" : ""}`,
+		text: row.blank ? BLANK_UNIT_TEXT : row.unit,
+	});
 	if (row.path) {
 		const path = row.path;
 		title.addClass("is-link");
@@ -178,7 +190,14 @@ function renderUnit(unit: HTMLElement, row: PlotMatrixRow, editable: boolean, cb
 	if (row.mark) {
 		titleRow.createSpan({ cls: "scribe-canvas-card-mark", text: "⚠", attr: { "aria-label": row.mark } });
 	}
-	if (row.ghost && editable) unit.createDiv({ cls: "scribe-plot-matrix-unit-note", text: "No note yet" });
+	if (row.ghost && !row.blank && editable) {
+		const create = unit.createEl("a", { cls: "scribe-plot-matrix-unit-create", text: CREATE_NOTE_LABEL, href: "#" });
+		create.addEventListener("click", (e) => {
+			e.preventDefault();
+			e.stopPropagation();
+			void cb.createNote(row.key);
+		});
+	}
 
 	if (editable && row.target) {
 		const edit = unit.createEl("button", { cls: "scribe-plot-matrix-unit-edit clickable-icon", attr: { "aria-label": "Edit act, chapter and scene" } });
@@ -190,7 +209,18 @@ function renderUnit(unit: HTMLElement, row: PlotMatrixRow, editable: boolean, cb
 	}
 }
 
+/** A cell's content, then its ⚠ when the row disagrees with the note or the lines in that column. */
 function renderValue(cell: HTMLElement, row: PlotMatrixRow, column: FieldColumn): void {
+	renderContent(cell, row, column);
+	const mark = column === "Synopsis" || column === "Comments" ? undefined : row.cellMarks[column];
+	if (mark) cell.createDiv({ cls: "scribe-plot-matrix-cell-mark" }).createSpan({
+		cls: "scribe-canvas-card-mark",
+		text: "⚠",
+		attr: { "aria-label": mark },
+	});
+}
+
+function renderContent(cell: HTMLElement, row: PlotMatrixRow, column: FieldColumn): void {
 	cell.empty();
 	const raw = rawValue(row, column);
 
@@ -306,6 +336,7 @@ function startUnitEdit(unit: HTMLElement, row: PlotMatrixRow, cb: PlotMatrixCall
 		{ column: "Scene", label: "Scene", value: row.sceneText ?? "" },
 	];
 	const inputs: HTMLInputElement[] = [];
+	let writes: Promise<void> = Promise.resolve();
 	for (const field of fields) {
 		const label = unit.createEl("label", { cls: "scribe-plot-matrix-unit-field" });
 		label.createSpan({ text: field.label });
@@ -321,12 +352,27 @@ function startUnitEdit(unit: HTMLElement, row: PlotMatrixRow, cb: PlotMatrixCall
 		input.addEventListener("blur", () => {
 			if (input.value === field.value) return;
 			const previous = field.value;
-			field.value = input.value;
-			// Later inputs in this square are written against the row as it now stands.
-			if (row.target && field.column === "Chapter") row.target.chapterText = input.value.trim() || null;
-			if (row.target && field.column === "Scene") row.target.sceneText = input.value.trim() || null;
-			void cb.editCell(row, field.column, input.value).catch(() => {
-				field.value = previous;
+			const next = input.value;
+			field.value = next;
+			// One write at a time: a later field in this square is written against the row
+			// as the earlier one left it, so the row's expected Chapter / Scene text is only
+			// advanced once that write has gone through.
+			writes = writes.then(async () => {
+				const written = await cb.editCell(row, field.column, next);
+				if (!written) {
+					field.value = previous;
+					return;
+				}
+				const text = next.trim() || null;
+				if (field.column === "Chapter") {
+					row.chapterText = text;
+					if (row.target) row.target.chapterText = text;
+				} else if (field.column === "Scene") {
+					row.sceneText = text;
+					if (row.target) row.target.sceneText = text;
+				} else {
+					row.act = text;
+				}
 			});
 		});
 	}

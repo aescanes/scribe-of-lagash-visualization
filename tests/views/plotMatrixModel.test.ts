@@ -57,6 +57,7 @@ function ctx(entries: NovelEntry[], rows: OutlineRow[], outlineExists: boolean):
 		layout,
 		recon: reconcileOutline(rows, entries, layout, "Book", "en"),
 		outlineRows: rows,
+		blankRows: [],
 		outlineExists,
 		language: "en",
 	};
@@ -81,7 +82,7 @@ test("with an outline the matrix mirrors its rows, in table order, and is editab
 	assert.equal(a.lineColor, "#e06c75", "the Line cell is matched to a line by name, case-insensitively");
 	assert.equal(a.dateLabel, "November 3, 2026");
 	assert.equal(a.comments, "fix");
-	assert.deepEqual(a.target, { rowIndex: 0, chapterText: "1 - Start", sceneText: null });
+	assert.deepEqual(a.target, { lineIndex: -1, chapterText: "1 - Start", sceneText: null }, "a row built by hand has no source line");
 
 	assert.equal(b.unit, "Chapter 1 › Scene 2");
 	assert.equal(b.ghost, true, "no note yet");
@@ -98,10 +99,11 @@ test("an unknown line has no color and an unparseable date is flagged but kept v
 	assert.equal(r.dateLabel, "someday");
 });
 
-test("a ghost row carries the outline's mark under its expected path", () => {
+test("a ghost row's line issue is marked on its Line cell", () => {
 	const rows = [row({ chapter: 1, chapterText: "1" })];
 	const [r] = plotMatrixModel(ctx([], rows, true)).rows;
-	assert.equal(r.mark, "no line set in the story outline");
+	assert.equal(r.cellMarks.Line, "no line set in the story outline", "shown in the Line cell");
+	assert.equal(r.mark, null, "not in the Act / Chapter / Scene square");
 });
 
 test("an outline file with no rows is an empty, still editable matrix", () => {
@@ -174,4 +176,45 @@ test("without an outline, a scene directly under an act folder shows the act, no
 	const [r] = plotMatrixModel(ctx(entries, [], false)).rows;
 	assert.equal(r.actLabel, "Act II");
 	assert.equal(r.unit, "Scene 2 - second");
+});
+
+test("a real note's property that disagrees with its row is marked on that cell", () => {
+	const entries = [
+		entry("Book/Chapter 1.md", {
+			order: 1,
+			date: "2026-01-01",
+			characters: ["Alice", "Carol"],
+			locations: ["Castle"],
+			status: "Done",
+		}),
+	];
+	const rows = [
+		row({ chapter: 1, chapterText: "1", line: "Main line", date: "2027-01-01", characters: ["Alice", "Bob"], status: "TO DO" }),
+	];
+	const [r] = plotMatrixModel(ctx(entries, rows, true)).rows;
+	assert.match(r.cellMarks.Date ?? "", /date differs.*note: 2026-01-01; story outline: 2027-01-01/);
+	assert.match(r.cellMarks.Characters ?? "", /only in the note: Carol; only in the story outline: Bob/);
+	assert.match(r.cellMarks.Locations ?? "", /only in the note: Castle/, "the row lists none while the note does");
+	assert.match(r.cellMarks.Status ?? "", /status differs.*note: Done; story outline: TO DO/);
+	assert.equal(r.cellMarks.Line, undefined);
+	assert.equal(r.mark, null);
+});
+
+test("matching properties, or a note with no row, raise no cell marks", () => {
+	const entries = [entry("Book/Chapter 1.md", { order: 1, date: "2026-11", characters: ["alice"], status: "done" })];
+	const rows = [row({ chapter: 1, chapterText: "1", line: "Main line", date: "November 2026", characters: ["Alice"], status: "Done", locations: [] })];
+	const [r] = plotMatrixModel(ctx(entries, rows, true)).rows;
+	assert.deepEqual(r.cellMarks, {});
+});
+
+test("a table row with no Chapter or Scene is shown, in table order, empty and editable", () => {
+	const rows = [row({ rowIndex: 0, sourceLine: 2, chapter: 1, chapterText: "1" })];
+	const blank = row({ rowIndex: -1, sourceLine: 3 });
+	const model = plotMatrixModel({ ...ctx([], rows, true), blankRows: [blank] });
+	assert.equal(model.rows.length, 2);
+	const [, b] = model.rows;
+	assert.deepEqual([b.blank, b.ghost, b.unit, b.chapterText, b.sceneText, b.act], [true, true, "", null, null, null]);
+	assert.deepEqual(b.target, { lineIndex: 3, chapterText: null, sceneText: null });
+	assert.equal(b.mark, null);
+	assert.equal(model.rows[0].blank, false);
 });

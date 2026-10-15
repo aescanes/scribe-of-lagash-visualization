@@ -57,6 +57,8 @@ function plan(over: Partial<OutlineReconciliation> = {}): OutlineReconciliation 
 		fulfilledLocations: {},
 		fulfilledDates: {},
 		rowPaths: {},
+		lineMarks: {},
+		unitMarks: {},
 		unknownLines: [],
 		...over,
 	};

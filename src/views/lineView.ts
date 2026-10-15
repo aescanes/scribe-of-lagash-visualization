@@ -103,6 +103,10 @@ export class LineView extends ItemView {
 	private outlineRows: OutlineRow[] = [];
 	/** Whether a usable Outline file exists (it may have no rows yet). */
 	private outlineExists = false;
+	/** Table rows with no Chapter or Scene yet; only the Plot matrix shows them. */
+	private outlineBlankRows: OutlineRow[] = [];
+	/** A redraw was skipped because a field was being edited; done when focus leaves. */
+	private redrawOwed = false;
 	private fileExists = false;
 	private undoStack: LineLayout[] = [];
 	private cardEls = new Map<string, HTMLElement[]>();
@@ -161,6 +165,12 @@ export class LineView extends ItemView {
 			return false;
 		});
 		this.unsubscribe = this.plugin.vaultIndex.onChange(() => this.onIndexChange());
+		this.registerDomEvent(this.contentEl, "focusout", () => {
+			// Deferred: focus is briefly nowhere while it moves between two fields.
+			window.setTimeout(() => {
+				if (this.redrawOwed && !this.isEditingText()) void this.refreshWhenIdle();
+			}, 0);
+		});
 		await this.openBook(this.plugin.vaultIndex.getStoryFolder());
 		this.opened = true;
 	}
@@ -208,6 +218,7 @@ export class LineView extends ItemView {
 		const path = this.outlinePath();
 		if (!path) {
 			this.outlineRows = [];
+			this.outlineBlankRows = [];
 			this.outlineExists = false;
 			return;
 		}
@@ -215,6 +226,7 @@ export class LineView extends ItemView {
 		await ensureOutlineWideClass(this.app, normalizePath(path));
 		const outline = await readOutlineFile(this.app, normalizePath(path));
 		this.outlineRows = outline.rows;
+		this.outlineBlankRows = outline.blankRows;
 		this.outlineExists = outline.exists;
 	}
 
@@ -232,6 +244,7 @@ export class LineView extends ItemView {
 			this.fileExists = false;
 			this.layout = emptyLineLayout();
 			this.outlineRows = [];
+			this.outlineBlankRows = [];
 			this.outlineExists = false;
 		}
 		this.render(false);
@@ -256,6 +269,7 @@ export class LineView extends ItemView {
 		// Don't yank the DOM out from under an in-progress drag or a line rename.
 		if (this.drag?.started || this.isEditingText()) {
 			this.autoPlace();
+			this.redrawOwed = true;
 			return;
 		}
 
@@ -354,14 +368,14 @@ export class LineView extends ItemView {
 	}
 
 	/** Writes one Plot matrix edit into the Outline table, then re-reads so the matrix shows the file. */
-	private async editOutlineCell(row: PlotMatrixRow, column: OutlineColumn, value: string): Promise<void> {
-		if (!row.target) return;
+	private async editOutlineCell(row: PlotMatrixRow, column: OutlineColumn, value: string): Promise<boolean> {
+		if (!row.target) return false;
 		if (column === "Chapter" || column === "Scene") {
 			const problem = unitEditProblem(row, column, value);
 			if (problem) {
 				new Notice(problem);
-				await this.refreshOutlineAndRender();
-				return;
+				await this.refreshWhenIdle();
+				return false;
 			}
 		}
 		const result = await writeOutlineCell(this.app, normalizePath(this.outlinePath()), row.target, column, value);
@@ -372,6 +386,21 @@ export class LineView extends ItemView {
 					: `Couldn't save the edit (${result.reason}).`,
 			);
 		}
+		await this.refreshWhenIdle();
+		return result.ok;
+	}
+
+	/**
+	 * Re-reads the outline and redraws, unless a field is being edited: redrawing
+	 * would close it under the writer's cursor. The redraw is then owed, and paid
+	 * as soon as focus leaves every field (see `onOpen`).
+	 */
+	private async refreshWhenIdle(): Promise<void> {
+		if (this.isEditingText()) {
+			this.redrawOwed = true;
+			return;
+		}
+		this.redrawOwed = false;
 		await this.refreshOutlineAndRender();
 	}
 
@@ -410,7 +439,8 @@ export class LineView extends ItemView {
 		root.toggleClass("is-readonly", !def.editable);
 
 		if (def.kind === "matrix") {
-			this.renderToolbar(root, folder, null);
+			const plotRecon = folder !== "" && hasContent ? this.reconcile(entries) : null;
+			this.renderToolbar(root, folder, null, plotRecon?.planned.length ?? 0);
 			if (folder === "" || !hasContent) {
 				this.renderNotice(root, folder === "" ? NO_FOLDER_NOTICE : this.noContentNotice());
 				return;
@@ -420,8 +450,9 @@ export class LineView extends ItemView {
 				def.buildPlotMatrix({
 					entries,
 					layout: this.layout,
-					recon: this.reconcile(entries),
+					recon: plotRecon ?? this.reconcile(entries),
 					outlineRows: this.outlineRows,
+					blankRows: this.outlineBlankRows,
 					outlineExists: this.outlineExists,
 					language: this.plugin.settings.titleLanguage,
 				}),
@@ -429,6 +460,10 @@ export class LineView extends ItemView {
 					openNote: (path) => this.openNote(path),
 					editCell: (row, column, value) => this.editOutlineCell(row, column, value),
 					addRow: () => this.addOutlineRow(),
+					createNote: async (expectedPath) => {
+						const planned = this.reconcile(this.currentEntries()).planned.find((p) => p.expectedPath === expectedPath);
+						if (planned) await this.onCreateOne(planned);
+					},
 				},
 			);
 			return;
@@ -501,7 +536,8 @@ export class LineView extends ItemView {
 		});
 	}
 
-	private renderToolbar(root: HTMLElement, folder: string, recon: OutlineReconciliation | null): void {
+	/** `plannedCount`: the Plot matrix's own "Create N planned notes" button (the line views draw theirs from `recon`). */
+	private renderToolbar(root: HTMLElement, folder: string, recon: OutlineReconciliation | null, plannedCount = 0): void {
 		const toolbar = root.createDiv({ cls: "scribe-canvas-toolbar" });
 
 		if (folder) toolbar.createSpan({ cls: "scribe-canvas-book-name", text: folder });
@@ -509,6 +545,7 @@ export class LineView extends ItemView {
 		toolbar.createDiv({ cls: "scribe-canvas-toolbar-spacer" });
 
 		if (recon) this.renderEditButtons(toolbar, recon);
+		else this.renderCreateAllButton(toolbar, plannedCount);
 
 		const def = STORY_VIEWS[this.storyView];
 		if (folder && def.kind === "board" && def.hasDateOrder) this.renderDateOrderButton(toolbar);
@@ -555,6 +592,15 @@ export class LineView extends ItemView {
 		this.render(false);
 	}
 
+	/** "Create N planned notes": makes the notes for every outline row that has none yet. */
+	private renderCreateAllButton(toolbar: HTMLElement, count: number): void {
+		if (count === 0) return;
+		const createAll = toolbar.createEl("button", {
+			text: `Create ${count} planned note${count === 1 ? "" : "s"}`,
+		});
+		createAll.addEventListener("click", () => void this.onCreateAll());
+	}
+
 	private renderEditButtons(toolbar: HTMLElement, recon: OutlineReconciliation): void {
 		const missingLines = this.missingOutlineLines();
 		if (missingLines.length > 0) {
@@ -567,13 +613,7 @@ export class LineView extends ItemView {
 			refresh.addEventListener("click", () => this.createOutlineLines());
 		}
 
-		if (recon.planned.length > 0) {
-			const n = recon.planned.length;
-			const createAll = toolbar.createEl("button", {
-				text: `Create ${n} planned note${n === 1 ? "" : "s"}`,
-			});
-			createAll.addEventListener("click", () => void this.onCreateAll());
-		}
+		this.renderCreateAllButton(toolbar, recon.planned.length);
 
 		if (this.outlineRows.length > 0) {
 			const align = toolbar.createEl("button", {

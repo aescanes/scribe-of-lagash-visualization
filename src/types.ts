@@ -102,6 +102,8 @@ export interface LineLayout {
 export interface OutlineRow {
 	/** Position in the table, top to bottom; used to order planned entries. */
 	rowIndex: number;
+	/** Index of the row's line in the file body (split on "\n"); set when parsed from a table. */
+	sourceLine?: number;
 	act: string | null;
 	chapter: number | null;
 	/**

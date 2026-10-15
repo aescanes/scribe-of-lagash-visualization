@@ -78,6 +78,8 @@ const EMPTY_PLAN: OutlineReconciliation = {
 	fulfilledLocations: {},
 	fulfilledDates: {},
 	rowPaths: {},
+	lineMarks: {},
+	unitMarks: {},
 	unknownLines: [],
 };
 

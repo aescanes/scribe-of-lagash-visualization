@@ -4,7 +4,7 @@
 import { App, normalizePath, parseYaml, TFile } from "obsidian";
 import { OutlineRow } from "../types";
 import { withMdExtension, withScribePrefix } from "./lineLayout";
-import { OUTLINE_COLUMNS, parseOutlineTable } from "./outline";
+import { OUTLINE_COLUMNS, parseOutlineTable, scanOutlineTable } from "./outline";
 import { CellEditResult, OutlineColumn, appendOutlineRow, ensureOutlineColumns, setOutlineCell } from "./outlineEdit";
 import { replaceFirstTable } from "./outlineGenerate";
 
@@ -57,15 +57,19 @@ export async function readOutline(app: App, path: string): Promise<OutlineRow[]>
 }
 
 /** `readOutline` plus whether a usable (marked) Outline file exists — it may have no rows yet. */
-export async function readOutlineFile(app: App, path: string): Promise<{ exists: boolean; rows: OutlineRow[] }> {
-	if (!path) return { exists: false, rows: [] };
+export async function readOutlineFile(
+	app: App,
+	path: string,
+): Promise<{ exists: boolean; rows: OutlineRow[]; blankRows: OutlineRow[] }> {
+	if (!path) return { exists: false, rows: [], blankRows: [] };
 	const file = app.vault.getAbstractFileByPath(normalizePath(path));
-	if (!(file instanceof TFile)) return { exists: false, rows: [] };
+	if (!(file instanceof TFile)) return { exists: false, rows: [], blankRows: [] };
 
 	const content = await app.vault.read(file);
 	const { frontmatter, body } = splitFrontmatter(content);
-	if (!hasMarker(frontmatter)) return { exists: false, rows: [] };
-	return { exists: true, rows: parseOutlineTable(body) };
+	if (!hasMarker(frontmatter)) return { exists: false, rows: [], blankRows: [] };
+	const { rows, blanks } = scanOutlineTable(body);
+	return { exists: true, rows: rows.map((r) => r.row), blankRows: blanks.map((r) => r.row) };
 }
 
 /**
@@ -203,7 +207,7 @@ export async function ensureOutlineWideClass(app: App, path: string): Promise<bo
 export async function writeOutlineCell(
 	app: App,
 	path: string,
-	target: { rowIndex: number; chapterText: string | null; sceneText: string | null },
+	target: { lineIndex: number; chapterText: string | null; sceneText: string | null },
 	column: OutlineColumn,
 	value: string,
 ): Promise<{ ok: true } | { ok: false; reason: "no-file" | "no-column" | "no-row" | "stale" }> {

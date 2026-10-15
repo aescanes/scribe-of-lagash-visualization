@@ -3,7 +3,7 @@
 
 import { NovelEntry, PlannedEntry } from "../types";
 import { OutlineReconciliation } from "../data/outline";
-import { ParsedDate, dateFormatHint, describeElapsed, formatStoryDate, parseStoryDate, toDayNumber } from "../data/dateParser";
+import { ParsedDate, dateConflict, dateFormatHint, describeElapsed, formatStoryDate, parseStoryDate, toDayNumber } from "../data/dateParser";
 import { CanvasCard, CanvasGap, CanvasModel, LINE_COLOR_PALETTE, manuscriptColumns } from "./canvasModel";
 
 /**
@@ -64,18 +64,7 @@ export function chronologicalModel(
 		const text = outlineText ?? noteText;
 		const date = parseStoryDate(text);
 
-		let mark: string | null = null;
-		if (text && !date) {
-			mark = unrecognized(text);
-		} else if (noteText && !outlineText && fulfilled.has(path)) {
-			// The outline has a row for this note but no date; the note's fills in.
-			mark = `date differs between the note and the story outline (note: ${noteText}; story outline: empty)`;
-		} else if (noteText && outlineText) {
-			const noteDate = parseStoryDate(noteText);
-			if (date && noteDate && date.key !== noteDate.key) {
-				mark = `date differs between the note and the story outline (note: ${noteText}; story outline: ${outlineText})`;
-			}
-		}
+		const mark = text && !date ? unrecognized(text) : dateConflict(noteText, outlineText, fulfilled.has(path));
 		items.push({
 			path,
 			column: columns.get(path) ?? 0,

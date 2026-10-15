@@ -11,18 +11,19 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   outline is ignored. "Generate outline from notes" no longer writes it.
 
 ### Added
-- The **Note title / folder name language** setting shows an example of the
-  words it reads (`Act, Chapter, Scene` or `Acto, Capítulo, Escena`) and
-  updates it when you change the language.
 - **Plot matrix view** for the StoryLines tab: the Story Outline as a matrix of big
   squares, one row per outline row (Act / Chapter / Scene, Line, Synopsis,
   Characters, Locations, Date, Status, Comments). Click a square to edit that
-  cell of the outline table; "Add row" appends a numbered row. Only the edited
+  cell of the outline table; "Add row" appends an empty row to fill in (a row with no Chapter or Scene yet
+  is shown in the matrix and ignored by the other views). Only the edited
   cell changes, and an edit is refused if the table changed under it. Without an
   Outline file the matrix is read-only and built from your notes. Each column has a
   one-line hint under its title; **Status** is a picker (No Status, TO DO, In
   Progress, First Draft, Revised Draft, Final Draft, Done), and any other value
   typed into the table is kept and flagged with a ⚠.
+  The Plot matrix has the same **Create N planned notes** toolbar button as the
+  StoryLines view, and a **Create note** link in the first square of a row with
+  no note yet.
 - **Chronological view** for the StoryLines tab: a read-only view with a single
   line holding every chapter/scene ordered by its in-story date, from the notes'
   `scribe-note-date` property or the Story Outline's `Date` column (the outline
@@ -61,6 +62,16 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Readable dates on every card**, in every view (and now on planned cards
   too): `2026-11-03` shows as "November 3, 2026" in the title language. A date
   that isn't recognized is shown as typed.
+- The **Note title / folder name language** setting shows an example of the
+  words it reads (`Act, Chapter, Scene` or `Acto, Capítulo, Escena`) and
+  updates it when you change the language.
+
+### Fixed
+- **Generate Story Outline from notes** now fills the whole outline: `Act` (from
+  an `Act I` folder), `Chapter`, `Scene`, `Line`, and the note's `scribe-note-*`
+  properties (`Characters`, `Locations`, `Date`, `Status`). Before it wrote only
+  Chapter, Scene, Line and an empty Synopsis. A note not placed on a line yet is
+  given the topmost line, as the board does.
 
 ### Changed
 - **The Story Outline now takes precedence over a note's properties** for the

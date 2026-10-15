@@ -129,6 +129,8 @@ export function parseOutlineTable(markdownBody: string): OutlineRow[] {
 export function scanOutlineTable(markdownBody: string): {
 	header: string[];
 	rows: { row: OutlineRow; lineIndex: number }[];
+	/** Table rows with neither a Chapter nor a Scene: ignored everywhere but the Plot matrix, which shows them (`rowIndex` -1). */
+	blanks: { row: OutlineRow; lineIndex: number }[];
 } {
 	const lines = markdownBody.split(/\r?\n/);
 
@@ -140,7 +142,7 @@ export function scanOutlineTable(markdownBody: string): {
 			break;
 		}
 	}
-	if (headerAt === -1) return { header: [], rows: [] };
+	if (headerAt === -1) return { header: [], rows: [], blanks: [] };
 
 	const header = splitTableRow(lines[headerAt]).map((cell) => cell.toLowerCase());
 	const colIndex = (name: ColumnName): number => header.indexOf(name);
@@ -150,6 +152,7 @@ export function scanOutlineTable(markdownBody: string): {
 	};
 
 	const rows: { row: OutlineRow; lineIndex: number }[] = [];
+	const blanks: { row: OutlineRow; lineIndex: number }[] = [];
 	for (let i = headerAt + 2; i < lines.length; i++) {
 		const line = lines[i];
 		if (!line.includes("|")) break;
@@ -159,28 +162,27 @@ export function scanOutlineTable(markdownBody: string): {
 		const sceneCell = cellAt(cells, "scene");
 		const chapter = toNumberOrNull(chapterCell);
 		const scene = toNumberOrNull(sceneCell);
-		if (chapter === null && scene === null) continue;
+		const blank = chapter === null && scene === null;
 
-		rows.push({
-			lineIndex: i,
-			row: {
-				rowIndex: rows.length,
-				act: toStringOrNull(cellAt(cells, "act")),
-				chapter,
-				chapterText: chapter === null ? null : chapterCell,
-				scene,
-				sceneText: scene === null ? null : sceneCell,
-				line: toStringOrNull(cellAt(cells, "line")),
-				summary: cellAt(cells, "synopsis"),
-				date: toStringOrNull(cellAt(cells, "date")),
-				characters: toStringArray(cellAt(cells, "characters")),
-				locations: toStringArray(cellAt(cells, "locations") || cellAt(cells, "places")),
-				status: toStringOrNull(cellAt(cells, "status")),
-				comments: toStringOrNull(cellAt(cells, "comments")),
-			},
-		});
+		const row: OutlineRow = {
+			rowIndex: blank ? -1 : rows.length,
+			sourceLine: i,
+			act: toStringOrNull(cellAt(cells, "act")),
+			chapter,
+			chapterText: chapter === null ? null : chapterCell,
+			scene,
+			sceneText: scene === null ? null : sceneCell,
+			line: toStringOrNull(cellAt(cells, "line")),
+			summary: cellAt(cells, "synopsis"),
+			date: toStringOrNull(cellAt(cells, "date")),
+			characters: toStringArray(cellAt(cells, "characters")),
+			locations: toStringArray(cellAt(cells, "locations") || cellAt(cells, "places")),
+			status: toStringOrNull(cellAt(cells, "status")),
+			comments: toStringOrNull(cellAt(cells, "comments")),
+		};
+		(blank ? blanks : rows).push({ row, lineIndex: i });
 	}
-	return { header, rows };
+	return { header, rows, blanks };
 }
 
 /**
@@ -263,6 +265,14 @@ export interface OutlineReconciliation {
 	previews: Record<string, string>;
 	/** Vault path -> a human-readable description of how the note differs from its row. */
 	marks: Record<string, string>;
+	/**
+	 * `marks` split by where the Plot matrix shows them: `lineMarks` are the
+	 * issues about the `Line` cell (unknown line, placed or moved elsewhere), and
+	 * `unitMarks` the rest (folder, type, duplicate title). Same keys as `marks`,
+	 * which still holds both together for the line views.
+	 */
+	lineMarks: Record<string, string>;
+	unitMarks: Record<string, string>;
 	/** Vault paths of real notes that matched a row — the rest are "not in the outline". */
 	fulfilledPaths: string[];
 	/**
@@ -293,6 +303,8 @@ const emptyReconciliation: OutlineReconciliation = {
 	planned: [],
 	previews: {},
 	marks: {},
+	lineMarks: {},
+	unitMarks: {},
 	fulfilledPaths: [],
 	fulfilledLineIds: {},
 	fulfilledCharacters: {},
@@ -419,6 +431,8 @@ export function reconcileOutline(
 	const planned: PlannedEntry[] = [];
 	const previews: Record<string, string> = {};
 	const marks: Record<string, string> = {};
+	const lineMarks: Record<string, string> = {};
+	const unitMarks: Record<string, string> = {};
 	const fulfilledPaths = new Set<string>();
 	const fulfilledLineIds: Record<string, string> = {};
 	const fulfilledCharacters: Record<string, string[]> = {};
@@ -444,14 +458,20 @@ export function reconcileOutline(
 			});
 
 			const draggedTo = placedLineOf.get(expectedPath);
+			let ghostMark: string | null = null;
 			if (!row.line) {
-				marks[expectedPath] = "no line set in the story outline";
+				ghostMark = "no line set in the story outline";
 			} else if (rowLineId === null) {
-				marks[expectedPath] = `story outline's line "${row.line}" isn't in StoryLines.md`;
+				ghostMark = `story outline's line "${row.line}" isn't in StoryLines.md`;
 			} else if (draggedTo && draggedTo !== rowLineId) {
-				marks[expectedPath] =
+				ghostMark =
 					`story outline says "${lineNameById.get(rowLineId) ?? row.line}", moved to ` +
 					`"${lineNameById.get(draggedTo) ?? draggedTo}"`;
+			}
+			// Every ghost issue is about its line.
+			if (ghostMark) {
+				marks[expectedPath] = ghostMark;
+				lineMarks[expectedPath] = ghostMark;
 			}
 			continue;
 		}
@@ -465,40 +485,52 @@ export function reconcileOutline(
 		if (row.date) fulfilledDates[path] = row.date;
 		if (row.summary) previews[path] = row.summary;
 
-		const issues: string[] = [];
-		if (duplicateMarks[path]) issues.push(duplicateMarks[path]);
+		let lineIssue: string | null = null;
 		if (row.line) {
 			if (rowLineId === null) {
-				issues.push(`story outline's line "${row.line}" isn't in StoryLines.md`);
+				lineIssue = `story outline's line "${row.line}" isn't in StoryLines.md`;
 			} else {
 				const actualLineId = placedLineOf.get(path);
 				if (actualLineId && actualLineId !== rowLineId) {
-					issues.push(
+					lineIssue =
 						`story outline says "${lineNameById.get(rowLineId) ?? row.line}", placed on ` +
-							`"${lineNameById.get(actualLineId) ?? actualLineId}"`,
-					);
+						`"${lineNameById.get(actualLineId) ?? actualLineId} in StoryLines"`;
 				}
 			}
 		}
+		const unitIssues: string[] = [];
 		if (folderOf(expectedPath) !== folderOf(path)) {
-			issues.push(`story outline expects it under "${folderOf(expectedPath) || trimSlashes(book)}"`);
+			unitIssues.push(`story outline expects it under "${folderOf(expectedPath) || trimSlashes(book)}"`);
 		}
 		if (matched.type !== type) {
-			issues.push(`story outline plans it as a ${type}, note is a ${matched.type}`);
+			unitIssues.push(`story outline plans it as a ${type}, note is a ${matched.type}`);
 		}
+		const unitAll = duplicateMarks[path] ? [duplicateMarks[path], ...unitIssues] : unitIssues;
+		const issues = [
+			...(duplicateMarks[path] ? [duplicateMarks[path]] : []),
+			...(lineIssue ? [lineIssue] : []),
+			...unitIssues,
+		];
 		if (issues.length > 0) marks[path] = issues.join("; ");
+		if (lineIssue) lineMarks[path] = lineIssue;
+		if (unitAll.length > 0) unitMarks[path] = unitAll.join("; ");
 	}
 
 	// A duplicate-titled note that no row ever matched (its sibling took the
 	// one row that named this number) still deserves the warning.
 	for (const [path, message] of Object.entries(duplicateMarks)) {
-		if (!marks[path] && !fulfilledPaths.has(path)) marks[path] = message;
+		if (!marks[path] && !fulfilledPaths.has(path)) {
+			marks[path] = message;
+			unitMarks[path] = message;
+		}
 	}
 
 	return {
 		planned,
 		previews,
 		marks,
+		lineMarks,
+		unitMarks,
 		fulfilledPaths: Array.from(fulfilledPaths),
 		fulfilledLineIds,
 		fulfilledCharacters,

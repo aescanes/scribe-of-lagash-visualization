@@ -2,10 +2,11 @@
 // Copyright (C) 2026 aescanes
 
 import { EntryType, LineLayout, NovelEntry, OutlineRow } from "../types";
-import { OutlineReconciliation, outlineRowNumber, outlineRowText, outlineRowType } from "../data/outline";
+import { OutlineReconciliation, outlineRowType } from "../data/outline";
 import { outlineUnitsOf } from "../data/outlineGenerate";
-import { displayDate, parseStoryDate } from "../data/dateParser";
+import { dateConflict, displayDate, parseStoryDate } from "../data/dateParser";
 import { checkStatus } from "../data/outlineStatus";
+import { mergeSources } from "./derivedLines";
 import { actLabel, unitLabel } from "../data/titleParser";
 
 /**
@@ -17,7 +18,8 @@ import { actLabel, unitLabel } from "../data/titleParser";
 export type PlotMatrixMode = "outline" | "notes";
 
 export interface PlotMatrixRowTarget {
-	rowIndex: number;
+	/** Index of the row's line in the outline file's body: where an edit lands. */
+	lineIndex: number;
 	chapterText: string | null;
 	sceneText: string | null;
 }
@@ -37,6 +39,8 @@ export interface PlotMatrixRow {
 	/** Path of the real note this row stands for, to open it; null for a ghost row. */
 	path: string | null;
 	ghost: boolean;
+	/** A table row with no Chapter or Scene yet: nothing to create until the writer numbers it. */
+	blank: boolean;
 	/** The `Line` cell's text, and the color of the line it names (null when unknown). */
 	line: string;
 	lineColor: string | null;
@@ -52,8 +56,14 @@ export interface PlotMatrixRow {
 	statusLabel: string;
 	statusInvalid: boolean;
 	comments: string;
-	/** ⚠ text from the reconciliation, or null. */
+	/** ⚠ text about the Act / Chapter / Scene square (folder, type, duplicate title), or null. */
 	mark: string | null;
+	/**
+	 * ⚠ texts shown in the cell they are about: the line named but unknown or
+	 * placed elsewhere, and a property of the real note that disagrees with this
+	 * row. Empty in notes mode, which has no outline to disagree with.
+	 */
+	cellMarks: Partial<Record<"Line" | "Characters" | "Locations" | "Date" | "Status", string>>;
 	/** What a cell edit needs to find this row; null when the row can't be edited (notes mode). */
 	target: PlotMatrixRowTarget | null;
 }
@@ -72,6 +82,8 @@ export interface PlotMatrixContext {
 	layout: LineLayout;
 	recon: OutlineReconciliation;
 	outlineRows: OutlineRow[];
+	/** Table rows with no Chapter or Scene (`scanOutlineTable`'s `blanks`), shown so they can be filled in. */
+	blankRows: OutlineRow[];
 	/** Whether the Outline file exists (it may still have no rows). */
 	outlineExists: boolean;
 	language: string;
@@ -111,12 +123,36 @@ function outlineRowUnit(row: OutlineRow, language: string): string {
 	return parts.join(" › ");
 }
 
+/** How a real note's properties disagree with its outline row, one text per cell that does. */
+function propertyMarks(row: OutlineRow, entry: NovelEntry): PlotMatrixRow["cellMarks"] {
+	const marks: PlotMatrixRow["cellMarks"] = {};
+	const characters = mergeSources(entry.characters, row.characters, "characters", true).conflict;
+	if (characters) marks.Characters = characters;
+	const locations = mergeSources(entry.locations, row.locations, "locations", true).conflict;
+	if (locations) marks.Locations = locations;
+	const date = dateConflict(entry.date, row.date, true);
+	if (date) marks.Date = date;
+
+	const note = entry.status?.trim() ?? "";
+	const outline = row.status?.trim() ?? "";
+	if (note && !outline) {
+		marks.Status = `status differs between the note and the story outline (note: ${note}; story outline: empty)`;
+	} else if (note && outline && note.toLowerCase() !== outline.toLowerCase()) {
+		marks.Status = `status differs between the note and the story outline (note: ${note}; story outline: ${outline})`;
+	}
+	return marks;
+}
+
 function outlineRows(ctx: PlotMatrixContext, colorOf: (ref: string) => string | null): PlotMatrixRow[] {
 	const plannedByRow = new Map(ctx.recon.planned.map((p) => [p.row.rowIndex, p]));
-	return ctx.outlineRows.map((row) => {
-		const path = ctx.recon.rowPaths[row.rowIndex] ?? null;
+	const entryByPath = new Map(ctx.entries.map((e) => [e.file.path, e]));
+	const ordered = [...ctx.outlineRows, ...ctx.blankRows].sort((a, b) => (a.sourceLine ?? 0) - (b.sourceLine ?? 0));
+	return ordered.map((row) => {
+		const blank = row.chapter === null && row.scene === null;
+		const path = blank ? null : ctx.recon.rowPaths[row.rowIndex] ?? null;
+		const entry = path ? entryByPath.get(path) ?? null : null;
 		const planned = plannedByRow.get(row.rowIndex) ?? null;
-		const key = path ?? planned?.expectedPath ?? `row ${row.rowIndex}`;
+		const key = blank ? `blank ${row.sourceLine}` : path ?? planned?.expectedPath ?? `row ${row.rowIndex}`;
 		return {
 			key,
 			type: outlineRowType(row),
@@ -124,9 +160,10 @@ function outlineRows(ctx: PlotMatrixContext, colorOf: (ref: string) => string | 
 			actLabel: row.act ? `${actLabel(ctx.language)} ${row.act}` : null,
 			chapterText: row.chapterText,
 			sceneText: row.sceneText,
-			unit: outlineRowUnit(row, ctx.language) || `${unitLabel(outlineRowType(row), ctx.language)} ${outlineRowText(row) ?? outlineRowNumber(row)}`,
+			unit: blank ? "" : outlineRowUnit(row, ctx.language),
 			path,
 			ghost: path === null,
+			blank,
 			line: row.line ?? "",
 			lineColor: row.line ? colorOf(row.line) : null,
 			synopsis: row.summary,
@@ -135,8 +172,12 @@ function outlineRows(ctx: PlotMatrixContext, colorOf: (ref: string) => string | 
 			...dateFields(row.date ?? "", ctx.language),
 			...statusFields(row.status ?? ""),
 			comments: row.comments ?? "",
-			mark: ctx.recon.marks[key] ?? null,
-			target: { rowIndex: row.rowIndex, chapterText: row.chapterText, sceneText: row.sceneText },
+			mark: ctx.recon.unitMarks[key] ?? null,
+			cellMarks: {
+				...(entry ? propertyMarks(row, entry) : {}),
+				...(ctx.recon.lineMarks[key] ? { Line: ctx.recon.lineMarks[key] } : {}),
+			},
+			target: { lineIndex: row.sourceLine ?? -1, chapterText: row.chapterText, sceneText: row.sceneText },
 		};
 	});
 }
@@ -157,6 +198,7 @@ function noteRows(ctx: PlotMatrixContext, colorOf: (ref: string) => string | nul
 			unit: chapterFolder ? `${chapterFolder} › ${entry.title}` : entry.title,
 			path: entry.file.path,
 			ghost: false,
+			blank: false,
 			line: lineName,
 			lineColor: lineName ? colorOf(lineName) : null,
 			synopsis: entry.excerpt ?? "",
@@ -166,6 +208,7 @@ function noteRows(ctx: PlotMatrixContext, colorOf: (ref: string) => string | nul
 			...statusFields(entry.status ?? ""),
 			comments: "",
 			mark: ctx.recon.marks[entry.file.path] ?? null,
+			cellMarks: {},
 			target: null,
 		};
 	});

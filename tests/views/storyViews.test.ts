@@ -19,6 +19,8 @@ const recon: OutlineReconciliation = {
 	fulfilledLocations: {},
 	fulfilledDates: {},
 	rowPaths: {},
+	lineMarks: {},
+	unitMarks: {},
 	unknownLines: [],
 };
 
