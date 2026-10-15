@@ -176,8 +176,10 @@ left as you wrote it and shown with a ⚠ instead of being treated as a status.
 
 Without a Story Outline file the matrix is read-only and built from your notes
 (their titles, folders, `scribe-note-*` frontmatter, line placement and first
-paragraph). `Comments` is yours alone: it lives only in the outline table and is
+paragraph, shown under Synopsis; the Comments column is left out). `Comments` is yours alone: it lives only in the outline table and is
 never copied into a note.
+
+<img src="https://raw.githubusercontent.com/aescanes/scribe-of-lagash-visualization/main/docs/images/plot-matrix-view.png" alt="Plot matrix view" width="600">
 
 ### Story Outline file _(optional)_
 

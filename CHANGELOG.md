@@ -11,10 +11,9 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   outline is ignored. "Generate outline from notes" no longer writes it.
 
 ### Added
-- New Story Outline files are created at the full width of the pane (a
-  `cssclasses: [scribe-outline-wide]` line in their frontmatter) so the table
-  shows more columns. An outline you already have gets the line added the next
-  time the plugin reads it, keeping any `cssclasses` it already had.
+- The **Note title / folder name language** setting shows an example of the
+  words it reads (`Act, Chapter, Scene` or `Acto, Capítulo, Escena`) and
+  updates it when you change the language.
 - **Plot matrix view** for the StoryLines tab: the Story Outline as a matrix of big
   squares, one row per outline row (Act / Chapter / Scene, Line, Synopsis,
   Characters, Locations, Date, Status, Comments). Click a square to edit that
@@ -24,10 +23,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   one-line hint under its title; **Status** is a picker (No Status, TO DO, In
   Progress, First Draft, Revised Draft, Final Draft, Done), and any other value
   typed into the table is kept and flagged with a ⚠.
-- **`Comments` column in the Story Outline**, and a complete column set: a new
-  outline is created with every column, and whenever the plugin reads an
-  existing outline it adds any column that is missing, in its usual place (`Scene` after
-  `Chapter`; nothing else in the file changes). `Comments` stays in the table; it is never copied into a note.
 - **Chronological view** for the StoryLines tab: a read-only view with a single
   line holding every chapter/scene ordered by its in-story date, from the notes'
   `scribe-note-date` frontmatter or the Story Outline's `Date` column (the outline
@@ -39,6 +34,10 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   with no date, or one that isn't recognized (⚠), sit in a "No date" strip. A
   toolbar button switches between oldest first and newest first, remembered
   per tab. Equal dates keep chapter/scene order. Nothing is written.
+- New Story Outline files are created at the full width of the pane (a
+  `cssclasses: [scribe-outline-wide]` line in their frontmatter) so the table
+  shows more columns. An outline you already have gets the line added the next
+  time the plugin reads it, keeping any `cssclasses` it already had.
 - **Cards show characters, locations and date from the Story Outline first,
   then from the note.** The outline row wins; when the row doesn't have the
   field, the note's own frontmatter (`scribe-note-characters`, `-locations`,
@@ -47,6 +46,10 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   characters on its cards, nor the Locations view the locations. Characters
   and locations each get their own line, and every date, characters and
   locations line has a small icon.
+- **`Comments` column in the Story Outline**, and a complete column set: a new
+  outline is created with every column, and whenever the plugin reads an
+  existing outline it adds any column that is missing, in its usual place (`Scene` after
+  `Chapter`; nothing else in the file changes). `Comments` stays in the table; it is never copied into a note.  
 - **A card with no Synopsis shows the first paragraph of its note**
   (shortened). The Synopsis comes from the Story Outline, so here the outline
   is read first, and there is more space between it and the date, characters
