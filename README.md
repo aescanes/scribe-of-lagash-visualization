@@ -26,6 +26,11 @@ planned card from the outline; the Plot matrix also edits the cells of the Story
 click. The Characters, Locations and Chronological views are derived
 from your notes and save nothing.
 
+<p align="center">
+  If you love using Scribe of Lagash - Visualization, please consider
+  <a href='https://ko-fi.com/O3J528W3FZ' target='_blank'><img align='absmiddle' height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi4.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
+</p>
+
 ## Installation
 
 Requires Obsidian ≥1.10.0.
@@ -417,6 +422,12 @@ npm run validate # typecheck + test + lint + lint:css (run before every commit)
 To try the plugin in a vault, copy (or symlink) `manifest.json`, `main.js`,
 and `styles.css` into `<vault>/.obsidian/plugins/scribe-of-lagash-visualization/`,
 then enable it from Obsidian's Community Plugins settings.
+
+## Support
+
+If this plugin helps your writing, you can support its development:
+
+<a href='https://ko-fi.com/O3J528W3FZ' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi4.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
 
 ## Contributing
 
