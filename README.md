@@ -26,7 +26,7 @@ planned card from the outline; the Plot matrix also edits the cells of the Story
 click. The Characters, Locations and Chronological views are derived
 from your notes and save nothing.
 
-<p align="center">
+<p align="left">
   If you love using Scribe of Lagash - Visualization, please consider
   <a href='https://ko-fi.com/O3J528W3FZ' target='_blank'><img align='absmiddle' height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi4.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
 </p>
