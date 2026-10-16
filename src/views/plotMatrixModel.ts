@@ -34,7 +34,8 @@ export interface PlotMatrixRow {
 	/**
 	 * Headings this row sits under, outermost first. From the notes they are the
 	 * note's folders as they are named (an act folder, then a chapter folder),
-	 * whatever the title language; from the outline, the Act when there is one.
+	 * whatever the title language; from the outline, the row's Act and, for a
+	 * scene, its Chapter.
 	 */
 	groups: string[];
 	chapterText: string | null;
@@ -121,11 +122,24 @@ function lineResolver(layout: LineLayout): (ref: string) => string | null {
 	return (ref) => colorByRef.get(ref.trim().toLowerCase()) ?? null;
 }
 
+/** What the row is: its Scene when it has one, else its Chapter. */
 function outlineRowUnit(row: OutlineRow, language: string): string {
-	const parts: string[] = [];
-	if (row.chapter !== null) parts.push(`${unitLabel("chapter", language)} ${row.chapterText ?? row.chapter}`);
-	if (row.scene !== null) parts.push(`${unitLabel("scene", language)} ${row.sceneText ?? row.scene}`);
-	return parts.join(" › ");
+	if (row.scene !== null) return `${unitLabel("scene", language)} ${row.sceneText ?? row.scene}`;
+	return `${unitLabel("chapter", language)} ${row.chapterText ?? row.chapter}`;
+}
+
+/**
+ * The headings above an outline row, like the folders above a note: its Act,
+ * then its Chapter when the row is a scene inside one. A chapter row has no
+ * chapter heading, since it is the row itself.
+ */
+function outlineRowGroups(row: OutlineRow, language: string): string[] {
+	const groups: string[] = [];
+	if (row.act) groups.push(`${actLabel(language)} ${row.act}`);
+	if (row.scene !== null && row.chapter !== null) {
+		groups.push(`${unitLabel("chapter", language)} ${row.chapterText ?? row.chapter}`);
+	}
+	return groups;
 }
 
 /** How a real note's properties disagree with its outline row, one text per cell that does. */
@@ -163,7 +177,7 @@ function outlineRows(ctx: PlotMatrixContext, colorOf: (ref: string) => string | 
 			type: outlineRowType(row),
 			act: row.act,
 			actLabel: row.act ? `${actLabel(ctx.language)} ${row.act}` : null,
-			groups: row.act ? [`${actLabel(ctx.language)} ${row.act}`] : [],
+			groups: outlineRowGroups(row, ctx.language),
 			chapterText: row.chapterText,
 			sceneText: row.sceneText,
 			unit: blank ? "" : outlineRowUnit(row, ctx.language),

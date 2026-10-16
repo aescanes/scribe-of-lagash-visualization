@@ -82,7 +82,8 @@ to the StoryLines file (`StoryLines.md`) automatically; `Mod+Z` undoes.
 The Story Outline as a matrix of big squares, in the same look as the other
 views: one row per outline row, and one column per piece of information —
 **Act / Chapter / Scene** (one square), **Line**, **Synopsis**, **Characters**,
-**Locations**, **Date**, **Status** and **Comments**. Rows whose note doesn't
+**Locations**, **Date**, **Status** and **Comments**. Rows are grouped under a heading for their Act and, for a scene, its Chapter,
+with one row per chapter or scene. Rows whose note doesn't
 exist yet are dashed, a line's color marks the left edge, and a ⚠ shows when a
 row disagrees with the real note — in the cell it is about: the **Line** cell for
 a line that is unknown or placed elsewhere, **Characters**, **Locations**,

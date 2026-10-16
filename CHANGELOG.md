@@ -16,8 +16,11 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Characters, Locations, Date, Status, Comments). Click a square to edit that
   cell of the outline table; "Add row" appends an empty row to fill in (a row with no Chapter or Scene yet
   is shown in the matrix and ignored by the other views). Only the edited
-  cell changes, and an edit is refused if the table changed under it. Without an
-  Outline file the matrix is read-only and built from your notes. Each column has a
+  cell changes, and an edit is refused if the table changed under it. Rows are grouped
+  under a heading for their Act and, for a scene, its Chapter (from the outline's
+  cells or, without an outline file, from the note's folders as named, in any
+  language), with one row per chapter or scene. Without an Outline file the
+  matrix is read-only and built from your notes. Each column has a
   one-line hint under its title; **Status** is a picker (No Status, TO DO, In
   Progress, First Draft, Revised Draft, Final Draft, Done), and any other value
   typed into the table is kept and flagged with a ⚠.

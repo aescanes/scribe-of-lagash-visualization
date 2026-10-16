@@ -76,6 +76,7 @@ test("with an outline the matrix mirrors its rows, in table order, and is editab
 
 	const [a, b] = model.rows;
 	assert.equal(a.unit, "Chapter 1 - Start");
+	assert.deepEqual(a.groups, ["Act I"], "a chapter row has no chapter heading");
 	assert.equal(a.act, "I");
 	assert.equal(a.ghost, false);
 	assert.equal(a.path, "Book/Act I/Chapter 1 - Start.md");
@@ -84,7 +85,8 @@ test("with an outline the matrix mirrors its rows, in table order, and is editab
 	assert.equal(a.comments, "fix");
 	assert.deepEqual(a.target, { lineIndex: -1, chapterText: "1 - Start", sceneText: null }, "a row built by hand has no source line");
 
-	assert.equal(b.unit, "Chapter 1 › Scene 2");
+	assert.equal(b.unit, "Scene 2");
+	assert.deepEqual(b.groups, ["Act I", "Chapter 1"], "a scene sits under its act and chapter");
 	assert.equal(b.ghost, true, "no note yet");
 	assert.equal(b.path, null);
 	assert.equal(b.status, "draft");
@@ -223,4 +225,23 @@ test("a table row with no Chapter or Scene is shown, in table order, empty and e
 	assert.deepEqual(b.target, { lineIndex: 3, chapterText: null, sceneText: null });
 	assert.equal(b.mark, null);
 	assert.equal(model.rows[0].blank, false);
+});
+
+test("with an outline the headings follow the same layouts as the notes: act, then chapter, over one row per chapter or scene", () => {
+	const cases: [string, Partial<OutlineRow>, string[], string][] = [
+		["Act / Chapter / Scene", { act: "I", chapter: 1, chapterText: "1", scene: 2, sceneText: "2" }, ["Act I", "Chapter 1"], "Scene 2"],
+		["Chapter / Scene", { chapter: 1, chapterText: "1", scene: 2, sceneText: "2" }, ["Chapter 1"], "Scene 2"],
+		["Act / Chapter", { act: "I", chapter: 1, chapterText: "1" }, ["Act I"], "Chapter 1"],
+		["Act / Scene", { act: "I", scene: 2, sceneText: "2" }, ["Act I"], "Scene 2"],
+		["no folders", { chapter: 1, chapterText: "1" }, [], "Chapter 1"],
+	];
+	for (const language of ["en", "es"]) {
+		for (const [name, over, groups, unit] of cases) {
+			const [r] = plotMatrixModel({ ...ctx([], [row(over)], true), language }).rows;
+			const words = language === "es" ? { Act: "Acto", Chapter: "Capítulo", Scene: "Escena" } : { Act: "Act", Chapter: "Chapter", Scene: "Scene" };
+			const local = (text: string) => text.replace("Act", words.Act).replace("Chapter", words.Chapter).replace("Scene", words.Scene);
+			assert.deepEqual(r.groups, groups.map(local), `${name} (${language})`);
+			assert.equal(r.unit, local(unit), `${name} (${language})`);
+		}
+	}
 });

@@ -183,7 +183,6 @@ function renderRow(grid: HTMLElement, row: PlotMatrixRow, model: PlotMatrixModel
 
 function renderUnit(unit: HTMLElement, row: PlotMatrixRow, editable: boolean, cb: PlotMatrixCallbacks): void {
 	unit.empty();
-	if (row.actLabel) unit.createDiv({ cls: "scribe-plot-matrix-unit-act", text: row.actLabel });
 
 	const titleRow = unit.createDiv({ cls: "scribe-plot-matrix-unit-title-row" });
 	const title = titleRow.createDiv({

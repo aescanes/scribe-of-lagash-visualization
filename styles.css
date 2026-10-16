@@ -747,11 +747,6 @@
 	border-left-style: dashed;
 }
 
-.scribe-plot-matrix-unit-act {
-	color: var(--text-muted);
-	font-size: var(--font-ui-smaller);
-}
-
 .scribe-plot-matrix-unit-title-row {
 	display: flex;
 	align-items: flex-start;
