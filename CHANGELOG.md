@@ -5,10 +5,31 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Removed
+- **The Story Outline's `Folder` column.** A row's folder is now always
+  `<Act label> <Act>` (or none). A leftover `Folder` column in an existing
+  outline is ignored. "Generate outline from notes" no longer writes it.
+
 ### Added
+- **Plot matrix view** for the StoryLines tab: the Story Outline as a matrix of big
+  squares, one row per outline row (Act / Chapter / Scene, Line, Synopsis,
+  Characters, Locations, Date, Status, Comments). Click a square to edit that
+  cell of the outline table; "Add row" appends an empty row to fill in (a row with no Chapter or Scene yet
+  is shown in the matrix and ignored by the other views). Only the edited
+  cell changes, and an edit is refused if the table changed under it. Rows are grouped
+  under a heading for their Act and, for a scene, its Chapter (from the outline's
+  cells or, without an outline file, from the note's folders as named, in any
+  language), with one row per chapter or scene. Without an Outline file the
+  matrix is read-only and built from your notes. Each column has a
+  one-line hint under its title; **Status** is a picker (No Status, TO DO, In
+  Progress, First Draft, Revised Draft, Final Draft, Done), and any other value
+  typed into the table is kept and flagged with a ⚠.
+  The Plot matrix has the same **Create N planned notes** toolbar button as the
+  StoryLines view, and a **Create note** link in the first square of a row with
+  no note yet.
 - **Chronological view** for the StoryLines tab: a read-only view with a single
   line holding every chapter/scene ordered by its in-story date, from the notes'
-  `scribe-note-date` frontmatter or the Story Outline's `Date` column (the note
+  `scribe-note-date` property or the Story Outline's `Date` column (the outline
   wins; a ⚠ flags a disagreement). Accepted dates are ISO (`2026`, `2026-11`,
   `2026-11-03`) and full English or Spanish month names (`November 2026`,
   `November 3, 2026`, `3 de noviembre de 2026`); a month followed by one number
@@ -17,14 +38,22 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   with no date, or one that isn't recognized (⚠), sit in a "No date" strip. A
   toolbar button switches between oldest first and newest first, remembered
   per tab. Equal dates keep chapter/scene order. Nothing is written.
-- **Cards show characters, locations and date from the note first, then from
-  the Story Outline.** The note's own frontmatter (`scribe-note-characters`,
-  `-locations`, `-date`) wins; when the note doesn't have the field, its
-  Story Outline row fills in; when neither has it, nothing is shown. Planned
+- New Story Outline files are created at the full width of the pane (a
+  `cssclasses: [scribe-outline-wide]` line in their properties) so the table
+  shows more columns. An outline you already have gets the line added the next
+  time the plugin reads it, keeping any `cssclasses` it already had.
+- **Cards show characters, locations and date from the Story Outline first,
+  then from the note.** The outline row wins; when the row doesn't have the
+  field, the note's own properties (`scribe-note-characters`, `-locations`,
+  `-date`) fills in; when neither has it, nothing is shown. Planned
   cards show their row's values. The Characters view no longer repeats the
   characters on its cards, nor the Locations view the locations. Characters
   and locations each get their own line, and every date, characters and
   locations line has a small icon.
+- **`Comments` column in the Story Outline**, and a complete column set: a new
+  outline is created with every column, and whenever the plugin reads an
+  existing outline it adds any column that is missing, in its usual place (`Scene` after
+  `Chapter`; nothing else in the file changes). `Comments` stays in the table; it is never copied into a note.  
 - **A card with no Synopsis shows the first paragraph of its note**
   (shortened). The Synopsis comes from the Story Outline, so here the outline
   is read first, and there is more space between it and the date, characters
@@ -36,8 +65,31 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Readable dates on every card**, in every view (and now on planned cards
   too): `2026-11-03` shows as "November 3, 2026" in the title language. A date
   that isn't recognized is shown as typed.
+- The **Note title / folder name language** setting shows an example of the
+  words it reads (`Act, Chapter, Scene` or `Acto, Capítulo, Escena`) and
+  updates it when you change the language.
+
+### Fixed
+- **Generate Story Outline from notes** now fills the whole outline: `Act` (from
+  an `Act I` folder), `Chapter`, `Scene`, `Line`, and the note's `scribe-note-*`
+  properties (`Characters`, `Locations`, `Date`, `Status`). Before it wrote only
+  Chapter, Scene, Line and an empty Synopsis. A note not placed on a line yet is
+  given the topmost line, as the board does.
 
 ### Changed
+- The tab is now titled **(SL) Visualization: <view>** (for example "(SL)
+  Visualization: Plot matrix") and the title follows the view you pick. The
+  command is now **Open visualizations** and the ribbon tooltip "(SL)
+  visualization: Open" (the command's id, and so any hotkey, is unchanged).
+- **The Story Outline now takes precedence over a note's properties** for the
+  date, characters and locations, everywhere (cards, Characters, Locations and
+  Chronological views): outline row first, then the note, then nothing. Before,
+  the note won (and the Characters / Locations views showed the union of both).
+  Writers without an outline file are unaffected. When both have a value and
+  they differ, the outline's is shown and the existing ⚠ explains the
+  difference. The same ⚠ appears when the outline row leaves the field empty
+  while the note has a value (the note's is shown) in the Characters,
+  Locations and Chronological views.
 - Moved the confirm modal from `src/views/` to the new `src/utils/` folder,
   since it is general-purpose and can be reused from any view or settings tab.
   The Goals and Stats plugin now shares this exact file in the same location. No change in behavior.

@@ -2,7 +2,7 @@
 
 Status: **Built.** A direct follow-up of the Characters view
 ([`characters-view-plan.md`](characters-view-plan.md)); every decision there
-(union of note + outline with a ⚠ on conflict, alphabetical lines, ghost cards
+(note + outline with a ⚠ on conflict — the outline wins since the precedence change, alphabetical lines, ghost cards
 non-clickable, "none" strip, per-tab view, StoryLines as default) applies
 unchanged.
 

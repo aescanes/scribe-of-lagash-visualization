@@ -32,7 +32,6 @@ function planned(n: number, characters: string[] = []): PlannedEntry {
 	const row: OutlineRow = {
 		rowIndex: n,
 		act: null,
-		folder: null,
 		chapter: n,
 		chapterText: String(n),
 		scene: null,
@@ -43,6 +42,7 @@ function planned(n: number, characters: string[] = []): PlannedEntry {
 		characters,
 		locations: [],
 		status: null,
+		comments: null,
 	};
 	return { row, type: "chapter", label: `Chapter ${n}`, expectedPath: `Book/Chapter ${n}.md`, lineId: null };
 }
@@ -57,6 +57,9 @@ function plan(over: Partial<OutlineReconciliation> = {}): OutlineReconciliation 
 		fulfilledCharacters: {},
 		fulfilledLocations: {},
 		fulfilledDates: {},
+		rowPaths: {},
+		lineMarks: {},
+		unitMarks: {},
 		unknownLines: [],
 		...over,
 	};
@@ -105,13 +108,18 @@ test("planned rows put ghost cards on their characters' lines", () => {
 	assert.equal(model.lines[0].cards[1].kind, "planned");
 });
 
-test("a fulfilled row's characters are unioned with the note's; a difference is marked", () => {
+test("a fulfilled row's characters win over the note's, and a difference is marked", () => {
 	const model = charactersModel(
-		[entry(1, ["Alice"])],
+		[entry(1, ["Alice", "Carol"])],
 		plan({ fulfilledCharacters: { "Book/Chapter 1.md": ["Alice", "Bob"] } }),
 	);
-	assert.deepEqual(model.lines.map((l) => l.def.name), ["Alice", "Bob"]);
-	assert.match(model.lines[0].cards[0].mark ?? "", /only in the story outline: Bob/);
+	assert.deepEqual(model.lines.map((l) => l.def.name), ["Alice", "Bob"], "Carol, only in the note, is not drawn");
+	assert.match(model.lines[0].cards[0].mark ?? "", /only in the note: Carol; only in the story outline: Bob/);
+});
+
+test("the note's characters are used when the row lists none", () => {
+	const model = charactersModel([entry(1, ["Alice"])], plan());
+	assert.deepEqual(model.lines.map((l) => l.def.name), ["Alice"]);
 });
 
 test("matching sources, or one empty source, raise no conflict", () => {
@@ -131,4 +139,13 @@ test("a character keeps the same colour every time", () => {
 	const a = charactersModel([entry(1, ["Alice"])], plan()).lines[0].def.color;
 	const b = charactersModel([entry(5, ["Zed", "Alice"])], plan()).lines.find((l) => l.def.name === "Alice")?.def.color;
 	assert.equal(a, b);
+});
+
+test("an outline row that lists no characters while the note does is a conflict; no row is not", () => {
+	const withRow = charactersModel([entry(1, ["Alice"])], plan({ fulfilledPaths: ["Book/Chapter 1.md"] }));
+	assert.deepEqual(withRow.lines.map((l) => l.def.name), ["Alice"]);
+	assert.match(withRow.lines[0].cards[0].mark ?? "", /only in the note: Alice/);
+
+	const noRow = charactersModel([entry(1, ["Alice"])], plan());
+	assert.equal(noRow.lines[0].cards[0].mark, null);
 });

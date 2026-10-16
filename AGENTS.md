@@ -21,8 +21,9 @@ are ordinary Markdown notes in the vault. The plugin discovers and reads them; i
 
 - the per-story **Lines file** (`Lines.md`) — its own document, rewritten freely;
 - the per-story **Outline file** — created with an empty skeleton only when the
-  user names it in settings *and* clicks the "Create" button there, then
-  never touched again (hand-edited only);
+  user names it in settings *and* clicks the "Create" button there. After that
+  the plugin only adds a header column the table lacks and, from the Plot matrix
+  view, the one cell (or appended row) the user just edited;
 - **new** chapter/scene notes, only when the user clicks a placeholder card to
   materialize a planned row (create-only; an existing note is never modified).
 
@@ -32,19 +33,30 @@ folder-based approach before adding a new frontmatter field or setting.
 
 ### Nomenclature
 - In some point of the project we start using in the documents and UI the word `story` instead `novel` or `book` and `writer` instead `novelist`. The code remains using the old nomenclature to avoid a big refactor of the code.
+- In UI text and docs for writers say **property / properties** (what Obsidian shows in its Properties panel); in code, comments and this file keep **frontmatter**, which matches the Obsidian API (`processFrontMatter`, `FRONTMATTER_KEYS`).
 
 ### Views of a story
+
+**Precedence (applies to every view and card):** when a value can come from both
+the Outline row and the note's `scribe-note-*` frontmatter — date, characters,
+locations, synopsis — the **Outline wins, then the note, then nothing**. Writers
+who plan keep the outline as the source of truth; writers without an outline
+get their notes. A real difference between the two is shown in the winner's
+value plus the existing ⚠ "differs between the note and the story outline"
+mark; so is a row that leaves the field empty while the note has it (a note
+with no row at all is never flagged). (Line membership is not part of this: `Lines.md` and the folder
+structure still win over the outline.)
 
 - **Line view** — the default view, and everything built so far. Chapters/scenes
   are discovered from a **story folder** by parsing note titles; the user creates
   **lines** (horizontal colored tracks) and drags each card onto a line. The
   arrangement is saved in the Lines file. `LineView`, `VIEW_TYPE_LINE_VIEW`,
-  ribbon icon / "Open lines" command.
+  ribbon icon / "Open visualizations" command.
 - **Characters view** — a read-only alternative to the Line view, chosen with
   the combo box at the top right of the same tab (view kept in the leaf's view
   state, default Line view). One derived line per character, alphabetical,
   built by `charactersModel` in `views/charactersModel.ts` from
-  `scribe-note-characters` and the Outline's `Characters` column (union; a ⚠
+  `scribe-note-characters` and the Outline's `Characters` column (outline's names win, else the note's; a ⚠
   mark when both list names and differ). Cards sit on the same
   manuscript-order columns; a scene naming two characters appears on both
   lines (derived, never saved — the one-card-one-line rule is for Lines.md).
@@ -53,13 +65,13 @@ folder-based approach before adding a new frontmatter field or setting.
   [`docs/feature-plans/characters-view-plan.md`](docs/feature-plans/characters-view-plan.md).
 - **Locations view** — the same read-only view, one derived line per
   location, from `scribe-note-locations` and the Outline's `Locations` column
-  (`locationsModel`; same union / ⚠ rules). Both views are thin wrappers over
+  (`locationsModel`; same precedence / ⚠ rules). Both views are thin wrappers over
   `derivedLinesModel` in `views/derivedLines.ts`. Plan:
   [`docs/feature-plans/locations-view-plan.md`](docs/feature-plans/locations-view-plan.md).
 - **Chronological view** — read-only, a single derived line ordering every
   chapter/scene by its date (`chronologicalModel` in
   `views/chronologicalModel.ts`), from `scribe-note-date` and the Outline's
-  `Date` column (one date per card: the note's, else its row's; ⚠ when both
+  `Date` column (one date per card: its row's, else the note's; ⚠ when both
   parse and differ). Dates are parsed by `data/dateParser.ts`: ISO, or full
   English/Spanish month names; a month followed by one number is a *year*
   (false years for calendar-less stories). Unrecognized or missing dates go to
@@ -67,6 +79,13 @@ folder-based approach before adding a new frontmatter field or setting.
   manuscript order; an asc/desc toolbar button is kept in the leaf's view
   state (`dateOrder`). Plan:
   [`docs/feature-plans/chronological-view-plan.md`](docs/feature-plans/chronological-view-plan.md).
+
+- **Plot matrix view** — the Story Outline as a matrix (`plotMatrixModel` in
+  `views/plotMatrixModel.ts`, DOM in `views/plotMatrixRenderer.ts`): one row per outline
+  row, edited cell by cell into the Outline file (`setOutlineCell`, via
+  `writeOutlineCell`). With no Outline file it is read-only, built from the
+  notes. It never touches `Lines.md`. Plan:
+  [`docs/feature-plans/plot-matrix-plan.md`](docs/feature-plans/plot-matrix-plan.md).
 
 > The term is **line**, not "timeline". An earlier draft called these timelines
 > and also let one card sit on several at once — that multi-membership idea was
@@ -137,7 +156,7 @@ Rules:
 
 ### The Outline file (per story)
 
-An **optional** second file beside `Lines.md`: a hand-edited Markdown table for
+An **optional** second file beside `Lines.md`: a Markdown table, edited by hand or in the Plot matrix view, for
 planning chapters/scenes *before* the notes exist. Off by default; a name in the
 **Outline file name** setting turns it on. The file is created only when the
 user clicks the **"Create"** button in that setting (never automatically
@@ -149,11 +168,11 @@ The `.md` extension is optional in the setting and normalized by
 `withMdExtension()` (in `lineLayout.ts`, shared with the StoryLines file name) —
 `Outline` and `Outline.md` both resolve to `(SL) Outline.md`. The configured
 name is `(SL) `-prefixed on disk, same as the Lines file. Columns: `Act | Chapter | Scene | Line | Summary`, plus optional
-`Folder | Date | Characters | Locations | Status` (a legacy `Places` header is still read as `Locations`); `Line` is a line name/id from
+`Date | Characters | Locations | Status | Comments` (a legacy `Places` header is still read as `Locations`); `Line` is a line name/id from
 `Lines.md`.
 
 - Each row's expected note path is `<story>/<folder>/<Chapter n>.md` (a scene row
-  nests under `<Chapter n>/`); `folder` is the `Folder` cell, else
+  nests under `<Chapter n>/`); `folder` is
   `"<Act label> <Act cell>"`, else nothing. A `Chapter`/`Scene` cell may carry
   free text after its number (e.g. `1 - The beginning`), same as a note title —
   `parseLeadingNumber` (`titleParser.ts`) reads only the leading number for
@@ -183,8 +202,11 @@ name is `(SL) `-prefixed on disk, same as the Lines file. Columns: `Act | Chapte
   (keyed by note path or expected path). **The folder/file structure and `Lines.md` always win** — an
   existing note or line is never edited to match the table (adding a missing
   line from the `Line` column is the one exception, and it's purely additive),
-  and the plugin never rewrites the table itself (the `Generate outline from
-  notes` command only fills a still-empty one).
+  and the plugin never rewrites the table's rows (the `Generate outline from
+  notes` command only fills a still-empty one); the writes it makes are
+  adding a header column the table lacks (`ensureOutlineColumns`), adding the
+  full-width `cssclasses` entry to its frontmatter (`ensureOutlineWideClass`) and, from
+  the Plot matrix view, the one cell (or appended row) the user just edited.
 - Both the notes and the outline are re-read every time the view opens and on
   every index change.
 
@@ -197,12 +219,14 @@ Entry point: [`src/main.ts`](src/main.ts) → `ScribeVisualizationPlugin`.
 
 | Piece | File | Responsibility |
 |---|---|---|
-| Plugin shell | [`src/main.ts`](src/main.ts) | onload wiring: registers the line view, ribbon icon, the "Open lines" / "Generate outline from notes" commands, settings tab; owns the index as a child `Component`; `createOutlineFiles()` writes the skeleton for the story folder, called only from the settings "Create" button |
+| Plugin shell | [`src/main.ts`](src/main.ts) | onload wiring: registers the line view, ribbon icon, the "Open visualizations" / "Generate outline from notes" commands, settings tab; owns the index as a child `Component`; `createOutlineFiles()` writes the skeleton for the story folder, called only from the settings "Create" button |
 | Types | [`src/types.ts`](src/types.ts) | `FRONTMATTER_KEYS` (**single source of truth** for key names), `NovelEntry`, `ParsedTitle`, `Line`, `Placement`, `LineLayout`, `OutlineRow`, `PlannedEntry` |
 | Title parser | [`src/data/titleParser.ts`](src/data/titleParser.ts) | Pure, no Obsidian imports: `parseTitle(basename, lang)`; `romanToInt` / `parseNumberToken` (whole string must be the number) / `parseLeadingNumber` (number then anything, used for Outline table cells); `availableLanguages` / `languageLabel`; `actLabel` / `unitLabel` (words the Outline file builds folders/filenames from). `LANGUAGE_PATTERNS` has `en` + `es` — a new language is one entry there plus one in `LANGUAGE_LABELS` / `ACT_LABELS` |
-| Outline helpers | [`src/data/outline.ts`](src/data/outline.ts) | Pure, unit-tested: `parseOutlineTable` (first GFM table → `OutlineRow[]`), `expectedNotePath`, `outlineRowType` / `outlineRowNumber` / `outlineRowText` (scene cell's raw text, else chapter's), `outlineLineNames` (distinct `Line` cell values, first-appearance order), `reconcileOutline` (rows vs. real entries → `planned` ghost cards + `previews` + discrepancy `marks` + `fulfilledPaths` + `unknownLines`) |
-| Outline file I/O | [`src/data/outlineFile.ts`](src/data/outlineFile.ts) | `outlineFilePath` (via `withMdExtension` + `withScribePrefix`), `readOutline` (marker-checked), `ensureOutlineFile` (writes the empty skeleton once, returns whether it did), `writeGeneratedOutline` (fills a still-empty table only) |
-| Outline generation | [`src/data/outlineGenerate.ts`](src/data/outlineGenerate.ts) | Pure: `generateOutlineTable(entries, layout)` → a table body from existing notes; `replaceFirstTable` swaps it in, keeping other text |
+| Outline helpers | [`src/data/outline.ts`](src/data/outline.ts) | Pure, unit-tested: `parseOutlineTable` (first GFM table → `OutlineRow[]`), `expectedNotePath`, `outlineRowType` / `outlineRowNumber` / `outlineRowText` (scene cell's raw text, else chapter's), `outlineLineNames` (distinct `Line` cell values, first-appearance order), `reconcileOutline` (rows vs. real entries → `planned` ghost cards + `previews` + discrepancy `marks` (also split into `lineMarks` / `unitMarks` for the Plot matrix) + `fulfilledPaths` + `rowPaths` + `unknownLines`) |
+| Outline edits | [`src/data/outlineEdit.ts`](src/data/outlineEdit.ts) | Pure, unit-tested: `ensureOutlineColumns(body)` inserts the `OUTLINE_COLUMNS` (in `outline.ts`) the first table lacks, each after the nearest preceding canonical column (`Act` first), touching nothing else |
+| Outline status | [`src/data/outlineStatus.ts`](src/data/outlineStatus.ts) | Pure, unit-tested: the statuses the Plot matrix offers (`OUTLINE_STATUSES`, `NO_STATUS` = empty cell) and `checkStatus`, which classifies a raw cell as none / known (canonical spelling) / unknown (kept, flagged) |
+| Outline file I/O | [`src/data/outlineFile.ts`](src/data/outlineFile.ts) | `ensureOutlineColumnsInFile` (run by the view each time it reads the outline; writes only if a column is missing), `outlineFilePath` (via `withMdExtension` + `withScribePrefix`), `readOutline` (marker-checked), `ensureOutlineFile` (writes the empty skeleton once, returns whether it did), `writeGeneratedOutline` (fills a still-empty table only) |
+| Outline generation | [`src/data/outlineGenerate.ts`](src/data/outlineGenerate.ts) | Pure: `generateOutlineTable(entries, layout)` → a table body from existing notes with every `OUTLINE_COLUMNS` column (Act from an `Act X` folder, Line from `Lines.md`, characters / locations / date / status from the note's properties); `replaceFirstTable` swaps it in, keeping other text |
 | Note scaffold | [`src/data/noteScaffold.ts`](src/data/noteScaffold.ts) | Pure: `scaffoldNoteBody(planned)` — starter body for a note created from a ghost card: only the frontmatter keys the row filled, then the Summary as the body (no `# title` heading — the filename is the title) |
 | Vault / story index | [`src/data/vaultIndex.ts`](src/data/vaultIndex.ts) | Scans notes under the configured story folder, keeps the title-parsed ones as a live `NovelEntry[]` sorted by `byManuscriptOrder` (folder, then title number), notifies via `onChange`. First scan waits for `onLayoutReady` + `metadataCache` "resolved"; also watches `vault` create/delete/rename, debounced. `rebuild()` is public. `getStoryFolder()` / `getEntriesForBook()` |
 | Line-layout helpers | [`src/data/lineLayout.ts`](src/data/lineLayout.ts) | Pure: `parseLineLayout` (coerce loose YAML), `lineFilePath`, `withScribePrefix` / `withMdExtension` (name normalization shared by the Lines and Outline file settings), `emptyLineLayout` |
@@ -213,8 +237,8 @@ Entry point: [`src/main.ts`](src/main.ts) → `ScribeVisualizationPlugin`.
 | Locations view | [`src/views/locationsModel.ts`](src/views/locationsModel.ts) | Same as `charactersModel` for locations (needs `fulfilledLocations`). Both delegate to [`src/views/derivedLines.ts`](src/views/derivedLines.ts): `derivedLinesModel(entries, plan, source)` — name normalization, note ∪ outline merge + ⚠, manuscript columns, alphabetical lines, stable color, "none" strip |
 | Date parser | [`src/data/dateParser.ts`](src/data/dateParser.ts) | Pure, unit-tested: `parseStoryDate` (ISO or full en/es month names → `ParsedDate` with a sort `key`, else `null`), `compareDates`, `formatStoryDate` (human label per precision, in the title language), `dateFormatHint` |
 | Chronological view | [`src/views/chronologicalModel.ts`](src/views/chronologicalModel.ts) | Pure, unit-tested: `chronologicalModel(entries, recon, order, language)` → one-line `CanvasModel` (+ `unplacedMarks` for the "No date" strip); `parseDateOrder`. Needs `OutlineReconciliation.fulfilledDates` |
-| Card text | [`src/data/excerpt.ts`](src/data/excerpt.ts), [`src/views/cardInfo.ts`](src/views/cardInfo.ts) | Pure, unit-tested. `firstParagraph(content)` → the shortened first paragraph of a note's body (`NovelEntry.excerpt`), shown when the outline row has no Synopsis. `realCardMeta` / `plannedCardMeta` / `metaRows` → the characters and locations rows (one line each, with an icon) on a card: the note's own list wins, the outline row fills in, and a view's `StoryViewDef.hides` drops the field it groups by |
-| Story views | [`src/views/storyViews.ts`](src/views/storyViews.ts) | Pure, unit-tested registry of the StoryLines tab's views (`STORY_VIEWS`): each `StoryViewDef` says whether it is `editable`, its empty/unplaced-strip wording, and its `buildModel`. **The view never checks which view it is in** — it reads the descriptor (`isEditable()`, `def.buildModel`). A new view (dates, …) is one entry here plus its model function; `parseStoryView` coerces saved view state |
+| Card text | [`src/data/excerpt.ts`](src/data/excerpt.ts), [`src/views/cardInfo.ts`](src/views/cardInfo.ts) | Pure, unit-tested. `firstParagraph(content)` → the shortened first paragraph of a note's body (`NovelEntry.excerpt`), shown when the outline row has no Synopsis. `realCardMeta` / `plannedCardMeta` / `metaRows` → the characters and locations rows (one line each, with an icon) on a card: the outline row's list wins, the note's own fills in, and a view's `StoryViewDef.hides` drops the field it groups by |
+| Story views | [`src/views/storyViews.ts`](src/views/storyViews.ts) | Pure, unit-tested registry of the Visualization tab's views (`STORY_VIEWS`): each `StoryViewDef` says whether it is `editable`, its empty/unplaced-strip wording, and its `buildModel`. **The view never checks which view it is in** — it reads the descriptor (`isEditable()`, `def.buildModel`). A new view (dates, …) is one entry here plus its model function; `parseStoryView` coerces saved view state |
 | Line view | [`src/views/lineView.ts`](src/views/lineView.ts) | `ItemView` (`VIEW_TYPE_LINE_VIEW`). DOM + pointer-drag only: renders from `canvasModel`, calls the pure ops via `mutate()` (push undo snapshot → apply → debounced save → re-render). Reads `Lines.md` + the outline on open / story-folder setting change / index change; a toolbar ⟳ button (shown only when `missingOutlineLines()` is non-empty) adds the lines the outline names but `Lines.md` lacks, an "Align cards to Story Outline " button (shown only while `outlineRows` is non-empty) re-spreads cards onto their reading-order columns, both as one undoable `mutate`; creates notes from ghost cards via a `confirm` modal |
 | Confirm modal | [`src/utils/confirmModal.ts`](src/utils/confirmModal.ts) | `confirm(app, {title, body, cta})` → `Promise<boolean>` (Obsidian ships no confirm primitive); lives in `src/utils/` because it is general-purpose, and is identical to the Goals and Stats plugin's copy — keep the two in sync |
 | Settings | [`src/settings/`](src/settings/) | Story folder, Line-file name, Outline-file name (empty = off) + its "Create" button, title language. `settingsTab.ts`'s rows are defined once (`settingRows()`) and rendered by both `getSettingDefinitions()` (declarative, Obsidian 1.13+, makes settings show up in Obsidian's search) and `display()` (imperative fallback for older Obsidian) |

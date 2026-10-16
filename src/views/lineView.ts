@@ -5,7 +5,8 @@ import { debounce, ItemView, Notice, normalizePath, Scope, setIcon, TFile, ViewS
 import type ScribeVisualizationPlugin from "../main";
 import { emptyLineLayout, lineFilePath, readLineLayout, writeLineLayout } from "../data/lineFile";
 import { outlineLineNames, OutlineReconciliation, reconcileOutline } from "../data/outline";
-import { outlineFilePath, readOutline } from "../data/outlineFile";
+import { appendOutlineRowToFile, ensureOutlineColumnsInFile, ensureOutlineWideClass, outlineFilePath, readOutlineFile, writeOutlineCell } from "../data/outlineFile";
+import { OutlineColumn, unitEditProblem } from "../data/outlineEdit";
 import { scaffoldNoteBody } from "../data/noteScaffold";
 import { displayDate } from "../data/dateParser";
 import { CardInfoField, CardMeta, metaRows, plannedCardMeta, realCardMeta } from "./cardInfo";
@@ -33,7 +34,12 @@ import {
 } from "./canvasModel";
 import { confirm } from "../utils/confirmModal";
 import { DateOrder, DEFAULT_DATE_ORDER, parseDateOrder } from "./chronologicalModel";
+import { PlotMatrixRow } from "./plotMatrixModel";
+import { renderPlotMatrix } from "./plotMatrixRenderer";
 import { DEFAULT_STORY_VIEW, StoryView, parseStoryView, StoryViewDef, STORY_VIEWS, storyViewIds } from "./storyViews";
+
+const NO_FOLDER_NOTICE =
+	"Add a story folder in the plugin settings (Settings → Scribe of Lagash - Visualization) to build its lines.";
 
 export const VIEW_TYPE_LINE_VIEW = "scribe-line-view";
 
@@ -95,6 +101,12 @@ export class LineView extends ItemView {
 	private book: string;
 	private layout: LineLayout = emptyLineLayout();
 	private outlineRows: OutlineRow[] = [];
+	/** Whether a usable Outline file exists (it may have no rows yet). */
+	private outlineExists = false;
+	/** Table rows with no Chapter or Scene yet; only the Plot matrix shows them. */
+	private outlineBlankRows: OutlineRow[] = [];
+	/** A redraw was skipped because a field was being edited; done when focus leaves. */
+	private redrawOwed = false;
 	private fileExists = false;
 	private undoStack: LineLayout[] = [];
 	private cardEls = new Map<string, HTMLElement[]>();
@@ -119,8 +131,19 @@ export class LineView extends ItemView {
 		return VIEW_TYPE_LINE_VIEW;
 	}
 
+	/** "(SL) Visualization: <view>" — the tab names the view it is showing. */
 	getDisplayText(): string {
-		return "(SL) StoryLines";
+		return `(SL) Visualization: ${STORY_VIEWS[this.storyView].label}`;
+	}
+
+	/**
+	 * Obsidian caches the title in two places: the tab (`updateHeader`, not in the
+	 * public typings, refreshes it) and the title above the content, which that call
+	 * leaves alone, so it is set here directly.
+	 */
+	private refreshTabTitle(): void {
+		(this.leaf as WorkspaceLeaf & { updateHeader?: () => void }).updateHeader?.();
+		this.containerEl.querySelector<HTMLElement>(".view-header-title")?.setText(this.getDisplayText());
 	}
 
 	getIcon(): string {
@@ -138,6 +161,7 @@ export class LineView extends ItemView {
 		this.storyView = parseStoryView(raw);
 		this.dateOrder = parseDateOrder("dateOrder" in saved ? saved.dateOrder : null);
 		await super.setState(state, result);
+		this.refreshTabTitle();
 		if (this.opened) this.render();
 	}
 
@@ -153,6 +177,12 @@ export class LineView extends ItemView {
 			return false;
 		});
 		this.unsubscribe = this.plugin.vaultIndex.onChange(() => this.onIndexChange());
+		this.registerDomEvent(this.contentEl, "focusout", () => {
+			// Deferred: focus is briefly nowhere while it moves between two fields.
+			window.setTimeout(() => {
+				if (this.redrawOwed && !this.isEditingText()) void this.refreshWhenIdle();
+			}, 0);
+		});
 		await this.openBook(this.plugin.vaultIndex.getStoryFolder());
 		this.opened = true;
 	}
@@ -195,9 +225,21 @@ export class LineView extends ItemView {
 		);
 	}
 
-	private async readOutlineRows(): Promise<OutlineRow[]> {
+	/** Re-reads the Outline file into `outlineRows` / `outlineExists`, first completing its columns. */
+	private async loadOutline(): Promise<void> {
 		const path = this.outlinePath();
-		return path ? readOutline(this.app, normalizePath(path)) : [];
+		if (!path) {
+			this.outlineRows = [];
+			this.outlineBlankRows = [];
+			this.outlineExists = false;
+			return;
+		}
+		await ensureOutlineColumnsInFile(this.app, normalizePath(path));
+		await ensureOutlineWideClass(this.app, normalizePath(path));
+		const outline = await readOutlineFile(this.app, normalizePath(path));
+		this.outlineRows = outline.rows;
+		this.outlineBlankRows = outline.blankRows;
+		this.outlineExists = outline.exists;
 	}
 
 	private async openBook(book: string): Promise<void> {
@@ -208,12 +250,14 @@ export class LineView extends ItemView {
 			const path = normalizePath(this.linePath());
 			this.fileExists = this.app.vault.getAbstractFileByPath(path) instanceof TFile;
 			this.layout = await readLineLayout(this.app, path);
-			this.outlineRows = await this.readOutlineRows();
+			await this.loadOutline();
 			this.autoPlace();
 		} else {
 			this.fileExists = false;
 			this.layout = emptyLineLayout();
 			this.outlineRows = [];
+			this.outlineBlankRows = [];
+			this.outlineExists = false;
 		}
 		this.render(false);
 	}
@@ -237,6 +281,7 @@ export class LineView extends ItemView {
 		// Don't yank the DOM out from under an in-progress drag or a line rename.
 		if (this.drag?.started || this.isEditingText()) {
 			this.autoPlace();
+			this.redrawOwed = true;
 			return;
 		}
 
@@ -250,7 +295,7 @@ export class LineView extends ItemView {
 	}
 
 	private async refreshOutlineAndRender(): Promise<void> {
-		this.outlineRows = await this.readOutlineRows();
+		await this.loadOutline();
 		this.autoPlace();
 		this.render();
 	}
@@ -282,7 +327,10 @@ export class LineView extends ItemView {
 
 	private isEditingText(): boolean {
 		const active = this.contentEl.doc.activeElement;
-		return active instanceof HTMLInputElement && this.contentEl.contains(active);
+		return (
+			(active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement || active instanceof HTMLSelectElement) &&
+			this.contentEl.contains(active)
+		);
 	}
 
 	private isEditable(): boolean {
@@ -319,6 +367,62 @@ export class LineView extends ItemView {
 
 	// ---- render ----
 
+	private noContentNotice(): string {
+		return (
+			`No chapters or scenes found in "${this.book}". Name notes like "Chapter 1" or "Scene 2"` +
+			`${this.plugin.settings.outlineFileName ? `, or add rows to "${this.outlinePath()}"` : ""}.`
+		);
+	}
+
+	private openNote(path: string): void {
+		const file = this.app.vault.getFileByPath(path);
+		if (file) void this.app.workspace.getLeaf(false).openFile(file);
+	}
+
+	/** Writes one Plot matrix edit into the Outline table, then re-reads so the matrix shows the file. */
+	private async editOutlineCell(row: PlotMatrixRow, column: OutlineColumn, value: string): Promise<boolean> {
+		if (!row.target) return false;
+		if (column === "Chapter" || column === "Scene") {
+			const problem = unitEditProblem(row, column, value);
+			if (problem) {
+				new Notice(problem);
+				await this.refreshWhenIdle();
+				return false;
+			}
+		}
+		const result = await writeOutlineCell(this.app, normalizePath(this.outlinePath()), row.target, column, value);
+		if (!result.ok) {
+			new Notice(
+				result.reason === "stale"
+					? "The story outline changed while you were editing. Your edit was not saved."
+					: `Couldn't save the edit (${result.reason}).`,
+			);
+		}
+		await this.refreshWhenIdle();
+		return result.ok;
+	}
+
+	/**
+	 * Re-reads the outline and redraws, unless a field is being edited: redrawing
+	 * would close it under the writer's cursor. The redraw is then owed, and paid
+	 * as soon as focus leaves every field (see `onOpen`).
+	 */
+	private async refreshWhenIdle(): Promise<void> {
+		if (this.isEditingText()) {
+			this.redrawOwed = true;
+			return;
+		}
+		this.redrawOwed = false;
+		await this.refreshOutlineAndRender();
+	}
+
+	private async addOutlineRow(): Promise<void> {
+		if (!(await appendOutlineRowToFile(this.app, normalizePath(this.outlinePath())))) {
+			new Notice("Couldn't add a row: the Story Outline needs a chapter or scene column.");
+		}
+		await this.refreshOutlineAndRender();
+	}
+
 	/**
 	 * Rebuilds the whole view from scratch — `render()` never patches the DOM,
 	 * it tears it down and starts over, so the scrollable board's scroll
@@ -340,11 +444,42 @@ export class LineView extends ItemView {
 
 		const folder = this.plugin.vaultIndex.getStoryFolder();
 		const entries = this.book ? this.currentEntries() : [];
-		const hasContent = entries.length > 0 || this.outlineRows.length > 0;
+		const hasContent = entries.length > 0 || this.outlineRows.length > 0 || this.outlineExists;
 		const viewReady = folder !== "" && hasContent && this.fileExists && !isLayoutEmpty(this.layout);
 
 		const def = STORY_VIEWS[this.storyView];
 		root.toggleClass("is-readonly", !def.editable);
+
+		if (def.kind === "matrix") {
+			const plotRecon = folder !== "" && hasContent ? this.reconcile(entries) : null;
+			this.renderToolbar(root, folder, null, plotRecon?.planned.length ?? 0);
+			if (folder === "" || !hasContent) {
+				this.renderNotice(root, folder === "" ? NO_FOLDER_NOTICE : this.noContentNotice());
+				return;
+			}
+			renderPlotMatrix(
+				root,
+				def.buildPlotMatrix({
+					entries,
+					layout: this.layout,
+					recon: plotRecon ?? this.reconcile(entries),
+					outlineRows: this.outlineRows,
+					blankRows: this.outlineBlankRows,
+					outlineExists: this.outlineExists,
+					language: this.plugin.settings.titleLanguage,
+				}),
+				{
+					openNote: (path) => this.openNote(path),
+					editCell: (row, column, value) => this.editOutlineCell(row, column, value),
+					addRow: () => this.addOutlineRow(),
+					createNote: async (expectedPath) => {
+						const planned = this.reconcile(this.currentEntries()).planned.find((p) => p.expectedPath === expectedPath);
+						if (planned) await this.onCreateOne(planned);
+					},
+				},
+			);
+			return;
+		}
 
 		// An editable view needs a Lines.md; a derived one only needs content.
 		const needsRecon = def.editable ? viewReady : folder !== "" && hasContent;
@@ -353,19 +488,12 @@ export class LineView extends ItemView {
 		this.renderToolbar(root, folder, def.editable ? recon : null);
 
 		if (folder === "") {
-			this.renderNotice(
-				root,
-				"Add a story folder in the plugin settings (Settings → Scribe of Lagash - Visualization) to build its lines.",
-			);
+			this.renderNotice(root, NO_FOLDER_NOTICE);
 			return;
 		}
 
 		if (!hasContent) {
-			this.renderNotice(
-				root,
-				`No chapters or scenes found in "${this.book}". Name notes like "Chapter 1" or "Scene 2"` +
-					`${this.plugin.settings.outlineFileName ? `, or add rows to "${this.outlinePath()}"` : ""}.`,
-			);
+			this.renderNotice(root, this.noContentNotice());
 			return;
 		}
 
@@ -420,7 +548,8 @@ export class LineView extends ItemView {
 		});
 	}
 
-	private renderToolbar(root: HTMLElement, folder: string, recon: OutlineReconciliation | null): void {
+	/** `plannedCount`: the Plot matrix's own "Create N planned notes" button (the line views draw theirs from `recon`). */
+	private renderToolbar(root: HTMLElement, folder: string, recon: OutlineReconciliation | null, plannedCount = 0): void {
 		const toolbar = root.createDiv({ cls: "scribe-canvas-toolbar" });
 
 		if (folder) toolbar.createSpan({ cls: "scribe-canvas-book-name", text: folder });
@@ -428,8 +557,10 @@ export class LineView extends ItemView {
 		toolbar.createDiv({ cls: "scribe-canvas-toolbar-spacer" });
 
 		if (recon) this.renderEditButtons(toolbar, recon);
+		else this.renderCreateAllButton(toolbar, plannedCount);
 
-		if (folder && STORY_VIEWS[this.storyView].hasDateOrder) this.renderDateOrderButton(toolbar);
+		const def = STORY_VIEWS[this.storyView];
+		if (folder && def.kind === "board" && def.hasDateOrder) this.renderDateOrderButton(toolbar);
 
 		if (folder) this.renderViewSelect(toolbar);
 	}
@@ -468,9 +599,19 @@ export class LineView extends ItemView {
 			await this.save();
 		}
 		this.storyView = next;
+		this.refreshTabTitle();
 		this.autoPlace();
 		this.app.workspace.requestSaveLayout();
 		this.render(false);
+	}
+
+	/** "Create N planned notes": makes the notes for every outline row that has none yet. */
+	private renderCreateAllButton(toolbar: HTMLElement, count: number): void {
+		if (count === 0) return;
+		const createAll = toolbar.createEl("button", {
+			text: `Create ${count} planned note${count === 1 ? "" : "s"}`,
+		});
+		createAll.addEventListener("click", () => void this.onCreateAll());
 	}
 
 	private renderEditButtons(toolbar: HTMLElement, recon: OutlineReconciliation): void {
@@ -485,13 +626,7 @@ export class LineView extends ItemView {
 			refresh.addEventListener("click", () => this.createOutlineLines());
 		}
 
-		if (recon.planned.length > 0) {
-			const n = recon.planned.length;
-			const createAll = toolbar.createEl("button", {
-				text: `Create ${n} planned note${n === 1 ? "" : "s"}`,
-			});
-			createAll.addEventListener("click", () => void this.onCreateAll());
-		}
+		this.renderCreateAllButton(toolbar, recon.planned.length);
 
 		if (this.outlineRows.length > 0) {
 			const align = toolbar.createEl("button", {
@@ -601,7 +736,15 @@ export class LineView extends ItemView {
 			for (const entry of model.unplaced) {
 				this.renderCard(
 					rail,
-					{ kind: "real", entry, planned: null, x: 0, summary: null, mark: model.unplacedMarks?.[entry.file.path] ?? null },
+					{
+						kind: "real",
+						entry,
+						planned: null,
+						x: 0,
+						// Outline synopsis first, like every card on a line; the note's paragraph fills in at render.
+						summary: recon.previews[entry.file.path] ?? null,
+						mark: model.unplacedMarks?.[entry.file.path] ?? null,
+					},
 					true,
 					readOnly,
 				);
@@ -761,10 +904,10 @@ export class LineView extends ItemView {
 		const summary = card.summary ?? entry.excerpt;
 		if (summary) body.createDiv({ cls: "scribe-canvas-card-summary", text: summary });
 
-		// Like people and places: the note's own date wins, the outline row's fills in.
+		// Like people and places: the outline row's date wins, the note's fills in.
 		const dateText =
 			card.dateLabel ??
-			displayDate(entry.date ?? this.cardCtx?.recon.fulfilledDates[entry.file.path], this.plugin.settings.titleLanguage);
+			displayDate(this.cardCtx?.recon.fulfilledDates[entry.file.path] ?? entry.date, this.plugin.settings.titleLanguage);
 		if (dateText) this.renderCardDate(body, dateText);
 		this.renderCardMeta(body, realCardMeta(entry, this.cardCtx?.recon ?? null, this.cardCtx?.hides ?? []));
 

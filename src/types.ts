@@ -102,9 +102,9 @@ export interface LineLayout {
 export interface OutlineRow {
 	/** Position in the table, top to bottom; used to order planned entries. */
 	rowIndex: number;
+	/** Index of the row's line in the file body (split on "\n"); set when parsed from a table. */
+	sourceLine?: number;
 	act: string | null;
-	/** Explicit folder override; when absent it's derived from `act`. */
-	folder: string | null;
 	chapter: number | null;
 	/**
 	 * The Chapter cell's raw text (e.g. "1 - The beginning"), starting with the
@@ -124,6 +124,8 @@ export interface OutlineRow {
 	characters: string[];
 	locations: string[];
 	status: string | null;
+	/** The writer's own remarks on the row; lives in the table only, never copied to a note. */
+	comments: string | null;
 }
 
 /**

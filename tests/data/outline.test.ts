@@ -37,7 +37,6 @@ function row(over: Partial<OutlineRow> = {}): OutlineRow {
 	return {
 		rowIndex: 0,
 		act: null,
-		folder: null,
 		chapter: null,
 		chapterText: null,
 		scene: null,
@@ -48,6 +47,7 @@ function row(over: Partial<OutlineRow> = {}): OutlineRow {
 		characters: [],
 		locations: [],
 		status: null,
+		comments: null,
 		...over,
 	};
 }
@@ -65,8 +65,8 @@ test("parseOutlineTable finds the table, maps columns by name, and strips bracke
 	assert.equal(rows.length, 2);
 	assert.deepEqual(rows[0], {
 		rowIndex: 0,
+		sourceLine: 2,
 		act: "I",
-		folder: null,
 		chapter: 1,
 		chapterText: "1",
 		scene: null,
@@ -77,6 +77,7 @@ test("parseOutlineTable finds the table, maps columns by name, and strips bracke
 		characters: [],
 		locations: [],
 		status: null,
+		comments: null,
 	});
 	assert.equal(rows[1].line, "Main line");
 });
@@ -103,10 +104,10 @@ test("parseOutlineTable returns [] when there is no table", () => {
 
 test("parseOutlineTable: the created skeleton (help comment + empty row) has no data rows", () => {
 	const skeleton = [
-		"<!-- Managed by Scribe of Lagash - Visualization — created once, never rewritten.",
+		"<!-- Managed by Scribe of Lagash - Visualization — edit by hand or in the Plot matrix view.",
 		"     Chapters as files, no acts . . . . . Chapter                -> Chapter 1.md",
 		"     Scenes in chapter folders . . . . . Chapter + Scene        -> Chapter 1/Scene 2.md",
-		"     Also recognized: Folder, Date, Characters, Locations, Status. -->",
+		"     Also recognized: Date, Characters, Locations, Status. -->",
 		"",
 		"| Act | Chapter | Scene | Line | Synopsis | Characters |",
 		"| --- | ------- | ----- | ---- | -------- | ---------- |",
@@ -171,14 +172,7 @@ test("expectedNotePath nests a scene under its chapter's folder", () => {
 	);
 });
 
-test("expectedNotePath prefers an explicit Folder cell over Act", () => {
-	assert.equal(
-		expectedNotePath(row({ act: "I", folder: "Part One", chapter: 1 }), "Book"),
-		"Book/Part One/Chapter 1.md",
-	);
-});
-
-test("expectedNotePath omits the folder segment when there's no Act or Folder", () => {
+test("expectedNotePath omits the folder segment when there's no Act", () => {
 	assert.equal(expectedNotePath(row({ chapter: 3 }), "Book"), "Book/Chapter 3.md");
 });
 
@@ -203,13 +197,6 @@ test("expectedNotePath carries a Scene cell's free text, nesting under its chapt
 	assert.equal(
 		expectedNotePath(row({ chapter: 1, chapterText: "1", scene: 2, sceneText: "2 - The reveal" }), "Book"),
 		"Book/Chapter 1/Scene 2 - The reveal.md",
-	);
-});
-
-test("expectedNotePath keeps a multi-segment Folder cell", () => {
-	assert.equal(
-		expectedNotePath(row({ folder: "Act I/Part 2", chapter: 1 }), "Book"),
-		"Book/Act I/Part 2/Chapter 1.md",
 	);
 });
 
@@ -456,7 +443,7 @@ test("reconcileOutline flags a Line discrepancy without moving the real card", (
 	const entries = [entry("Book/Chapter 1.md", { type: "chapter", order: 1 })];
 	const rows = [row({ chapter: 1, line: "Pensiones" })]; // real card is placed on "main"
 	const result = reconcileOutline(rows, entries, layout, "Book");
-	assert.match(result.marks["Book/Chapter 1.md"], /outline says "Pensiones", placed on "Main line"/);
+	assert.match(result.marks["Book/Chapter 1.md"], /outline says "Pensiones", placed on "Main line in StoryLines"/);
 });
 
 test("reconcileOutline flags a Type discrepancy", () => {
@@ -527,6 +514,9 @@ test("reconcileOutline is a no-op for an empty table", () => {
 		fulfilledCharacters: {},
 		fulfilledLocations: {},
 		fulfilledDates: {},
+		rowPaths: {},
+		lineMarks: {},
+		unitMarks: {},
 		unknownLines: [],
 	});
 });
@@ -559,4 +549,24 @@ test("reconcileOutline exposes a fulfilled row's Date cell", () => {
 	];
 	const result = reconcileOutline([dated, row({ chapter: 2 })], entries, layout, "Book");
 	assert.deepEqual(result.fulfilledDates, { "Book/Chapter 1.md": "November 3, 2026" });
+});
+
+test("reconcileOutline splits line issues (lineMarks) from folder and type issues (unitMarks)", () => {
+	const layout = {
+		lines: [
+			{ id: "a", name: "A", color: "#111", order: 0 },
+			{ id: "b", name: "B", color: "#222", order: 1 },
+		],
+		placements: { "Book/Chapter 1.md": { lines: ["b"], x: 0 } },
+	};
+	const result = reconcileOutline(
+		[row({ rowIndex: 0, act: "I", chapter: 1, chapterText: "1", line: "A" })],
+		[entry("Book/Chapter 1.md", { type: "chapter", order: 1 })],
+		layout,
+		"Book",
+	);
+	assert.match(result.lineMarks["Book/Chapter 1.md"], /story outline says "A", placed on "B in StoryLines"/);
+	assert.match(result.unitMarks["Book/Chapter 1.md"], /expects it under "Book\/Act I"/);
+	assert.ok(!result.unitMarks["Book/Chapter 1.md"].includes("placed on"));
+	assert.match(result.marks["Book/Chapter 1.md"], /placed on "B in StoryLines".*expects it under/, "marks still holds both");
 });

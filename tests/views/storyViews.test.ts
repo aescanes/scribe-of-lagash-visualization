@@ -18,6 +18,9 @@ const recon: OutlineReconciliation = {
 	fulfilledCharacters: {},
 	fulfilledLocations: {},
 	fulfilledDates: {},
+	rowPaths: {},
+	lineMarks: {},
+	unitMarks: {},
 	unknownLines: [],
 };
 
@@ -49,9 +52,15 @@ test("parseStoryView falls back to the default for unknown or malformed values",
 	assert.equal(isStoryView(null), false);
 });
 
-test("the selector lists every registered view, StoryLines first", () => {
-	assert.deepEqual(storyViewIds(), ["storylines", "characters", "locations", "chronological"]);
+test("the selector lists every registered view, StoryLines first and the Plot matrix right after it", () => {
+	assert.deepEqual(storyViewIds(), ["storylines", "plotMatrix", "characters", "locations", "chronological"]);
 	assert.equal(storyViewIds()[0], DEFAULT_STORY_VIEW);
+});
+
+test("the Plot matrix view is a matrix that never edits Lines.md", () => {
+	assert.equal(STORY_VIEWS.plotMatrix.kind, "matrix");
+	assert.equal(STORY_VIEWS.plotMatrix.editable, false);
+	assert.equal(parseStoryView("plotMatrix"), "plotMatrix");
 });
 
 test("only the StoryLines view is editable", () => {

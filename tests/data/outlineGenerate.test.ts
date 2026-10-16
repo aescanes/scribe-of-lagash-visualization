@@ -4,7 +4,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { generateOutlineTable, isOutlineRowable, replaceFirstTable } from "../../src/data/outlineGenerate";
+import { generateOutlineTable, isOutlineRowable, outlineUnitsOf, replaceFirstTable } from "../../src/data/outlineGenerate";
 import { parseOutlineTable } from "../../src/data/outline";
 import { LineLayout, NovelEntry } from "../../src/types";
 
@@ -49,12 +49,12 @@ test("generateOutlineTable emits a row per entry that round-trips through parseO
 
 	assert.equal(rows.length, 2);
 	assert.deepEqual(
-		{ folder: rows[0].folder, chapter: rows[0].chapter, scene: rows[0].scene, line: rows[0].line },
-		{ folder: "Act I", chapter: 1, scene: null, line: "Main line" },
+		{ chapter: rows[0].chapter, scene: rows[0].scene, line: rows[0].line },
+		{ chapter: 1, scene: null, line: "Main line" },
 	);
 	assert.deepEqual(
-		{ folder: rows[1].folder, chapter: rows[1].chapter, scene: rows[1].scene },
-		{ folder: "Act I", chapter: 1, scene: 2 },
+		{ chapter: rows[1].chapter, scene: rows[1].scene },
+		{ chapter: 1, scene: 2 },
 	);
 });
 
@@ -62,8 +62,8 @@ test("generateOutlineTable: a chapter file directly under the book (no Act) roun
 	const entries = [entry("Book/Chapter 1.md", { type: "chapter", order: 1, context: [] })];
 	const rows = parseOutlineTable(generateOutlineTable(entries, layout));
 	assert.deepEqual(
-		{ folder: rows[0].folder, chapter: rows[0].chapter, scene: rows[0].scene },
-		{ folder: null, chapter: 1, scene: null },
+		{ chapter: rows[0].chapter, scene: rows[0].scene },
+		{ chapter: 1, scene: null },
 	);
 });
 
@@ -73,8 +73,8 @@ test("generateOutlineTable: a scene under a chapter folder with no Act round-tri
 	];
 	const rows = parseOutlineTable(generateOutlineTable(entries, layout));
 	assert.deepEqual(
-		{ folder: rows[0].folder, chapter: rows[0].chapter, scene: rows[0].scene },
-		{ folder: null, chapter: 2, scene: 1 },
+		{ chapter: rows[0].chapter, scene: rows[0].scene },
+		{ chapter: 2, scene: 1 },
 	);
 });
 
@@ -82,8 +82,8 @@ test("generateOutlineTable: a scene directly under the book (no chapter folder) 
 	const entries = [entry("Book/Scene 2.md", { type: "scene", order: 2, context: [], title: "Scene 2" })];
 	const rows = parseOutlineTable(generateOutlineTable(entries, layout));
 	assert.deepEqual(
-		{ folder: rows[0].folder, chapter: rows[0].chapter, scene: rows[0].scene },
-		{ folder: null, chapter: null, scene: 2 },
+		{ chapter: rows[0].chapter, scene: rows[0].scene },
+		{ chapter: null, scene: 2 },
 	);
 });
 
@@ -123,4 +123,91 @@ test("replaceFirstTable swaps the skeleton table but keeps the surrounding text"
 test("replaceFirstTable appends when there is no table", () => {
 	const out = replaceFirstTable("Just notes.\n", "| Folder |\n| ------ |");
 	assert.equal(out, "Just notes.\n\n| Folder |\n| ------ |\n");
+});
+
+test("outlineUnitsOf: in an Act/Scene layout the act folder is not read as a chapter", () => {
+	const scene = entry("Book/Act II/Scene 2.md", { type: "scene", order: 2, context: ["Act II"], title: "Scene 2" });
+	assert.deepEqual(outlineUnitsOf(scene), { chapter: null, scene: 2, chapterFolder: null, outerFolders: ["Act II"] });
+
+	const nested = entry("Book/Act II/Chapter 2/Scene 3.md", {
+		type: "scene",
+		order: 3,
+		context: ["Act II", "Chapter 2"],
+		title: "Scene 3",
+	});
+	assert.deepEqual(outlineUnitsOf(nested), {
+		chapter: 2,
+		scene: 3,
+		chapterFolder: "Chapter 2",
+		outerFolders: ["Act II"],
+	});
+});
+
+test("generateOutlineTable fills Act from an act folder, in the title language", () => {
+	const entries = [entry("Book/Act II/Chapter 1.md", { type: "chapter", order: 1, context: ["Act II"] })];
+	assert.equal(parseOutlineTable(generateOutlineTable(entries, layout))[0].act, "II");
+
+	const es = [entry("Book/Acto III/Capítulo 1.md", { type: "chapter", order: 1, context: ["Acto III"] })];
+	assert.equal(parseOutlineTable(generateOutlineTable(es, layout, "es"))[0].act, "III");
+
+	const scene = [
+		entry("Book/Act I/Scene 2.md", { type: "scene", order: 2, context: ["Act I"], title: "Scene 2" }),
+	];
+	const row = parseOutlineTable(generateOutlineTable(scene, layout))[0];
+	assert.deepEqual([row.act, row.chapter, row.scene], ["I", null, 2]);
+
+	const other = [entry("Book/Part 1/Chapter 1.md", { type: "chapter", order: 1, context: ["Part 1"] })];
+	assert.equal(parseOutlineTable(generateOutlineTable(other, layout))[0].act, null, "not an act folder");
+});
+
+test("generateOutlineTable carries the note's date, characters, locations and status", () => {
+	const entries = [
+		entry("Book/Chapter 1.md", {
+			type: "chapter",
+			order: 1,
+			date: "1981-11-01",
+			characters: ["Harry", "Ron"],
+			locations: ["Privet Drive"],
+			status: "First Draft",
+		}),
+	];
+	const [row] = parseOutlineTable(generateOutlineTable(entries, layout));
+	assert.equal(row.date, "1981-11-01");
+	assert.deepEqual(row.characters, ["Harry", "Ron"]);
+	assert.deepEqual(row.locations, ["Privet Drive"]);
+	assert.equal(row.status, "First Draft");
+	assert.equal(row.summary, "");
+	assert.equal(row.comments, null);
+});
+
+test("generateOutlineTable writes every outline column", () => {
+	const table = generateOutlineTable([entry("Book/Chapter 1.md", { type: "chapter", order: 1 })], layout);
+	const header = table.split("\n")[0].split("|").map((c) => c.trim()).filter(Boolean);
+	assert.deepEqual(header, [
+		"Act", "Chapter", "Scene", "Line", "Synopsis", "Characters", "Locations", "Date", "Status", "Comments",
+	]);
+});
+
+test("generateOutlineTable puts a note with no placement on the topmost line, like the board does", () => {
+	const two: LineLayout = {
+		lines: [
+			{ id: "b", name: "Second", color: "#111", order: 1 },
+			{ id: "a", name: "First", color: "#222", order: 0 },
+		],
+		placements: { "Book/Chapter 2.md": { lines: ["b"], x: 1 } },
+	};
+	const entries = [
+		entry("Book/Chapter 1.md", { type: "chapter", order: 1 }),
+		entry("Book/Chapter 2.md", { type: "chapter", order: 2 }),
+	];
+	const rows = parseOutlineTable(generateOutlineTable(entries, two));
+	assert.deepEqual(rows.map((r) => r.line), ["First", "Second"]);
+	assert.deepEqual(parseOutlineTable(generateOutlineTable(entries, { lines: [], placements: {} })).map((r) => r.line), [null, null]);
+});
+
+test("generateOutlineTable keeps a pipe in a property from breaking the table", () => {
+	const entries = [entry("Book/Chapter 1.md", { type: "chapter", order: 1, status: "a | b" })];
+	const rows = parseOutlineTable(generateOutlineTable(entries, layout));
+	assert.equal(rows.length, 1);
+	assert.equal(rows[0].status, "a | b");
 });

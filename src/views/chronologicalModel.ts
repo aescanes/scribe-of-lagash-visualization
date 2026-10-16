@@ -3,7 +3,7 @@
 
 import { NovelEntry, PlannedEntry } from "../types";
 import { OutlineReconciliation } from "../data/outline";
-import { ParsedDate, dateFormatHint, describeElapsed, formatStoryDate, parseStoryDate, toDayNumber } from "../data/dateParser";
+import { ParsedDate, dateConflict, dateFormatHint, describeElapsed, formatStoryDate, parseStoryDate, toDayNumber } from "../data/dateParser";
 import { CanvasCard, CanvasGap, CanvasModel, LINE_COLOR_PALETTE, manuscriptColumns } from "./canvasModel";
 
 /**
@@ -53,25 +53,18 @@ export function chronologicalModel(
 	language: string,
 ): CanvasModel {
 	const columns = manuscriptColumns(entries, plan.planned);
+	const fulfilled = new Set(plan.fulfilledPaths);
 
 	const items: Item[] = [];
 	for (const entry of entries) {
 		const path = entry.file.path;
 		const noteText = entry.date;
 		const outlineText = plan.fulfilledDates[path] ?? null;
-		// A card has one date: the note's, falling back to its outline row's.
-		const text = noteText ?? outlineText;
+		// A card has one date: its outline row's, falling back to the note's.
+		const text = outlineText ?? noteText;
 		const date = parseStoryDate(text);
 
-		let mark: string | null = null;
-		if (text && !date) {
-			mark = unrecognized(text);
-		} else if (noteText && outlineText) {
-			const outlineDate = parseStoryDate(outlineText);
-			if (date && outlineDate && date.key !== outlineDate.key) {
-				mark = `date differs between the note and the story outline (note: ${noteText}; story outline: ${outlineText})`;
-			}
-		}
+		const mark = text && !date ? unrecognized(text) : dateConflict(noteText, outlineText, fulfilled.has(path));
 		items.push({
 			path,
 			column: columns.get(path) ?? 0,

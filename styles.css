@@ -614,3 +614,245 @@
 .scribe-canvas-view.is-readonly .scribe-canvas-unplaced-rail .scribe-canvas-card {
 	flex: none;
 }
+
+/* ---- Outline file ---- */
+
+/* The Outline file asks (via `cssclasses` in its frontmatter) to ignore the
+   "readable line length" width, so its table can show every column. */
+.scribe-outline-wide {
+	--file-line-width: none;
+}
+
+/* ---- Plot matrix view (the Story Outline as a matrix) ---- */
+
+.scribe-plot-matrix-scroll {
+	padding: var(--size-4-3);
+}
+
+.scribe-plot-matrix-grid {
+	/* Synopsis and Comments, the two free-text columns, share one width. */
+	--scribe-plot-matrix-text-col: 300px;
+
+	display: grid;
+	grid-template-columns:
+		minmax(190px, 220px) minmax(150px, 170px) var(--scribe-plot-matrix-text-col)
+		repeat(2, 130px) minmax(150px, 170px) minmax(110px, 140px) var(--scribe-plot-matrix-text-col);
+	gap: var(--size-4-2);
+	width: max-content;
+	min-width: 100%;
+}
+
+/* No Comments column when the matrix is built from the notes. */
+.scribe-plot-matrix-grid.is-readonly {
+	grid-template-columns:
+		minmax(190px, 220px) minmax(150px, 170px) var(--scribe-plot-matrix-text-col)
+		repeat(2, 130px) minmax(150px, 170px) minmax(110px, 140px);
+}
+
+.scribe-plot-matrix-head-title {
+	display: flex;
+	align-items: center;
+	gap: var(--size-2-3);
+	color: var(--text-normal);
+}
+
+.scribe-plot-matrix-head-icon {
+	display: inline-flex;
+	flex: none;
+	color: var(--text-muted);
+}
+
+.scribe-plot-matrix-head-icon .svg-icon {
+	width: var(--icon-s);
+	height: var(--icon-s);
+}
+
+.scribe-plot-matrix-head-hint {
+	margin-top: var(--size-2-2);
+	padding-top: var(--size-2-2);
+	border-top: 1px solid var(--background-modifier-border);
+	font-weight: 400;
+	color: var(--text-faint);
+	line-height: 1.3;
+}
+
+.scribe-plot-matrix-head {
+	position: sticky;
+	top: calc(var(--size-4-3) * -1);
+	z-index: 2;
+	padding: var(--size-2-3) var(--size-4-2);
+	background: var(--background-secondary);
+	border-bottom: 1px solid var(--background-modifier-border);
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+	font-weight: 600;
+}
+
+/* An act's name runs across the whole row above its chapters. */
+.scribe-plot-matrix-act {
+	grid-column: 1 / -1;
+	margin-top: var(--size-4-2);
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+/* A square: same card look as the Line view's cards. */
+.scribe-plot-matrix-act.is-subgroup {
+	margin-top: 0;
+	padding-left: var(--size-4-3);
+	font-weight: 500;
+	text-transform: none;
+}
+
+.scribe-plot-matrix-cell {
+	position: relative;
+	box-sizing: border-box;
+	min-height: 150px;
+	padding: var(--size-4-2) var(--size-4-3);
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+	box-shadow: var(--shadow-s);
+	overflow: hidden;
+}
+
+.scribe-plot-matrix-cell.is-editable {
+	cursor: text;
+}
+
+.scribe-plot-matrix-cell.is-editable:hover {
+	border-color: var(--background-modifier-border-hover);
+	box-shadow: var(--shadow-l);
+}
+
+.scribe-plot-matrix-cell.is-editing {
+	border-color: var(--interactive-accent);
+}
+
+/* A row with no note yet — dashed, like a ghost card. */
+.scribe-plot-matrix-cell.is-planned {
+	border-style: dashed;
+	background: var(--background-secondary);
+	box-shadow: none;
+}
+
+.scribe-plot-matrix-unit {
+	border-left: 3px solid var(--scribe-line-color, var(--background-modifier-border));
+}
+
+.scribe-plot-matrix-unit.is-planned {
+	border-left-style: dashed;
+}
+
+.scribe-plot-matrix-unit-title-row {
+	display: flex;
+	align-items: flex-start;
+	gap: 4px;
+}
+
+.scribe-plot-matrix-unit-title {
+	flex: 1;
+	min-width: 0;
+	font-weight: 600;
+	overflow-wrap: anywhere;
+}
+
+.scribe-plot-matrix-unit-title.is-empty {
+	color: var(--text-faint);
+	font-weight: 400;
+}
+
+.scribe-plot-matrix-unit-title.is-link {
+	cursor: pointer;
+}
+
+.scribe-plot-matrix-unit-title.is-link:hover {
+	color: var(--text-accent);
+}
+
+.scribe-plot-matrix-unit-create {
+	display: inline-block;
+	margin-top: 4px;
+	color: var(--text-accent);
+	font-size: var(--font-ui-smaller);
+	cursor: pointer;
+}
+
+.scribe-plot-matrix-unit-edit {
+	position: absolute;
+	right: var(--size-2-2);
+	bottom: var(--size-2-2);
+	opacity: 0.5;
+}
+
+.scribe-plot-matrix-unit-edit:focus-visible,
+.scribe-plot-matrix-unit:hover .scribe-plot-matrix-unit-edit {
+	opacity: 1;
+}
+
+.scribe-plot-matrix-unit-field {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	margin-bottom: var(--size-2-3);
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+}
+
+.scribe-plot-matrix-cell-mark {
+	margin-top: var(--size-2-2);
+}
+
+.scribe-plot-matrix-text {
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+
+.scribe-plot-matrix-line {
+	display: flex;
+	align-items: center;
+	gap: var(--size-2-3);
+}
+
+.scribe-plot-matrix-line.is-unknown {
+	color: var(--text-muted);
+}
+
+.scribe-plot-matrix-line-dot {
+	flex: none;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: var(--scribe-line-color);
+}
+
+.scribe-plot-matrix-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--size-2-2);
+}
+
+.scribe-plot-matrix-chip {
+	padding: 1px var(--size-4-2);
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-l);
+	font-size: var(--font-ui-smaller);
+}
+
+.scribe-plot-matrix-input {
+	width: 100%;
+	box-sizing: border-box;
+}
+
+textarea.scribe-plot-matrix-input {
+	min-height: 80px;
+	resize: vertical;
+}
+
+.scribe-plot-matrix-add {
+	padding: var(--size-4-3);
+}

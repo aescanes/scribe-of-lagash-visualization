@@ -31,7 +31,6 @@ function planned(n: number, locations: string[] = []): PlannedEntry {
 	const row: OutlineRow = {
 		rowIndex: n,
 		act: null,
-		folder: null,
 		chapter: n,
 		chapterText: String(n),
 		scene: null,
@@ -42,6 +41,7 @@ function planned(n: number, locations: string[] = []): PlannedEntry {
 		characters: [],
 		locations,
 		status: null,
+		comments: null,
 	};
 	return { row, type: "chapter", label: `Chapter ${n}`, expectedPath: `Book/Chapter ${n}.md`, lineId: null };
 }
@@ -56,6 +56,9 @@ function plan(over: Partial<OutlineReconciliation> = {}): OutlineReconciliation 
 		fulfilledCharacters: {},
 		fulfilledLocations: {},
 		fulfilledDates: {},
+		rowPaths: {},
+		lineMarks: {},
+		unitMarks: {},
 		unknownLines: [],
 		...over,
 	};
@@ -92,12 +95,12 @@ test("planned rows put ghost cards on their locations' lines", () => {
 	assert.deepEqual(model.lines[0].cards.map((c) => c.kind), ["real", "planned"]);
 });
 
-test("a fulfilled row's locations are unioned with the note's; a difference is marked", () => {
+test("a fulfilled row's locations win over the note's, and a difference is marked", () => {
 	const model = locationsModel(
-		[entry(1, ["Castle"])],
+		[entry(1, ["Castle", "Tower"])],
 		plan({ fulfilledLocations: { "Book/Chapter 1.md": ["Castle", "Docks"] } }),
 	);
-	assert.deepEqual(model.lines.map((l) => l.def.name), ["Castle", "Docks"]);
+	assert.deepEqual(model.lines.map((l) => l.def.name), ["Castle", "Docks"], "Tower, only in the note, is not drawn");
 	assert.match(model.lines[0].cards[0].mark ?? "", /locations differ/);
 });
 
@@ -107,4 +110,9 @@ test("character data does not leak into the Locations model", () => {
 		plan({ fulfilledCharacters: { "Book/Chapter 1.md": ["Bob"] } }),
 	);
 	assert.equal(model.lines.length, 0);
+});
+
+test("an outline row that lists no locations while the note does is a conflict", () => {
+	const model = locationsModel([entry(1, ["Castle"])], plan({ fulfilledPaths: ["Book/Chapter 1.md"] }));
+	assert.match(model.lines[0].cards[0].mark ?? "", /locations differ.*only in the note: Castle/);
 });

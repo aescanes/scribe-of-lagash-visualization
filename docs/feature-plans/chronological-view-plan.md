@@ -97,9 +97,9 @@ next to `fulfilledCharacters` / `fulfilledLocations`. Additive; default `{}` in
 
 - **One line**, `id: "chronological"`, name "Chronological", a fixed theme-friendly
   color from `LINE_COLOR_PALETTE`.
-- For a **real note**: the date is the note's `scribe-note-date`, else the
-  fulfilled outline row's `Date`. If both exist and **parse to different keys**,
-  the **note wins** (the folder/notes-win rule) and the card gets a `mark` ⚠
+- For a **real note**: the date is the fulfilled outline row's `Date`, else the
+  note's `scribe-note-date` (outline → note → nothing; originally the note won).
+  If both exist and **parse to different keys**, the **outline wins** and the card gets a `mark` ⚠
   ("date differs between the note and the story outline (…)"). If they are the
   same moment written differently (`2026-11` vs `November 2026`), no mark.
   Unlike Characters this is not a union — a card has one date.

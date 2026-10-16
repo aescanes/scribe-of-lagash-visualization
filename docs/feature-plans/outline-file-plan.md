@@ -44,7 +44,7 @@ scribe-visualization: outline
 ---
 
 <!-- Managed by Scribe of Lagash - Visualization.
-     Columns: Act | Chapter | Scene | Line | Summary  (Folder/Date/Characters/Locations/Status optional).
+     Columns: Act | Chapter | Scene | Line | Summary  (Date/Characters/Locations/Status optional).
      "Line" is a line name or id from Lines.md. Click a ghost card in the line view to create its note. -->
 
 | Act | Chapter | Scene | Line      | Summary                                   |
@@ -56,7 +56,7 @@ scribe-visualization: outline
   brackets stripped from cells so shorthand still parses.
 - A row with neither `Chapter` nor `Scene` is skipped.
 - Expected note path for a row:
-  - `folder` = `Folder` cell, else `"<Act label> <Act cell>"` (`Act`/`Acto` by
+  - `folder` = `"<Act label> <Act cell>"` (`Act`/`Acto` by
     title language), else none.
   - chapter row → `<book>/<folder>/<Chapter unit> <n>.md`
   - scene row → `<book>/<folder>/<Chapter unit> <n>/<Scene unit> <m>.md` (a
@@ -173,8 +173,9 @@ affordance.
 - **"Generate outline from notes" command** (optional) — fills a freshly
   created, still-empty table from the current entries. Not the default path;
   the settings-created file is empty by design.
-- The plugin never writes back to the table — rewriting it from canvas edits
-  is explicitly out of scope.
+- The line views never write back to the table — rewriting it from canvas edits
+  is out of scope there. The one exception is the Plot matrix view, which edits
+  the cell the user changes (see [`plot-matrix-plan.md`](plot-matrix-plan.md)).
 
 ---
 
