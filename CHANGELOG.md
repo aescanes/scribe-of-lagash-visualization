@@ -5,6 +5,12 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+- **Plugin description** (`manifest.json`, `package.json`) now covers the
+  Characters, Locations and Chronological views, the Story Outline and the Plot
+  matrix. The README intro states the plugin's two goals up front: visualize
+  what you have written and plot what comes next.
+
 ## [1.0.0](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/1.0.0) - 2026-10-16
 
 ### Removed

@@ -3,10 +3,16 @@
 ![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Minimum Obsidian version](https://img.shields.io/badge/obsidian-%E2%89%A51.10.0-8b6cef)
 
-An [Obsidian](https://obsidian.md) plugin that helps writers visualize their
-chapters and scenes. It is part of the **Scribe of Lagash**
-series, a set of independent, focused tools for planning and writing stories
-in Obsidian.
+An [Obsidian](https://obsidian.md) plugin that helps writers **visualize** their
+chapters and scenes and **plot** their story ahead of writing it. It is part of
+the **Scribe of Lagash** series, a set of independent, focused tools for
+planning and writing stories in Obsidian.
+
+- **Visualize** what you have written and planned: see every chapter and scene as a card,
+  arranged on your own lines, or grouped by character, location or in-story
+  date.
+- **Plot** what comes next: plan the story in a Story Outline, edit it as a
+  matrix, and turn planned rows into real notes with a click.
 
 This plugin doesn't own your prose: chapters and scenes are just regular notes
 in your vault. Point the plugin at the folder that holds a story and it
