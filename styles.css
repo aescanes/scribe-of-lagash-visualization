@@ -700,6 +700,13 @@
 }
 
 /* A square: same card look as the Line view's cards. */
+.scribe-plot-matrix-act.is-subgroup {
+	margin-top: 0;
+	padding-left: var(--size-4-3);
+	font-weight: 500;
+	text-transform: none;
+}
+
 .scribe-plot-matrix-cell {
 	position: relative;
 	box-sizing: border-box;

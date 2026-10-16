@@ -130,6 +130,7 @@ test("without an outline file the matrix is read-only and built from the notes",
 	assert.equal(model.editable, false);
 	const [a, b] = model.rows;
 	assert.equal(a.unit, "Chapter 1");
+	assert.deepEqual(a.groups, []);
 	assert.equal(a.line, "Main line", "the line comes from the note's placement in Lines.md");
 	assert.equal(a.lineColor, "#e06c75");
 	assert.deepEqual(a.characters, ["Alice"]);
@@ -137,8 +138,8 @@ test("without an outline file the matrix is read-only and built from the notes",
 	assert.equal(a.target, null);
 	assert.equal(a.comments, "");
 
-	assert.equal(b.unit, "Chapter 2 › Scene 1");
-	assert.equal(b.act, "Act I");
+	assert.equal(b.unit, "Scene 1", "the folders are headings, the row is just the note");
+	assert.deepEqual(b.groups, ["Act I", "Chapter 2"]);
 	assert.equal(b.dateLabel, "2026");
 	assert.equal(b.ghost, false);
 });
@@ -164,18 +165,23 @@ test("status: offered values are canonical, an empty one is none, anything else 
 	assert.deepEqual([c.statusLabel, c.statusInvalid, c.status], ["wip", true, "wip"]);
 });
 
-test("without an outline, a scene directly under an act folder shows the act, not a chapter", () => {
-	const entries = [
-		entry("Book/Act II/Scene 2 - second.md", {
-			type: "scene",
-			order: 2,
-			context: ["Act II"],
-			title: "Scene 2 - second",
-		}),
+test("without an outline the rows are the notes and the headings are their folders, in any language", () => {
+	const layouts: [string, Partial<NovelEntry>, string[], string][] = [
+		["Act / Chapter / Scene", { type: "scene", order: 1, context: ["Act I", "Chapter 1"], title: "Scene 1" }, ["Act I", "Chapter 1"], "Scene 1"],
+		["Chapter / Scene", { type: "scene", order: 1, context: ["Chapter 1"], title: "Scene 1" }, ["Chapter 1"], "Scene 1"],
+		["Act / Chapter", { type: "chapter", order: 1, context: ["Act I"], title: "Chapter 1" }, ["Act I"], "Chapter 1"],
+		["Act / Scene", { type: "scene", order: 1, context: ["Act I"], title: "Scene 1" }, ["Act I"], "Scene 1"],
+		["no folders", { type: "chapter", order: 1, context: [], title: "Chapter 1" }, [], "Chapter 1"],
+		["Spanish folders", { type: "scene", order: 1, context: ["Acto I", "Capítulo 1"], title: "Escena 1" }, ["Acto I", "Capítulo 1"], "Escena 1"],
 	];
-	const [r] = plotMatrixModel(ctx(entries, [], false)).rows;
-	assert.equal(r.actLabel, "Act II");
-	assert.equal(r.unit, "Scene 2 - second");
+	for (const language of ["en", "es"]) {
+		for (const [name, over, groups, unit] of layouts) {
+			const entries = [entry(`Book/${[...(over.context ?? []), over.title].join("/")}.md`, over)];
+			const [r] = plotMatrixModel({ ...ctx(entries, [], false), language }).rows;
+			assert.deepEqual(r.groups, groups, `${name} (${language})`);
+			assert.equal(r.unit, unit, `${name} (${language})`);
+		}
+	}
 });
 
 test("a real note's property that disagrees with its row is marked on that cell", () => {

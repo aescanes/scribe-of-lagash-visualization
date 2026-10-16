@@ -136,12 +136,20 @@ export function renderPlotMatrix(parent: HTMLElement, model: PlotMatrixModel, cb
 		});
 	}
 
-	let lastAct: string | null = null;
+	let lastGroups: string[] = [];
 	for (const row of model.rows) {
-		if (row.actLabel && row.actLabel !== lastAct) {
-			grid.createDiv({ cls: "scribe-plot-matrix-act", text: row.actLabel });
+		// A heading per folder level, drawn when it or an outer level changes.
+		const changedAt = row.groups.findIndex((name, level) => name !== lastGroups[level]);
+		if (changedAt !== -1) {
+			row.groups.slice(changedAt).forEach((name, i) => {
+				const level = changedAt + i;
+				grid.createDiv({
+					cls: `scribe-plot-matrix-act${level > 0 ? " is-subgroup" : ""}`,
+					text: name,
+				});
+			});
 		}
-		lastAct = row.actLabel;
+		lastGroups = row.groups;
 		renderRow(grid, row, model, cb);
 	}
 

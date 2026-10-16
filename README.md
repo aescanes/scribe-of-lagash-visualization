@@ -107,8 +107,12 @@ Draft, Final Draft or Done. If you type something else into the table, it is
 left as you wrote it and shown with a ⚠ instead of being treated as a status.
 
 Without a Story Outline file the matrix is read-only and built from your notes
-(their titles, folders, `scribe-note-*` properties, line placement and first
-paragraph, shown under Synopsis; the Comments column is left out). `Comments` is yours alone: it lives only in the outline table and is
+(their titles, `scribe-note-*` properties, line placement and first paragraph,
+shown under Synopsis; the Comments column is left out). There is one row per
+note, grouped under a heading for each of its folders (an act folder, then a
+chapter folder), exactly as you named them and in any language; notes that
+aren't in folders are not grouped. `Comments` is yours alone: it lives only in
+the outline table and is
 never copied into a note.
 
 <img src="https://raw.githubusercontent.com/aescanes/scribe-of-lagash-visualization/main/docs/images/plot-matrix-view.png" alt="Plot matrix view" width="600">

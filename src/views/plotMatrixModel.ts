@@ -3,7 +3,6 @@
 
 import { EntryType, LineLayout, NovelEntry, OutlineRow } from "../types";
 import { OutlineReconciliation, outlineRowType } from "../data/outline";
-import { outlineUnitsOf } from "../data/outlineGenerate";
 import { dateConflict, displayDate, parseStoryDate } from "../data/dateParser";
 import { checkStatus } from "../data/outlineStatus";
 import { mergeSources } from "./derivedLines";
@@ -30,8 +29,14 @@ export interface PlotMatrixRow {
 	type: EntryType;
 	/** The outline row's raw Act / Chapter / Scene cells (the editors' values); null in notes mode. */
 	act: string | null;
-	/** The Act as shown, with its word ("Act I" / "Acto I"); in notes mode the folder name as it is. */
+	/** The Act as shown, with its word ("Act I" / "Acto I"); null in notes mode, where folders are `groups`. */
 	actLabel: string | null;
+	/**
+	 * Headings this row sits under, outermost first. From the notes they are the
+	 * note's folders as they are named (an act folder, then a chapter folder),
+	 * whatever the title language; from the outline, the Act when there is one.
+	 */
+	groups: string[];
 	chapterText: string | null;
 	sceneText: string | null;
 	/** Display text of the Act / Chapter / Scene square, e.g. "Chapter 1 › Scene 2". */
@@ -158,6 +163,7 @@ function outlineRows(ctx: PlotMatrixContext, colorOf: (ref: string) => string | 
 			type: outlineRowType(row),
 			act: row.act,
 			actLabel: row.act ? `${actLabel(ctx.language)} ${row.act}` : null,
+			groups: row.act ? [`${actLabel(ctx.language)} ${row.act}`] : [],
 			chapterText: row.chapterText,
 			sceneText: row.sceneText,
 			unit: blank ? "" : outlineRowUnit(row, ctx.language),
@@ -185,17 +191,17 @@ function outlineRows(ctx: PlotMatrixContext, colorOf: (ref: string) => string | 
 function noteRows(ctx: PlotMatrixContext, colorOf: (ref: string) => string | null): PlotMatrixRow[] {
 	const lineById = new Map(ctx.layout.lines.map((l) => [l.id, l]));
 	return ctx.entries.map((entry) => {
-		const { chapterFolder, outerFolders } = outlineUnitsOf(entry, ctx.language);
 		const placed = ctx.layout.placements[entry.file.path]?.lines[0];
 		const lineName = placed ? lineById.get(placed)?.name ?? "" : "";
 		return {
 			key: entry.file.path,
 			type: entry.type,
-			act: outerFolders.length > 0 ? outerFolders.join("/") : null,
-			actLabel: outerFolders.length > 0 ? outerFolders.join("/") : null,
+			act: null,
+			actLabel: null,
+			groups: entry.context,
 			chapterText: null,
 			sceneText: null,
-			unit: chapterFolder ? `${chapterFolder} › ${entry.title}` : entry.title,
+			unit: entry.title,
 			path: entry.file.path,
 			ghost: false,
 			blank: false,
