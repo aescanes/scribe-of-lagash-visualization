@@ -34,7 +34,7 @@ from your notes and save nothing.
 
 <p align="left">
   If you love using Scribe of Lagash - Visualization, please consider
-  <a href='https://ko-fi.com/O3J528W3FZ' target='_blank'><img align='absmiddle' height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi4.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
+  <a href='https://ko-fi.com/O3J528W3FZ' target='_blank'><img align="absmiddle" height="36" src="https://raw.githubusercontent.com/aescanes/scribe-of-lagash-visualization/main/assets/images/buy-me-a-coffee.png" alt="Buy me a coffee at ko-fi.com" /></a>
 </p>
 
 ## Installation
@@ -433,7 +433,7 @@ then enable it from Obsidian's Community Plugins settings.
 
 If this plugin helps your writing, you can support its development:
 
-<a href='https://ko-fi.com/O3J528W3FZ' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi4.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
+<a href='https://ko-fi.com/O3J528W3FZ' target='_blank'><img height="36" src="https://raw.githubusercontent.com/aescanes/scribe-of-lagash-visualization/main/assets/images/buy-me-a-coffee.png" alt="Buy me a coffee at ko-fi.com" /></a>
 
 ## Contributing
 
