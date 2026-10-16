@@ -5,6 +5,8 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.0.0](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/1.0.0) - 2026-10-16
+
 ### Removed
 - **The Story Outline's `Folder` column.** A row's folder is now always
   `<Act label> <Act>` (or none). A leftover `Folder` column in an existing
