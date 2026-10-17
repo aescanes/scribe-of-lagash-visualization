@@ -5,6 +5,8 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.0.3](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/1.0.3) - 2026-10-17
+
 ### Changed
 - Resize `Buy me a coffee` image and change link documenatation.
 
