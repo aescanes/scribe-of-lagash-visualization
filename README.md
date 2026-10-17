@@ -32,10 +32,16 @@ planned card from the outline; the Plot matrix also edits the cells of the Story
 click. The Characters, Locations and Chronological views are derived
 from your notes and save nothing.
 
-<p align="left">
-  If you love using Scribe of Lagash - Visualization, please consider
-  <a href='https://ko-fi.com/O3J528W3FZ' target='_blank'><img align="absmiddle" height="36" src="https://raw.githubusercontent.com/aescanes/scribe-of-lagash-visualization/main/assets/images/buy-me-a-coffee.png" alt="Buy me a coffee at ko-fi.com" /></a>
-</p>
+## Thank you
+
+If this plugin helps your writing, you can support its development
+[buying me a coffee on Ko-fi](https://ko-fi.com/O3J528W3FZ):
+
+<div align="center">
+
+[![Buy me a coffee](assets/images/buy-me-a-coffee.png)](https://ko-fi.com/O3J528W3FZ)
+
+</div>
 
 ## Installation
 
@@ -172,11 +178,11 @@ whatever form you typed (in the **Title language**); the notes are never rewritt
 
 Accepted dates (English and Spanish month names, full names only):
 
-| Form | Examples |
-|---|---|
-| Year / month / day (ISO) | `2026`, `2026-11`, `2026-11-03` |
-| Month and year | `November 2026`, `noviembre de 2026` |
-| Day, month and year | `November 3, 2026`, `3 November 2026`, `3 de noviembre de 2026` |
+| Form                     | Examples                                                        |
+| ------------------------ | --------------------------------------------------------------- |
+| Year / month / day (ISO) | `2026`, `2026-11`, `2026-11-03`                                 |
+| Month and year           | `November 2026`, `noviembre de 2026`                            |
+| Day, month and year      | `November 3, 2026`, `3 November 2026`, `3 de noviembre de 2026` |
 
 A month followed by a single number is always a **year**, so a story without a
 real calendar can use small made-up years: `November 1`, `December 1`,
@@ -186,8 +192,8 @@ and impossible dates (`2026-02-30`) are not recognized. Real and made-up years
 in the same story simply sort by number.
 
 > **Tip: if Obsidian shows a calendar picker for `scribe-note-date`**, it has
-> given that property the *Date* type, which only takes real `YYYY-MM-DD` dates.
-> To type any of the forms above (like `November 1`), change the type to *Text*:
+> given that property the _Date_ type, which only takes real `YYYY-MM-DD` dates.
+> To type any of the forms above (like `November 1`), change the type to _Text_:
 > in the note's **Properties** panel, click the icon to the left of
 > `scribe-note-date`, choose **Property type**, then **Text**. Obsidian
 > remembers it for every note in the vault. The Story Outline's `Date` column
@@ -360,14 +366,14 @@ asks you to if you haven't). You don't need to click **Create** first: if the
 file doesn't exist yet, the command creates it. Then, for each recognized
 chapter or scene note, it writes one row:
 
-| Column                                      | What the command fills in                                                                                         |
-| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `Act`                                       | The act folder the note sits in, e.g. `I` for `Act I/` (empty for a note outside an act folder)                   |
-| `Chapter`                                   | The chapter number (for a scene, read from its chapter folder's name)                                             |
-| `Scene`                                     | The scene number, for scene notes                                                                                 |
-| `Line`                                      | The line the note's card sits on in the StoryLines file; a note not placed yet gets the topmost line              |
+| Column                                      | What the command fills in                                                                                            |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `Act`                                       | The act folder the note sits in, e.g. `I` for `Act I/` (empty for a note outside an act folder)                      |
+| `Chapter`                                   | The chapter number (for a scene, read from its chapter folder's name)                                                |
+| `Scene`                                     | The scene number, for scene notes                                                                                    |
+| `Line`                                      | The line the note's card sits on in the StoryLines file; a note not placed yet gets the topmost line                 |
 | `Characters`, `Locations`, `Date`, `Status` | The note's `scribe-note-characters`, `scribe-note-locations`, `scribe-note-date` and `scribe-note-status` properties |
-| `Synopsis`, `Comments`                      | Left empty for you to fill in                                                                                     |
+| `Synopsis`, `Comments`                      | Left empty for you to fill in                                                                                        |
 
 Things to know:
 
@@ -428,12 +434,6 @@ npm run validate # typecheck + test + lint + lint:css (run before every commit)
 To try the plugin in a vault, copy (or symlink) `manifest.json`, `main.js`,
 and `styles.css` into `<vault>/.obsidian/plugins/scribe-of-lagash-visualization/`,
 then enable it from Obsidian's Community Plugins settings.
-
-## Support
-
-If this plugin helps your writing, you can support its development:
-
-<a href='https://ko-fi.com/O3J528W3FZ' target='_blank'><img height="36" src="https://raw.githubusercontent.com/aescanes/scribe-of-lagash-visualization/main/assets/images/buy-me-a-coffee.png" alt="Buy me a coffee at ko-fi.com" /></a>
 
 ## Contributing
 
