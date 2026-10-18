@@ -35,11 +35,11 @@ from your notes and save nothing.
 ## Thank you
 
 If this plugin helps your writing, you can support its development
-[buying me a coffee on Ko-fi](https://ko-fi.com/O3J528W3FZ):
+[buying me a coffee on Ko-fi](https://ko-fi.com/O3J528W3FZ)
 
-<div align="center">
+<div align="left">
 
-[![Buy me a coffee](assets/images/buy-me-a-coffee.png)](https://ko-fi.com/O3J528W3FZ)
+[![Buy me a coffee](https://raw.githubusercontent.com/aescanes/scribe-of-lagash-visualization/main/assets/images/buy-me-a-coffee.png)](https://ko-fi.com/O3J528W3FZ)
 
 </div>
 
