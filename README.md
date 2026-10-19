@@ -8,6 +8,8 @@ chapters and scenes and **plot** their story ahead of writing it. It is part of
 the **Scribe of Lagash** series, a set of independent, focused tools for
 planning and writing stories in Obsidian.
 
+<img src="docs/images/storylines-view.png" alt="StoryLines view" width="600">
+
 - **Visualize** what you have written and planned: see every chapter and scene as a card,
   arranged on your own lines, or grouped by character, location or in-story
   date.
