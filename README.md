@@ -8,7 +8,7 @@ chapters and scenes and **plot** their story ahead of writing it. It is part of
 the **Scribe of Lagash** series, a set of independent, focused tools for
 planning and writing stories in Obsidian.
 
-<img src="docs/images/storylines-view.png" alt="StoryLines view" width="600">
+<img src="docs/images/storylines-view.png" alt="StoryLines view">
 
 - **Visualize** what you have written and planned: see every chapter and scene as a card,
   arranged on your own lines, or grouped by character, location or in-story
@@ -93,7 +93,7 @@ reading order and onto the line its row names. Add /
 rename / recolor / reorder / delete lines from the line headers. Changes save
 to the StoryLines file (`StoryLines.md`) automatically; `Mod+Z` undoes.
 
-<img src="docs/images/storylines-view.png" alt="StoryLines view" width="600">
+<img src="docs/images/storylines-view.png" alt="StoryLines view">
 
 ### Plot matrix view
 
@@ -134,7 +134,7 @@ aren't in folders are not grouped. `Comments` is yours alone: it lives only in
 the outline table and is
 never copied into a note.
 
-<img src="docs/images/plot-matrix-view.png" alt="Plot matrix view" width="600">
+<img src="docs/images/plot-matrix-view.png" alt="Plot matrix view">
 
 ### Characters view
 
@@ -151,7 +151,7 @@ non-clickable cards, and notes with no characters sit in a "No characters
 listed" strip. Nothing is moved, created or saved in this view, and each tab
 remembers its own view.
 
-<img src="docs/images/characters-view.png" alt="Characters view" width="600">
+<img src="docs/images/characters-view.png" alt="Characters view">
 
 ### Locations view
 
@@ -161,7 +161,7 @@ Outline's `Locations` column, with the same rule (outline first, then the note;
 ⚠ when they differ; a
 "No locations listed" strip for the rest).
 
-<img src="docs/images/locations-view.png" alt="Locations view" width="600">
+<img src="docs/images/locations-view.png" alt="Locations view">
 
 ### Chronological view
 
@@ -200,7 +200,7 @@ in the same story simply sort by number.
 > remembers it for every note in the vault. The Story Outline's `Date` column
 > is a plain table cell and has no such picker.
 
-<img src="docs/images/chronological-view.png" alt="Chronological view" width="600">
+<img src="docs/images/chronological-view.png" alt="Chronological view">
 
 ### Story Outline file _(optional)_
 
@@ -221,7 +221,7 @@ fills an empty outline from them; see
 [Generating the Story Outline from your notes](#generating-the-story-outline-from-your-notes). See
 [docs/feature-plans/outline-file-plan.md](docs/feature-plans/outline-file-plan.md).
 
-<img src="docs/images/story-outline.png" alt="Story Outline file" width="500">
+<img src="docs/images/story-outline.png" alt="Story Outline file">
 
 ### What a card shows
 
