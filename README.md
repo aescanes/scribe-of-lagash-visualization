@@ -39,7 +39,7 @@ If this plugin helps your writing, you can support its development
 
 <div align="left">
 
-[![Buy me a coffee](https://raw.githubusercontent.com/aescanes/scribe-of-lagash-visualization/main/assets/images/buy-me-a-coffee.png)](https://ko-fi.com/O3J528W3FZ)
+[![Buy me a coffee](assets/images/buy-me-a-coffee.png)](https://ko-fi.com/O3J528W3FZ)
 
 </div>
 
@@ -62,12 +62,11 @@ plugins for planning and writing stories:
   helps writers visualize their chapters and scenes.
 - **[Scribe of Lagash - Goals and Stats](https://community.obsidian.md/plugins/scribe-of-lagash-goals-stats)** ([github repository](https://github.com/aescanes/scribe-of-lagash-goals-stats)) —
   helps writers set goals and see detailed statistics for their story.
+- **[Scribe of Lagash - Focus](https://community.obsidian.md/plugins/scribe-of-lagash-focus)** ([github repository](https://github.com/aescanes/scribe-of-lagash-focus)) —
+  helps writers focus on their work and remove distractions.
 
-Each plugin works fine on its own, so each has its own **Story folder**
-setting and neither requires the other. They are designed to complement each
-other, though, and work best together: point both at the same story folder so
-the cards you see here and the counts and goals tracked in Goals and Stats
-describe the same notes.
+Each plugin works fine on its own, and none requires another, but they are
+designed to complement each other and work best together.
 
 ### About the name
 
@@ -92,7 +91,7 @@ reading order and onto the line its row names. Add /
 rename / recolor / reorder / delete lines from the line headers. Changes save
 to the StoryLines file (`StoryLines.md`) automatically; `Mod+Z` undoes.
 
-<img src="https://raw.githubusercontent.com/aescanes/scribe-of-lagash-visualization/main/docs/images/storylines-view.png" alt="StoryLines view" width="600">
+<img src="docs/images/storylines-view.png" alt="StoryLines view" width="600">
 
 ### Plot matrix view
 
@@ -133,7 +132,7 @@ aren't in folders are not grouped. `Comments` is yours alone: it lives only in
 the outline table and is
 never copied into a note.
 
-<img src="https://raw.githubusercontent.com/aescanes/scribe-of-lagash-visualization/main/docs/images/plot-matrix-view.png" alt="Plot matrix view" width="600">
+<img src="docs/images/plot-matrix-view.png" alt="Plot matrix view" width="600">
 
 ### Characters view
 
@@ -150,7 +149,7 @@ non-clickable cards, and notes with no characters sit in a "No characters
 listed" strip. Nothing is moved, created or saved in this view, and each tab
 remembers its own view.
 
-<img src="https://raw.githubusercontent.com/aescanes/scribe-of-lagash-visualization/main/docs/images/characters-view.png" alt="Characters view" width="600">
+<img src="docs/images/characters-view.png" alt="Characters view" width="600">
 
 ### Locations view
 
@@ -160,7 +159,7 @@ Outline's `Locations` column, with the same rule (outline first, then the note;
 ⚠ when they differ; a
 "No locations listed" strip for the rest).
 
-<img src="https://raw.githubusercontent.com/aescanes/scribe-of-lagash-visualization/main/docs/images/locations-view.png" alt="Locations view" width="600">
+<img src="docs/images/locations-view.png" alt="Locations view" width="600">
 
 ### Chronological view
 
@@ -199,7 +198,7 @@ in the same story simply sort by number.
 > remembers it for every note in the vault. The Story Outline's `Date` column
 > is a plain table cell and has no such picker.
 
-<img src="https://raw.githubusercontent.com/aescanes/scribe-of-lagash-visualization/main/docs/images/chronological-view.png" alt="Chronological view" width="600">
+<img src="docs/images/chronological-view.png" alt="Chronological view" width="600">
 
 ### Story Outline file _(optional)_
 
@@ -220,7 +219,7 @@ fills an empty outline from them; see
 [Generating the Story Outline from your notes](#generating-the-story-outline-from-your-notes). See
 [docs/feature-plans/outline-file-plan.md](docs/feature-plans/outline-file-plan.md).
 
-<img src="https://raw.githubusercontent.com/aescanes/scribe-of-lagash-visualization/main/docs/images/story-outline.png" alt="Story Outline file" width="500">
+<img src="docs/images/story-outline.png" alt="Story Outline file" width="500">
 
 ### What a card shows
 
