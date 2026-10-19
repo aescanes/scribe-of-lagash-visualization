@@ -5,6 +5,8 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.0.4](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/1.0.4) - 2026-10-19
+
 ### Changed
 - README: the "Scribe of Lagash Plugins" and Installation sections now match
   across the three plugins. The series list includes Focus, and the intro states

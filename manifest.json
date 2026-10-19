@@ -1,7 +1,7 @@
 {
 	"id": "scribe-of-lagash-visualization",
 	"name": "Scribe of Lagash - Visualization",
-	"version": "1.0.3",
+	"version": "1.0.4",
 	"minAppVersion": "1.10.0",
 	"description": "Visualize your story's chapters and scenes as cards on lines, by character, location or date, and plot it ahead with a story outline and plot matrix whose rows become real notes.",
 	"author": "aescanes",
