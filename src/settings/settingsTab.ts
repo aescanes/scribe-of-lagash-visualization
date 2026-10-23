@@ -5,6 +5,7 @@ import { App, Notice, normalizePath, PluginSettingTab, Setting, SettingDefinitio
 import type ScribeVisualizationPlugin from "../main";
 import { actLabel, availableLanguages, languageLabel, unitLabel } from "../data/titleParser";
 import { FolderSuggest } from "./folderSuggest";
+import { renderSeriesButton, SERIES_HEADING, seriesRows } from "./seriesSection";
 
 /** One settings row: shared between the declarative (Obsidian 1.13+) and imperative (fallback) render paths. */
 interface SettingRow {
@@ -12,6 +13,8 @@ interface SettingRow {
 	desc: string | DocumentFragment;
 	render: (setting: Setting) => void;
 }
+
+const PLUGIN_ID = "scribe-of-lagash-visualization";
 
 const SUPPORT_NAME = "If this plugin helps your writing, you can support its development";
 const SUPPORT_URL = "https://ko-fi.com/O3J528W3FZ";
@@ -235,6 +238,16 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 			},
 			{
 				type: "group",
+				heading: SERIES_HEADING,
+				items: seriesRows(PLUGIN_ID).map((row) => ({
+					name: row.name,
+					desc: row.desc,
+					searchable: false,
+					render: (setting) => renderSeriesButton(setting, row),
+				})),
+			},
+			{
+				type: "group",
 				heading: "Support",
 				items: [
 					{
@@ -262,6 +275,11 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 		new Setting(containerEl).setName("Behavior").setHeading();
 		for (const { name, desc, render } of this.behaviourRows()) {
 			render(new Setting(containerEl).setName(name).setDesc(desc));
+		}
+
+		new Setting(containerEl).setName(SERIES_HEADING).setHeading();
+		for (const row of seriesRows(PLUGIN_ID)) {
+			renderSeriesButton(new Setting(containerEl).setName(row.name).setDesc(row.desc), row);
 		}
 
 		new Setting(containerEl).setName("Support").setHeading();
