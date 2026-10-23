@@ -13,6 +13,9 @@ interface SettingRow {
 	render: (setting: Setting) => void;
 }
 
+const SUPPORT_NAME = "If this plugin helps your writing, you can support its development";
+const SUPPORT_URL = "https://ko-fi.com/O3J528W3FZ";
+
 const INTRO_NAME = "How this plugin works";
 
 /**
@@ -111,6 +114,15 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 		});
 		setting.addButton((button) =>
 			button.setButtonText("Set").onClick(() => void this.applyStoryFolder(typed.trim())),
+		);
+	}
+
+	private renderSupportButton(setting: Setting): void {
+		setting.addButton((button) =>
+			button
+				.setButtonText("Buy me a coffee")
+				.setCta()
+				.onClick(() => window.open(SUPPORT_URL)),
 		);
 	}
 
@@ -221,6 +233,17 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 				heading: "Behavior",
 				items: this.behaviourRows().map(({ name, desc, render }) => ({ name, desc, render })),
 			},
+			{
+				type: "group",
+				heading: "Support",
+				items: [
+					{
+						name: SUPPORT_NAME,
+						searchable: false,
+						render: (setting) => this.renderSupportButton(setting),
+					},
+				],
+			},
 		];
 	}
 
@@ -240,5 +263,8 @@ export class ScribeVisualizationSettingTab extends PluginSettingTab {
 		for (const { name, desc, render } of this.behaviourRows()) {
 			render(new Setting(containerEl).setName(name).setDesc(desc));
 		}
+
+		new Setting(containerEl).setName("Support").setHeading();
+		this.renderSupportButton(new Setting(containerEl).setName(SUPPORT_NAME));
 	}
 }

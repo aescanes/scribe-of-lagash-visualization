@@ -6,6 +6,8 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Settings: a "Support" section with a Ko-fi button for readers who want to
+  support the plugin's development.
 - The column guide in the Story Outline file now lists the `Status` values and
   what each one means.
 
