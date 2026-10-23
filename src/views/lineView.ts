@@ -5,7 +5,7 @@ import { debounce, ItemView, Notice, normalizePath, Scope, setIcon, TFile, ViewS
 import type ScribeVisualizationPlugin from "../main";
 import { emptyLineLayout, lineFilePath, readLineLayout, writeLineLayout } from "../data/lineFile";
 import { outlineLineNames, OutlineReconciliation, reconcileOutline } from "../data/outline";
-import { appendOutlineRowToFile, ensureOutlineColumnsInFile, ensureOutlineWideClass, outlineFilePath, readOutlineFile, writeOutlineCell } from "../data/outlineFile";
+import { appendOutlineRowToFile, ensureOutlineColumnsInFile, ensureOutlineGuideInFile, ensureOutlineWideClass, outlineFilePath, readOutlineFile, writeOutlineCell } from "../data/outlineFile";
 import { OutlineColumn, unitEditProblem } from "../data/outlineEdit";
 import { scaffoldNoteBody } from "../data/noteScaffold";
 import { displayDate } from "../data/dateParser";
@@ -235,6 +235,7 @@ export class LineView extends ItemView {
 			return;
 		}
 		await ensureOutlineColumnsInFile(this.app, normalizePath(path));
+		await ensureOutlineGuideInFile(this.app, normalizePath(path));
 		await ensureOutlineWideClass(this.app, normalizePath(path));
 		const outline = await readOutlineFile(this.app, normalizePath(path));
 		this.outlineRows = outline.rows;

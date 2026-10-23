@@ -7,6 +7,7 @@ import { withMdExtension, withScribePrefix } from "./lineLayout";
 import { OUTLINE_COLUMNS, parseOutlineTable, scanOutlineTable } from "./outline";
 import { CellEditResult, OutlineColumn, appendOutlineRow, ensureOutlineColumns, setOutlineCell } from "./outlineEdit";
 import { replaceFirstTable } from "./outlineGenerate";
+import { OUTLINE_GUIDE, refreshOutlineGuide } from "./outlineGuide";
 
 /**
  * Reads the optional per-book "Outline file" — a Markdown table
@@ -102,49 +103,7 @@ export async function ensureOutlineFile(app: App, path: string): Promise<boolean
 		"",
 		"---",
 		"",
-		"## Filling in the outline",
-		"",
-		"Each row plans one chapter or scene. Fill the columns that match how this",
-		"story is (or will be) organized on disk — pick **one** layout per story:",
-		"",
-		"| Layout | Columns to fill | The row's note |",
-		"| --- | --- | --- |",
-		"| Chapters as files | `Chapter` | `Chapter 1.md` |",
-		"| …grouped in acts | `Act` + `Chapter` | `Act I/Chapter 1.md` |",
-		"| Scenes in chapter folders | `Chapter` + `Scene` | `Chapter 1/Scene 2.md` |",
-		"| …grouped in acts | `Act` + `Chapter` + `Scene` | `Act I/Chapter 1/Scene 2.md` |",
-		"| Scenes with no chapter | `Scene` (+ optional `Act`) | `Scene 2.md` |",
-		"",
-		"- Numbers may be digits or roman numerals (`IV`), optionally followed by",
-		"  free text, e.g. `1 - The beginning` — carried into the note's title the",
-		"  same way it would be if you typed it directly. The Act / Chapter / Scene",
-		"  words and the folder names follow the **Title language** setting.",
-		"- `Line` — a line name or id from the StoryLines file.",
-		"- `Synopsis` (optional) — shown on the card, and becomes the note body when the note",
-		"  is created.",
-		"- `Characters` (optional) - a list of characters involved in the chapter or scene, separated by commas.",
-		"- `Locations` (optional) - a list of locations where the chapter or scene happens, separated by commas.",
-		"- `Date` (optional) - the in-story date, which orders the",
-		"  Chronological view. Use `2026-11-03`, `November 2026`, `November 3, 2026` or `3 de noviembre de 2026`.",
-		"  Full month names in English or Spanish only. A month followed by a single",
-		"  number is a year (`November 1` is November of year 1), so a story with no real",
-		"  calendar can use small years. A day needs a year (`November 3, 1`).",
-		"- `Status` (optional) - where the chapter or scene stands. The Plot matrix offers these values",
-		"  (case doesn't matter); anything else is kept as written but flagged:",
-		"  - *(empty)* - no status set.",
-		"  - `TO DO` - planned, not started.",
-		"  - `In Progress` - being written now.",
-		"  - `First Draft` - a complete first pass exists.",
-		"  - `Revised Draft` - reworked at least once.",
-		"  - `Final Draft` - polished; only minor touch-ups left.",
-		"  - `Done` - finished, nothing more to do.",
-		"- `Comments` (optional) - your own remarks on the row. They stay in this table; they are not copied into the note.",
-		"- Any column missing from the table is added automatically when the plugin reads this file.",
-		"- A row with neither a Chapter nor a Scene value is ignored. Prologue /",
-		"  Epilogue / Interlude have no number and can't be planned here — create",
-		"  those notes directly.",
-		'- Do **not** mix "chapter as a file" and "chapter as a folder" in one story.',
-		"",
+		OUTLINE_GUIDE,
 	].join("\n");
 	await app.vault.create(normalized, body);
 	return true;
@@ -173,6 +132,34 @@ export async function ensureOutlineColumnsInFile(app: App, path: string): Promis
 		const { body } = splitFrontmatter(content);
 		wrote = true;
 		return content.slice(0, content.length - body.length) + ensureOutlineColumns(body).body;
+	});
+	return wrote;
+}
+
+/**
+ * Brings the column guide below the table up to date, so a file made by an
+ * older version learns about new columns and values. Does nothing when the
+ * file is missing, unmarked, has no guide, or already matches. Returns whether it wrote.
+ */
+export async function ensureOutlineGuideInFile(app: App, path: string): Promise<boolean> {
+	if (!path) return false;
+	const file = app.vault.getAbstractFileByPath(normalizePath(path));
+	if (!(file instanceof TFile)) return false;
+
+	const check = (content: string): boolean => {
+		const { frontmatter, body } = splitFrontmatter(content);
+		return hasMarker(frontmatter) && refreshOutlineGuide(body) !== null;
+	};
+	if (!check(await app.vault.read(file))) return false;
+
+	let wrote = false;
+	await app.vault.process(file, (content) => {
+		const { frontmatter, body } = splitFrontmatter(content);
+		if (!hasMarker(frontmatter)) return content;
+		const next = refreshOutlineGuide(body);
+		if (next === null) return content;
+		wrote = true;
+		return content.slice(0, content.length - body.length) + next;
 	});
 	return wrote;
 }

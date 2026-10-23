@@ -353,7 +353,10 @@ planned rows on the **Chronological view**.
 A row with neither a `Chapter` nor a `Scene`
 value is ignored, and un-numbered units (`Prologue`, …) can't be planned here —
 create those notes directly. The Story Outline file created for you repeats
-this guide below the table.
+this guide below the table, and the plugin keeps it up to date: when a new
+version changes the guide, the text from the `## Filling in the outline`
+heading to the end of the file is replaced. Don't write below it, and delete the
+heading if you don't want it refreshed.
 
 ### Generating the Story Outline from your notes
 

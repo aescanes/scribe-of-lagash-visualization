@@ -5,6 +5,17 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- The column guide in the Story Outline file now lists the `Status` values and
+  what each one means.
+
+### Changed
+- An existing Story Outline file gets its column guide below the table
+  refreshed to the current text whenever the plugin reads it, so files made by
+  an older version learn about new columns and values. The guide is replaced
+  from its `## Filling in the outline` heading to the end of the file; delete
+  the heading to opt out.
+
 ## [1.0.4](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/1.0.4) - 2026-10-19
 
 ### Changed

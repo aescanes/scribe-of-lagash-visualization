@@ -206,6 +206,17 @@ line by hand. Now the `Line` column can create lines.
 - `reconcileOutline`'s `unknownLines` diagnostic notice points the user at the
   ⟳ button (or at fixing the `Line` cell).
 
+### Keeping the column guide current
+
+The guide below the table (`OUTLINE_GUIDE`, in `outlineGuide.ts`) is shared by
+`ensureOutlineFile` and `ensureOutlineGuideInFile`. The view calls the latter
+beside `ensureOutlineColumnsInFile` each time it reads the outline, so a file
+made by an older version picks up new columns and values (e.g. the `Status`
+list). `refreshOutlineGuide(body)` replaces everything from the
+`## Filling in the outline` heading to the end of the file, and does nothing
+when the guide already matches or the heading is absent (the user deleted it).
+Trade-off: text a user writes below the guide is overwritten.
+
 ---
 
 ## Open questions to resolve as we go
