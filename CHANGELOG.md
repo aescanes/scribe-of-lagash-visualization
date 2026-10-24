@@ -5,6 +5,8 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.1.0](https://github.com/aescanes/scribe-of-lagash-visualization/releases/tag/1.1.0) - 2026-10-24
+
 ### Added
 - Settings: a "Support" section with a Ko-fi button for readers who want to
   support the plugin's development.
