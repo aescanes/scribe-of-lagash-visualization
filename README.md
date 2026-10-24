@@ -70,6 +70,9 @@ plugins for planning and writing stories:
 Each plugin works fine on its own, and none requires another, but they are
 designed to complement each other and work best together.
 
+Learn more about the series on the
+[Scribe of Lagash website](https://aescanes.github.io/scribe-of-lagash-website/).
+
 ### About the name
 
 "Scribe" is the writer at the center of every plugin in the series, and

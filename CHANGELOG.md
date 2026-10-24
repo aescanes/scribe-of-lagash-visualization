@@ -11,6 +11,7 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Settings: a "Scribe of Lagash series" section, above "Support", with a link
   to the series website and to the community plugin pages of the other two
   plugins.
+- README: the "Scribe of Lagash Plugins" section links to the series website.
 - The column guide in the Story Outline file now lists the `Status` values and
   what each one means.
 
